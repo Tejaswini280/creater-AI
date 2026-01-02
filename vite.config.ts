@@ -99,7 +99,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: `http://localhost:${process.env.PORT || 5000}`,
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
@@ -115,7 +115,7 @@ export default defineConfig({
         },
       },
       '/ws': {
-        target: 'ws://localhost:5000',
+        target: `ws://localhost:${process.env.PORT || 5000}`,
         changeOrigin: true,
         ws: true,
         configure: (proxy, _options) => {

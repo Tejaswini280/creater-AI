@@ -2191,7 +2191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString(),
         requestId: req.headers['x-request-id'] || 'unknown',
         serverInfo: {
-          port: 5000,
+          port: parseInt(process.env.PORT || '5000', 10),
           protocol: 'ws',
           status: 'running'
         }
@@ -2406,10 +2406,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Redirect to frontend with success
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5000'}/dashboard?linkedin=success`);
+      res.redirect(`${process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 5000}`}/dashboard?linkedin=success`);
     } catch (error) {
       console.error('LinkedIn callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5000'}/dashboard?linkedin=error`);
+      res.redirect(`${process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 5000}`}/dashboard?linkedin=error`);
     }
   });
 

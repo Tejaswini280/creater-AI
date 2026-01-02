@@ -239,18 +239,19 @@ if (!perfMode) {
   if (app.get("env") === "development" && process.env.NODE_ENV !== "test") {
     console.log("Setting up Vite development server");
     try {
-      const { setupVite } = await import("./vite");
-      await setupVite(app, server);
+      // Use dynamic import to avoid bundling vite in production
+      const viteModule = await import("./vite.js");
+      await viteModule.setupVite(app, server);
     } catch (error) {
       console.error("Failed to setup Vite development server:", error);
       // Fallback to static serving in case Vite setup fails
-      const { serveStatic } = await import("./static-server");
-      serveStatic(app);
+      const staticModule = await import("./static-server.js");
+      staticModule.serveStatic(app);
     }
   } else {
     console.log("Setting up static file server");
-    const { serveStatic } = await import("./static-server");
-    serveStatic(app);
+    const staticModule = await import("./static-server.js");
+    staticModule.serveStatic(app);
   }
 
   // Attempt to create DB indexes for better performance (best-effort)
@@ -260,10 +261,8 @@ if (!perfMode) {
     console.warn('DB index creation skipped or failed (non-fatal):', (e instanceof Error ? e.message : String(e)));
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Use PORT from environment or default to 5000
+  const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
     host: "0.0.0.0",
