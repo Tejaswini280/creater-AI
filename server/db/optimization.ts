@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 
 // Database performance monitoring
 export class DatabaseMonitor {

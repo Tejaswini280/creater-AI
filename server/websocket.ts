@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { authenticateToken } from './auth';
 import { StreamingAIService } from './services/streaming-ai';
-import { log } from './vite';
+import { log } from './utils/logger';
 
 interface WebSocketSession {
   id: string;
