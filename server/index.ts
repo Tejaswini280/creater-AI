@@ -193,10 +193,14 @@ if (!perfMode) {
   const wsManager = new WebSocketManager(server);
   log("WebSocket server initialized");
 
-  // Initialize Content Scheduler Service
-  const schedulerService = ContentSchedulerService.getInstance();
-  await schedulerService.initialize();
-  log("Content Scheduler Service initialized");
+  // Initialize Content Scheduler Service (non-blocking)
+  try {
+    const schedulerService = ContentSchedulerService.getInstance();
+    await schedulerService.initialize();
+    log("Content Scheduler Service initialized");
+  } catch (error) {
+    console.warn("Content Scheduler Service initialization failed (non-fatal):", error instanceof Error ? error.message : String(error));
+  }
 
   // Make WebSocket manager globally available for routes
   (global as any).wsManager = wsManager;
