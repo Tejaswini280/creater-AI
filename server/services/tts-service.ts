@@ -3,9 +3,15 @@ import fs from 'fs';
 import path from 'path';
 import { nanoid } from 'nanoid';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const hasValidOpenAIKey = !!OPENAI_API_KEY && OPENAI_API_KEY.length > 20;
+
+let openai: OpenAI | null = null;
+if (hasValidOpenAIKey) {
+  openai = new OpenAI({
+    apiKey: OPENAI_API_KEY
+  });
+}
 
 export class TTSService {
   private static audioDir = path.join(process.cwd(), 'uploads', 'audio');
@@ -18,6 +24,10 @@ export class TTSService {
 
   static async generateVoiceover(text: string, voice: string = 'alloy', speed: number = 1.0): Promise<string> {
     try {
+      if (!openai) {
+        throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+      }
+
       await this.ensureAudioDir();
 
       console.log(`🎙️ Generating voiceover with OpenAI TTS...`);

@@ -15,11 +15,23 @@ import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize AI clients with provided API keys
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || ''
-});
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const hasValidOpenAIKey = !!OPENAI_API_KEY && OPENAI_API_KEY.length > 20;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+let openai: OpenAI | null = null;
+if (hasValidOpenAIKey) {
+  openai = new OpenAI({
+    apiKey: OPENAI_API_KEY
+  });
+}
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const hasValidGeminiKey = !!GEMINI_API_KEY && GEMINI_API_KEY.length > 20;
+
+let genAI: GoogleGenerativeAI | null = null;
+if (hasValidGeminiKey) {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+}
 
 interface SeededData {
   userIds: string[];

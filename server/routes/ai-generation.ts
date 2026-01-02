@@ -517,6 +517,14 @@ router.post('/generate-voiceover', authenticateToken, async (req: any, res) => {
     console.log(`📝 Text: "${text.substring(0, 100)}..."`);
     console.log(`🗣️ Voice: ${voice}`);
 
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 20) {
+      return res.status(400).json({
+        success: false,
+        message: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.'
+      });
+    }
+
     // Quick TTS implementation
     const OpenAI = require('openai');
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
