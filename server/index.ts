@@ -244,12 +244,12 @@ if (!perfMode) {
     } catch (error) {
       console.error("Failed to setup Vite development server:", error);
       // Fallback to static serving in case Vite setup fails
-      const { serveStatic } = await import("./vite");
+      const { serveStatic } = await import("./static-server");
       serveStatic(app);
     }
   } else {
     console.log("Setting up static file server");
-    const { serveStatic } = await import("./vite");
+    const { serveStatic } = await import("./static-server");
     serveStatic(app);
   }
 

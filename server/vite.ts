@@ -17,7 +17,15 @@ export async function setupVite(app: Express, server: Server) {
   try {
     // Dynamically import Vite only when needed
     const { createServer: createViteServer, createLogger } = await import("vite");
-    const viteConfig = (await import("../vite.config")).default;
+    
+    // Import vite config dynamically to avoid bundling it
+    let viteConfig;
+    try {
+      viteConfig = (await import("../vite.config")).default;
+    } catch (error) {
+      console.warn("Could not load vite.config, using default config");
+      viteConfig = {};
+    }
     
     const viteLogger = createLogger();
 
