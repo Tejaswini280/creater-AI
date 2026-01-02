@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Scheduler Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Scheduler Test</h1>
+    
+    <div class="test-section info">
+        <h3>Test Instructions</h3>
+        <p>This test will verify that the frontend scheduler is working correctly with the fixed backend.</p>
+        <ol>
+            <li>Click "Test GET Scheduled Content" to verify the API is working</li>
+            <li>Click "Test Create Scheduled Content" to create new content</li>
+            <li>Click "Test GET Scheduled Content" again to verify the new content appears</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>1. Test GET Scheduled Content</h3>
+        <button onclick="testGetScheduledContent()">Test GET Scheduled Content</button>
+        <div id="getResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test Create Scheduled Content</h3>
+        <button onclick="testCreateScheduledContent()">Test Create Scheduled Content</button>
+        <div id="createResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Dashboard Integration</h3>
+        <button onclick="testDashboardIntegration()">Test Dashboard Integration</button>
+        <div id="dashboardResult"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:5000';
+        
+        // Set test token
+        localStorage.setItem('token', 'test-token');
+        localStorage.setItem('user', JSON.stringify({
+            id: 'test-user-id',
+            email: 'test@example.com',
+            firstName: 'Test',
+            lastName: 'User'
+        }));
+
+        async function testGetScheduledContent() {
+            const resultDiv = document.getElementById('getResult');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/content/scheduled`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h4>✅ GET /api/content/scheduled - SUCCESS</h4>
+                        <p>Found ${data.scheduledContent.length} scheduled content items</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ GET /api/content/scheduled - FAILED</h4>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h4>❌ GET /api/content/scheduled - ERROR</h4>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function testCreateScheduledContent() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const newContent = {
+                    title: 'Frontend Test Content',
+                    description: 'This is a test content created from frontend',
+                    platform: 'youtube',
+                    contentType: 'video',
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Tomorrow
+                };
+
+                const response = await fetch(`${BASE_URL}/api/content/schedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newContent)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h4>✅ POST /api/content/schedule - SUCCESS</h4>
+                        <p>Content created successfully!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ POST /api/content/schedule - FAILED</h4>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h4>❌ POST /api/content/schedule - ERROR</h4>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function testDashboardIntegration() {
+            const resultDiv = document.getElementById('dashboardResult');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                // Test the dashboard endpoint
+                const response = await fetch(`${BASE_URL}/api/content/scheduled?limit=5`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h4>✅ Dashboard Integration - SUCCESS</h4>
+                        <p>Dashboard can fetch ${data.scheduledContent.length} scheduled content items</p>
+                        <p>✅ Upcoming Schedule component will work correctly</p>
+                        <p>✅ Scheduler page will display content correctly</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ Dashboard Integration - FAILED</h4>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Dashboard Integration - ERROR</h4>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

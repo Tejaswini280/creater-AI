@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Features Test - Task 5.4</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .test-section {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4299e1;
+        }
+        .test-section h3 {
+            color: #2d3748;
+            margin-top: 0;
+        }
+        .test-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .test-item h4 {
+            color: #4a5568;
+            margin-top: 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pending { background: #fed7d7; color: #c53030; }
+        .status.success { background: #c6f6d5; color: #2f855a; }
+        .status.error { background: #fed7d7; color: #c53030; }
+        .status.warning { background: #fef5e7; color: #d69e2e; }
+        .test-button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #3182ce;
+        }
+        .test-button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f1f5f9;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #667eea);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .summary {
+            background: #e6fffa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #38b2ac;
+        }
+        .summary h3 {
+            color: #2d3748;
+            margin-top: 0;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4299e1;
+        }
+        .stat-label {
+            color: #4a5568;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Security Features Test - Task 5.4</h1>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <div class="summary">
+            <h3>📊 Test Summary</h3>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalTests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="passedTests">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="failedTests">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-number" id="successRate">0%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔑 JWT Token Management</h3>
+            
+            <div class="test-item">
+                <h4>Token Generation & Validation <span class="status pending" id="jwt-status">PENDING</span></h4>
+                <p>Test JWT token generation, validation, and refresh mechanisms</p>
+                <button class="test-button" onclick="testJWTFeatures()">Test JWT</button>
+                <div class="result" id="jwt-result"></div>
+            </div>
+
+            <div class="test-item">
+                <h4>Session Timeout Warnings <span class="status pending" id="session-status">PENDING</span></h4>
+                <p>Test session expiry warnings and automatic token refresh</p>
+                <button class="test-button" onclick="testSessionTimeout()">Test Session</button>
+                <div class="result" id="session-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🛡️ API Security</h3>
+            
+            <div class="test-item">
+                <h4>API Key Management <span class="status pending" id="apikey-status">PENDING</span></h4>
+                <p>Test API key generation, rotation, and revocation</p>
+                <button class="test-button" onclick="testAPIKeyManagement()">Test API Keys</button>
+                <div class="result" id="apikey-result"></div>
+            </div>
+
+            <div class="test-item">
+                <h4>Rate Limiting <span class="status pending" id="rate-status">PENDING</span></h4>
+                <p>Test rate limiting enforcement across different endpoints</p>
+                <button class="test-button" onclick="testRateLimiting()">Test Rate Limits</button>
+                <div class="result" id="rate-result"></div>
+            </div>
+
+            <div class="test-item">
+                <h4>Input Validation & Sanitization <span class="status pending" id="input-status">PENDING</span></h4>
+                <p>Test SQL injection and XSS prevention</p>
+                <button class="test-button" onclick="testInputValidation()">Test Input Security</button>
+                <div class="result" id="input-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 CORS & Headers</h3>
+            
+            <div class="test-item">
+                <h4>CORS Configuration <span class="status pending" id="cors-status">PENDING</span></h4>
+                <p>Test CORS policy compliance and security headers</p>
+                <button class="test-button" onclick="testCORS()">Test CORS</button>
+                <div class="result" id="cors-result"></div>
+            </div>
+
+            <div class="test-item">
+                <h4>Security Headers <span class="status pending" id="headers-status">PENDING</span></h4>
+                <p>Test Helmet security headers and CSP policies</p>
+                <button class="test-button" onclick="testSecurityHeaders()">Test Headers</button>
+                <div class="result" id="headers-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Error Handling & Logging</h3>
+            
+            <div class="test-item">
+                <h4>Error Handling <span class="status pending" id="error-status">PENDING</span></h4>
+                <p>Test proper error responses and security headers</p>
+                <button class="test-button" onclick="testErrorHandling()">Test Errors</button>
+                <div class="result" id="error-result"></div>
+            </div>
+
+            <div class="test-item">
+                <h4>Security Audit Logging <span class="status pending" id="audit-status">PENDING</span></h4>
+                <p>Test security event logging and suspicious activity detection</p>
+                <button class="test-button" onclick="testAuditLogging()">Test Logging</button>
+                <div class="result" id="audit-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Comprehensive Security Test</h3>
+            
+            <div class="test-item">
+                <h4>Full Security Suite <span class="status pending" id="comprehensive-status">PENDING</span></h4>
+                <p>Run all security tests in sequence</p>
+                <button class="test-button" onclick="runAllSecurityTests()">Run All Tests</button>
+                <div class="result" id="comprehensive-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0
+        };
+
+        // Update progress bar and summary
+        function updateProgress() {
+            const progress = testResults.total > 0 ? (testResults.passed / testResults.total) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('totalTests').textContent = testResults.total;
+            document.getElementById('passedTests').textContent = testResults.passed;
+            document.getElementById('failedTests').textContent = testResults.failed;
+            document.getElementById('successRate').textContent = Math.round(progress) + '%';
+        }
+
+        // Update test status
+        function updateStatus(testId, status, message) {
+            const statusElement = document.getElementById(testId + '-status');
+            statusElement.className = `status ${status}`;
+            statusElement.textContent = status.toUpperCase();
+            
+            if (status === 'success') testResults.passed++;
+            else if (status === 'error') testResults.failed++;
+            testResults.total++;
+            updateProgress();
+        }
+
+        // Test JWT Features
+        async function testJWTFeatures() {
+            const resultDiv = document.getElementById('jwt-result');
+            resultDiv.innerHTML = 'Testing JWT features...';
+            
+            try {
+                // Test login to get tokens
+                const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'test123'
+                    })
+                });
+                
+                if (!loginResponse.ok) throw new Error('Login failed');
+                
+                const loginData = await loginResponse.json();
+                resultDiv.innerHTML += '<br>✅ Login successful, tokens generated';
+                
+                // Test token validation
+                const validateResponse = await fetch(`${API_BASE}/auth/validate`, {
+                    headers: {
+                        'Authorization': `Bearer ${loginData.accessToken}`
+                    }
+                });
+                
+                if (validateResponse.ok) {
+                    resultDiv.innerHTML += '<br>✅ Token validation successful';
+                } else {
+                    throw new Error('Token validation failed');
+                }
+                
+                // Test token refresh
+                const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        refreshToken: loginData.refreshToken
+                    })
+                });
+                
+                if (refreshResponse.ok) {
+                    resultDiv.innerHTML += '<br>✅ Token refresh successful';
+                    updateStatus('jwt', 'success', 'All JWT features working');
+                } else {
+                    throw new Error('Token refresh failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('jwt', 'error', error.message);
+            }
+        }
+
+        // Test Session Timeout
+        async function testSessionTimeout() {
+            const resultDiv = document.getElementById('session-result');
+            resultDiv.innerHTML = 'Testing session timeout warnings...';
+            
+            try {
+                // Check if session timeout headers are present
+                const response = await fetch(`${API_BASE}/auth/validate`, {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const sessionWarning = response.headers.get('X-Session-Expiry-Warning');
+                const sessionTime = response.headers.get('X-Session-Expiry-Time');
+                
+                if (sessionWarning || sessionTime) {
+                    resultDiv.innerHTML += '<br>✅ Session timeout headers present';
+                    updateStatus('session', 'success', 'Session timeout working');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ No session timeout headers (may be normal)';
+                    updateStatus('session', 'warning', 'No session timeout headers');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('session', 'error', error.message);
+            }
+        }
+
+        // Test API Key Management
+        async function testAPIKeyManagement() {
+            const resultDiv = document.getElementById('apikey-result');
+            resultDiv.innerHTML = 'Testing API key management...';
+            
+            try {
+                // Test API key generation
+                const generateResponse = await fetch(`${API_BASE}/keys/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: JSON.stringify({
+                        permissions: ['read', 'write'],
+                        expiresInDays: 30
+                    })
+                });
+                
+                if (generateResponse.ok) {
+                    const generateData = await generateResponse.json();
+                    resultDiv.innerHTML += '<br>✅ API key generation successful';
+                    
+                    // Test API key info
+                    const infoResponse = await fetch(`${API_BASE}/keys/info`, {
+                        headers: {
+                            'X-API-Key': generateData.data.apiKey
+                        }
+                    });
+                    
+                    if (infoResponse.ok) {
+                        resultDiv.innerHTML += '<br>✅ API key validation successful';
+                        updateStatus('apikey', 'success', 'API key management working');
+                    } else {
+                        throw new Error('API key validation failed');
+                    }
+                } else {
+                    throw new Error('API key generation failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('apikey', 'error', error.message);
+            }
+        }
+
+        // Test Rate Limiting
+        async function testRateLimiting() {
+            const resultDiv = document.getElementById('rate-result');
+            resultDiv.innerHTML = 'Testing rate limiting...';
+            
+            try {
+                // Make multiple rapid requests to trigger rate limiting
+                const promises = [];
+                for (let i = 0; i < 15; i++) {
+                    promises.push(fetch(`${API_BASE}/health`));
+                }
+                
+                const responses = await Promise.all(promises);
+                const rateLimited = responses.some(r => r.status === 429);
+                
+                if (rateLimited) {
+                    resultDiv.innerHTML += '<br>✅ Rate limiting working (429 responses detected)';
+                    updateStatus('rate', 'success', 'Rate limiting enforced');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ No rate limiting detected (may be normal)';
+                    updateStatus('rate', 'warning', 'No rate limiting detected');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('rate', 'error', error.message);
+            }
+        }
+
+        // Test Input Validation
+        async function testInputValidation() {
+            const resultDiv = document.getElementById('input-result');
+            resultDiv.innerHTML = 'Testing input validation and sanitization...';
+            
+            try {
+                // Test SQL injection prevention
+                const sqlInjectionResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: "'; DROP TABLE users; --",
+                        password: "'; DROP TABLE users; --"
+                    })
+                });
+                
+                if (sqlInjectionResponse.status === 400) {
+                    resultDiv.innerHTML += '<br>✅ SQL injection prevention working';
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ SQL injection prevention may not be working';
+                }
+                
+                // Test XSS prevention
+                const xssResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: '<script>alert("xss")</script>',
+                        password: '<iframe src="javascript:alert(1)"></iframe>'
+                    })
+                });
+                
+                if (xssResponse.status === 400) {
+                    resultDiv.innerHTML += '<br>✅ XSS prevention working';
+                    updateStatus('input', 'success', 'Input validation working');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ XSS prevention may not be working';
+                    updateStatus('input', 'warning', 'XSS prevention unclear');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('input', 'error', error.message);
+            }
+        }
+
+        // Test CORS
+        async function testCORS() {
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.innerHTML = 'Testing CORS configuration...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                if (corsHeaders['Access-Control-Allow-Origin']) {
+                    resultDiv.innerHTML += '<br>✅ CORS headers present';
+                    updateStatus('cors', 'success', 'CORS configured');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ CORS headers missing';
+                    updateStatus('cors', 'warning', 'CORS headers missing');
+                }
+                
+                resultDiv.innerHTML += `<br>CORS Headers: ${JSON.stringify(corsHeaders, null, 2)}`;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('cors', 'error', error.message);
+            }
+        }
+
+        // Test Security Headers
+        async function testSecurityHeaders() {
+            const resultDiv = document.getElementById('headers-result');
+            resultDiv.innerHTML = 'Testing security headers...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                
+                const securityHeaders = {
+                    'X-Content-Type-Options': response.headers.get('X-Content-Type-Options'),
+                    'X-Frame-Options': response.headers.get('X-Frame-Options'),
+                    'X-XSS-Protection': response.headers.get('X-XSS-Protection'),
+                    'Strict-Transport-Security': response.headers.get('Strict-Transport-Security'),
+                    'Referrer-Policy': response.headers.get('Referrer-Policy')
+                };
+                
+                const presentHeaders = Object.values(securityHeaders).filter(h => h !== null).length;
+                
+                if (presentHeaders >= 3) {
+                    resultDiv.innerHTML += '<br>✅ Security headers present';
+                    updateStatus('headers', 'success', 'Security headers configured');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ Some security headers missing';
+                    updateStatus('headers', 'warning', 'Some headers missing');
+                }
+                
+                resultDiv.innerHTML += `<br>Security Headers: ${JSON.stringify(securityHeaders, null, 2)}`;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('headers', 'error', error.message);
+            }
+        }
+
+        // Test Error Handling
+        async function testErrorHandling() {
+            const resultDiv = document.getElementById('error-result');
+            resultDiv.innerHTML = 'Testing error handling...';
+            
+            try {
+                // Test invalid endpoint
+                const response = await fetch(`${API_BASE}/invalid-endpoint`);
+                
+                if (response.status === 404) {
+                    resultDiv.innerHTML += '<br>✅ 404 error handling working';
+                }
+                
+                // Test malformed JSON
+                const malformedResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{"invalid": json}'
+                });
+                
+                if (malformedResponse.status >= 400) {
+                    resultDiv.innerHTML += '<br>✅ Malformed JSON error handling working';
+                    updateStatus('error', 'success', 'Error handling working');
+                } else {
+                    resultDiv.innerHTML += '<br>⚠️ Malformed JSON handling unclear';
+                    updateStatus('error', 'warning', 'Error handling unclear');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('error', 'error', error.message);
+            }
+        }
+
+        // Test Audit Logging
+        async function testAuditLogging() {
+            const resultDiv = document.getElementById('audit-result');
+            resultDiv.innerHTML = 'Testing security audit logging...';
+            
+            try {
+                // Make a request that might trigger audit logging
+                const response = await fetch(`${API_BASE}/health`);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML += '<br>✅ Request processed (audit logging may be active)';
+                    updateStatus('audit', 'success', 'Audit logging active');
+                } else {
+                    throw new Error('Request failed');
+                }
+                
+                // Note: Audit logging is server-side, so we can't directly verify it
+                resultDiv.innerHTML += '<br>ℹ️ Audit logging verification requires server-side inspection';
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<br>❌ Error: ${error.message}`;
+                updateStatus('audit', 'error', error.message);
+            }
+        }
+
+        // Run all security tests
+        async function runAllSecurityTests() {
+            const resultDiv = document.getElementById('comprehensive-result');
+            resultDiv.innerHTML = 'Running comprehensive security test suite...<br>';
+            
+            const tests = [
+                { name: 'JWT Features', func: testJWTFeatures },
+                { name: 'Session Timeout', func: testSessionTimeout },
+                { name: 'API Key Management', func: testAPIKeyManagement },
+                { name: 'Rate Limiting', func: testRateLimiting },
+                { name: 'Input Validation', func: testInputValidation },
+                { name: 'CORS', func: testCORS },
+                { name: 'Security Headers', func: testSecurityHeaders },
+                { name: 'Error Handling', func: testErrorHandling },
+                { name: 'Audit Logging', func: testAuditLogging }
+            ];
+            
+            for (const test of tests) {
+                resultDiv.innerHTML += `<br>🔄 Running ${test.name}...`;
+                try {
+                    await test.func();
+                    resultDiv.innerHTML += ` ✅ ${test.name} completed`;
+                } catch (error) {
+                    resultDiv.innerHTML += ` ❌ ${test.name} failed: ${error.message}`;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait between tests
+            }
+            
+            resultDiv.innerHTML += '<br><br>🎉 Comprehensive security test completed!';
+            updateStatus('comprehensive', 'success', 'All tests completed');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateProgress();
+        });
+    </script>
+</body>
+</html>

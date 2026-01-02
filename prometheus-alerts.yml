@@ -1,0 +1,31 @@
+groups:
+  - name: application-alerts
+    rules:
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(creatornexus_http_request_duration_ms_bucket[5m])) by (le)) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency above 500ms"
+          description: "95th percentile HTTP latency has exceeded 500ms for 5 minutes."
+
+      - alert: HighErrorRate
+        expr: sum(rate(creatornexus_http_request_duration_ms_count{status_code=~"5.."}[5m])) / sum(rate(creatornexus_http_request_duration_ms_count[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate above 5%"
+          description: "5xx error rate exceeded 5% over the last 5 minutes."
+
+      - alert: MemoryGrowth
+        expr: rate(process_resident_memory_bytes[30m]) > 5e6
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Process memory growing rapidly"
+          description: "Resident memory increased by more than ~5MB/min over 30 minutes."
+
+

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Task 1.1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message.system { background-color: #e3f2fd; }
+        .message.error { background-color: #ffebee; }
+        .message.data { background-color: #f1f8e9; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Test - Task 1.1</h1>
+        <p>This page tests the WebSocket server implementation for Task 1.1</p>
+        
+        <div id="status" class="status disconnected">
+            Status: Disconnected
+        </div>
+        
+        <div class="controls">
+            <h3>Connection Controls</h3>
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button id="heartbeatBtn" onclick="sendHeartbeat()" disabled>Send Heartbeat</button>
+            <button id="clearBtn" onclick="clearMessages()">Clear Messages</button>
+        </div>
+        
+        <div class="controls">
+            <h3>Stream Controls</h3>
+            <button id="startStreamBtn" onclick="startStream()" disabled>Start Script Generation</button>
+            <button id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
+        </div>
+        
+        <h3>Messages</h3>
+        <div id="messages" class="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentStreamId = null;
+        
+        function updateStatus(status, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `Status: ${status}`;
+            statusEl.className = `status ${className}`;
+        }
+        
+        function addMessage(message, type = 'system') {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        function updateButtons(connected) {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('heartbeatBtn').disabled = !connected;
+            document.getElementById('startStreamBtn').disabled = !connected;
+            document.getElementById('stopStreamBtn').disabled = !currentStreamId;
+        }
+        
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                addMessage('Already connected', 'error');
+                return;
+            }
+            
+            updateStatus('Connecting...', 'connecting');
+            addMessage('Attempting to connect to WebSocket...');
+            
+            // Try to connect to WebSocket server
+            const wsUrl = 'ws://localhost:5000/ws?token=test-token';
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                updateStatus('Connected', 'connected');
+                addMessage('WebSocket connected successfully!', 'data');
+                updateButtons(true);
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    addMessage(`Received: ${JSON.stringify(message, null, 2)}`, 'data');
+                    
+                    if (message.type === 'stream_started') {
+                        currentStreamId = message.streamId;
+                        updateButtons(true);
+                    } else if (message.type === 'stream_stopped' || message.type === 'error') {
+                        currentStreamId = null;
+                        updateButtons(true);
+                    }
+                } catch (error) {
+                    addMessage(`Raw message: ${event.data}`, 'data');
+                }
+            };
+            
+            ws.onclose = function(event) {
+                updateStatus('Disconnected', 'disconnected');
+                addMessage(`WebSocket closed: ${event.code} - ${event.reason}`, 'error');
+                currentStreamId = null;
+                updateButtons(false);
+            };
+            
+            ws.onerror = function(error) {
+                updateStatus('Error', 'disconnected');
+                addMessage(`WebSocket error: ${error}`, 'error');
+                updateButtons(false);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendHeartbeat() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = {
+                    type: 'heartbeat',
+                    timestamp: Date.now()
+                };
+                ws.send(JSON.stringify(message));
+                addMessage(`Sent heartbeat: ${JSON.stringify(message)}`);
+            }
+        }
+        
+        function startStream() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = {
+                    type: 'start_stream',
+                    streamType: 'script_generation',
+                    config: {
+                        topic: 'AI Technology Trends',
+                        platform: 'youtube',
+                        duration: '5 minutes'
+                    }
+                };
+                ws.send(JSON.stringify(message));
+                addMessage(`Started stream: ${JSON.stringify(message)}`);
+            }
+        }
+        
+        function stopStream() {
+            if (ws && ws.readyState === WebSocket.OPEN && currentStreamId) {
+                const message = {
+                    type: 'stop_stream',
+                    streamId: currentStreamId
+                };
+                ws.send(JSON.stringify(message));
+                addMessage(`Stopped stream: ${JSON.stringify(message)}`);
+            }
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        // Auto-connect on page load
+        window.onload = function() {
+            addMessage('Page loaded. Click "Connect" to test WebSocket connection.');
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Workspace Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Content Workspace Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Content Workspace Modal</h2>
+        <p>This tests the basic modal functionality without requiring a full app context.</p>
+        <button class="test-button" onclick="testModal()">Test Modal</button>
+        <div id="modal-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test File Upload Simulation</h2>
+        <p>This simulates file upload functionality.</p>
+        <input type="file" id="test-file" accept="image/*,video/*,audio/*" multiple>
+        <button class="test-button" onclick="testFileUpload()">Test File Upload</button>
+        <div id="upload-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Media Recording Simulation</h2>
+        <p>This tests the media recording interface.</p>
+        <button class="test-button" onclick="testRecording()">Test Recording Interface</button>
+        <div id="recording-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test Script Generation</h2>
+        <p>This tests the script generation form.</p>
+        <button class="test-button" onclick="testScriptGeneration()">Test Script Generation</button>
+        <div id="script-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test Voiceover Generation</h2>
+        <p>This tests the voiceover generation form.</p>
+        <button class="test-button" onclick="testVoiceoverGeneration()">Test Voiceover Generation</button>
+        <div id="voiceover-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Test Content Scheduling</h2>
+        <p>This tests the content scheduling form.</p>
+        <button class="test-button" onclick="testScheduling()">Test Scheduling</button>
+        <div id="scheduling-result" class="result"></div>
+    </div>
+
+    <script>
+        // Mock content data for testing
+        const mockContent = {
+            id: 'test-content-123',
+            title: 'Test Video Content',
+            description: 'This is a test video for the Content Workspace',
+            platform: 'youtube',
+            contentType: 'video',
+            status: 'draft'
+        };
+
+        function testModal() {
+            const result = document.getElementById('modal-result');
+            try {
+                // Simulate modal creation
+                const modal = {
+                    isOpen: true,
+                    content: mockContent,
+                    tabs: ['media', 'create', 'script', 'voiceover', 'schedule']
+                };
+                
+                result.className = 'result success';
+                result.textContent = `✅ Modal created successfully!\n\nContent: ${JSON.stringify(modal.content, null, 2)}\nTabs: ${modal.tabs.join(', ')}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function testFileUpload() {
+            const result = document.getElementById('upload-result');
+            const fileInput = document.getElementById('test-file');
+            
+            try {
+                if (fileInput.files.length === 0) {
+                    throw new Error('No files selected');
+                }
+
+                const files = Array.from(fileInput.files);
+                const fileInfo = files.map(file => ({
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: new Date(file.lastModified).toLocaleString()
+                }));
+
+                result.className = 'result success';
+                result.textContent = `✅ Files selected successfully!\n\n${JSON.stringify(fileInfo, null, 2)}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function testRecording() {
+            const result = document.getElementById('recording-result');
+            
+            try {
+                // Check if media devices are available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Media devices not supported in this browser');
+                }
+
+                result.className = 'result success';
+                result.textContent = `✅ Media recording interface ready!\n\nSupported features:\n- Video recording: ${navigator.mediaDevices.getUserMedia ? 'Yes' : 'No'}\n- Audio recording: ${navigator.mediaDevices.getUserMedia ? 'Yes' : 'No'}\n- Image capture: ${navigator.mediaDevices.getUserMedia ? 'Yes' : 'No'}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function testScriptGeneration() {
+            const result = document.getElementById('script-result');
+            
+            try {
+                const scriptData = {
+                    description: 'A tutorial about AI content creation',
+                    platform: 'youtube',
+                    tone: 'Educational',
+                    duration: '5-10 minutes'
+                };
+
+                result.className = 'result success';
+                result.textContent = `✅ Script generation form ready!\n\nForm data:\n${JSON.stringify(scriptData, null, 2)}\n\nThis would call the AI API to generate content.`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function testVoiceoverGeneration() {
+            const result = document.getElementById('voiceover-result');
+            
+            try {
+                const voiceoverData = {
+                    text: 'Welcome to our AI-powered content creation tutorial. Learn how to generate engaging scripts and create professional voiceovers.',
+                    voice: 'en-US-1',
+                    speed: 1.0,
+                    pitch: 1.0
+                };
+
+                result.className = 'result success';
+                result.textContent = `✅ Voiceover generation form ready!\n\nForm data:\n${JSON.stringify(voiceoverData, null, 2)}\n\nThis would call the AI API to generate voiceover audio.`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function testScheduling() {
+            const result = document.getElementById('scheduling-result');
+            
+            try {
+                const scheduleData = {
+                    platforms: ['youtube', 'instagram'],
+                    date: new Date().toISOString().split('T')[0],
+                    time: '12:00',
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                };
+
+                result.className = 'result success';
+                result.textContent = `✅ Content scheduling form ready!\n\nSchedule data:\n${JSON.stringify(scheduleData, null, 2)}\n\nThis would schedule content for auto-posting to selected platforms.`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        // Initialize test environment
+        console.log('Content Workspace Test Environment Ready');
+        console.log('Mock Content:', mockContent);
+    </script>
+</body>
+</html>

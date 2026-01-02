@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Wizard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 0 5px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+        }
+        .step.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .step.completed {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .flow-diagram {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .flow-step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            text-align: center;
+        }
+        .flow-step h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .flow-step ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .flow-step li {
+            padding: 2px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Project Wizard Test</h1>
+            <p>Test the multi-step project creation workflow</p>
+        </div>
+
+        <!-- Project Flow Overview -->
+        <div class="test-section">
+            <h3>📋 Project Creation Flow</h3>
+            <div class="step-indicator">
+                <div class="step active">
+                    <strong>Step 1</strong><br>
+                    Project Basics
+                </div>
+                <div class="step">
+                    <strong>Step 2</strong><br>
+                    Content Creation
+                </div>
+                <div class="step">
+                    <strong>Step 3</strong><br>
+                    Integrations
+                </div>
+                <div class="step">
+                    <strong>Step 4</strong><br>
+                    Schedule & Plan
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow Details -->
+        <div class="test-section">
+            <h3>🔄 Workflow Details</h3>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <h4>📝 Project Basics</h4>
+                    <ul>
+                        <li>• Project Name</li>
+                        <li>• Description</li>
+                        <li>• Content Type</li>
+                        <li>• Category</li>
+                        <li>• Target Audience</li>
+                        <li>• Project Goals</li>
+                    </ul>
+                </div>
+                
+                <div class="flow-step">
+                    <h4>🎨 Content Creation</h4>
+                    <ul>
+                        <li>• Content Formats</li>
+                        <li>• Posting Frequency</li>
+                        <li>• Content Themes</li>
+                        <li>• Brand Voice</li>
+                        <li>• Content Length</li>
+                    </ul>
+                </div>
+                
+                <div class="flow-step">
+                    <h4>🔗 Integrations</h4>
+                    <ul>
+                        <li>• Social Platforms</li>
+                        <li>• AI Tools</li>
+                        <li>• Auto Scheduling</li>
+                        <li>• Time Zone</li>
+                        <li>• Preferences</li>
+                    </ul>
+                </div>
+                
+                <div class="flow-step">
+                    <h4>📅 Schedule & Plan</h4>
+                    <ul>
+                        <li>• Start Date</li>
+                        <li>• Duration</li>
+                        <li>• Budget</li>
+                        <li>• Team Members</li>
+                        <li>• Final Review</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Actions -->
+        <div class="test-section">
+            <h3>🧪 Test Actions</h3>
+            <a href="/project-wizard" class="button">🚀 Start Project Wizard</a>
+            <a href="/new-project-enhanced" class="button">📝 Old Project Form</a>
+            <a href="/trend-analysis" class="button">📊 Trend Analysis</a>
+            <a href="/dashboard" class="button">🏠 Dashboard</a>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="test-section">
+            <h3>✨ Key Features</h3>
+            <div class="success">
+                <strong>✅ Multi-Step Workflow</strong><br>
+                Guided 4-step process for comprehensive project setup
+            </div>
+            
+            <div class="success">
+                <strong>✅ Progress Tracking</strong><br>
+                Visual progress bar and step indicators
+            </div>
+            
+            <div class="success">
+                <strong>✅ Form Validation</strong><br>
+                Real-time validation with error messages
+            </div>
+            
+            <div class="success">
+                <strong>✅ Data Persistence</strong><br>
+                Form data saved between steps
+            </div>
+            
+            <div class="success">
+                <strong>✅ Responsive Design</strong><br>
+                Works on desktop and mobile devices
+            </div>
+        </div>
+
+        <!-- Integration Points -->
+        <div class="test-section">
+            <h3>🔗 Integration Points</h3>
+            <div class="info">
+                <strong>Dashboard Quick Actions:</strong> "New Project" button now opens the wizard
+            </div>
+            <div class="info">
+                <strong>Trend Analysis:</strong> Accessible from wizard and dashboard
+            </div>
+            <div class="info">
+                <strong>Project Management:</strong> Created projects appear in dashboard
+            </div>
+            <div class="info">
+                <strong>Content Studio:</strong> Projects link to content creation tools
+            </div>
+        </div>
+
+        <!-- Usage Instructions -->
+        <div class="test-section">
+            <h3>📖 How to Use</h3>
+            <ol>
+                <li><strong>Start:</strong> Click "Start Project Wizard" or use Dashboard → Quick Actions → New Project</li>
+                <li><strong>Step 1:</strong> Fill in project basics (name, type, goals)</li>
+                <li><strong>Step 2:</strong> Configure content creation settings</li>
+                <li><strong>Step 3:</strong> Set up platform integrations and AI tools</li>
+                <li><strong>Step 4:</strong> Schedule timeline and finalize project</li>
+                <li><strong>Complete:</strong> Project is created and you're redirected to dashboard</li>
+            </ol>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="test-section">
+            <h3>⚙️ Technical Implementation</h3>
+            <ul>
+                <li><strong>Frontend:</strong> React with TypeScript</li>
+                <li><strong>Forms:</strong> React Hook Form with Zod validation</li>
+                <li><strong>UI:</strong> Shadcn/ui components</li>
+                <li><strong>Routing:</strong> Wouter for navigation</li>
+                <li><strong>State:</strong> Multi-step form state management</li>
+                <li><strong>Validation:</strong> Real-time form validation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Simple client-side functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Project Wizard Test Page Loaded');
+            
+            // Check if we're in the right environment
+            if (window.location.hostname === 'localhost') {
+                console.log('✅ Running on localhost - wizard should be accessible');
+            } else {
+                console.log('⚠️ Not on localhost - adjust URLs as needed');
+            }
+            
+            // Add click handlers for better UX
+            const buttons = document.querySelectorAll('.button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.href && this.href.startsWith('/')) {
+                        // For relative URLs, we might need to handle them differently
+                        console.log('Navigating to:', this.href);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Actions Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Quick Actions Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Content Studio Quick Actions Buttons</h2>
+        <p>This test verifies that the Quick Actions buttons in the Content Studio page are properly connected to their respective modals.</p>
+        
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li><strong>Generate Script</strong> - Should open AI Generation Modal</li>
+            <li><strong>AI Voiceover</strong> - Should open Quick Actions Modal with voiceover tab</li>
+            <li><strong>Create Thumbnail</strong> - Should open Quick Actions Modal with brand kit tab</li>
+            <li><strong>Schedule Post</strong> - Should open Scheduling Modal</li>
+        </ul>
+        
+        <div id="test-results"></div>
+        
+        <button class="test-button" onclick="testQuickActions()">Run Quick Actions Test</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Backend API Endpoints</h2>
+        <p>This test verifies that the backend API endpoints for Quick Actions are working properly.</p>
+        
+        <button class="test-button" onclick="testGenerateScript()">Test Generate Script API</button>
+        <button class="test-button" onclick="testAIVoiceover()">Test AI Voiceover API</button>
+        <button class="test-button" onclick="testCreateThumbnail()">Test Create Thumbnail API</button>
+        <button class="test-button" onclick="testSchedulePost()">Test Schedule Post API</button>
+        
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Modal Integration</h2>
+        <p>This test verifies that the modal components are properly imported and functional.</p>
+        
+        <button class="test-button" onclick="testModalComponents()">Test Modal Components</button>
+        
+        <div id="modal-results"></div>
+    </div>
+
+    <script>
+        function logResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            element.appendChild(div);
+        }
+
+        function testQuickActions() {
+            logResult('test-results', 'Starting Quick Actions functionality test...', 'info');
+            
+            // Test 1: Check if the app is running
+            fetch('http://localhost:5173')
+                .then(response => {
+                    if (response.ok) {
+                        logResult('test-results', '✅ Content Studio page is accessible', 'success');
+                    } else {
+                        logResult('test-results', '❌ Content Studio page is not accessible', 'error');
+                    }
+                })
+                .catch(error => {
+                    logResult('test-results', `❌ Error accessing Content Studio: ${error.message}`, 'error');
+                });
+            
+            // Test 2: Check if the Quick Actions buttons exist
+            setTimeout(() => {
+                logResult('test-results', '🔍 Checking for Quick Actions buttons in DOM...', 'info');
+                
+                // This would need to be run in the actual app context
+                logResult('test-results', 'ℹ️ Manual verification required: Navigate to Content Studio page and test each button', 'info');
+            }, 1000);
+        }
+
+        function testGenerateScript() {
+            logResult('api-results', 'Testing Generate Script API endpoint...', 'info');
+            
+            fetch('/api/ai/generate-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer test-token'
+                },
+                body: JSON.stringify({
+                    platform: 'youtube',
+                    contentType: 'script',
+                    tone: 'Conversational',
+                    duration: '60 seconds',
+                    targetAudience: 'General audience',
+                    keywords: 'test, content, generation'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    logResult('api-results', '✅ Generate Script API working correctly', 'success');
+                } else {
+                    logResult('api-results', `❌ Generate Script API error: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                logResult('api-results', `❌ Generate Script API failed: ${error.message}`, 'error');
+            });
+        }
+
+        function testAIVoiceover() {
+            logResult('api-results', 'Testing AI Voiceover API endpoint...', 'info');
+            
+            fetch('/api/ai/generate-voiceover', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer test-token'
+                },
+                body: JSON.stringify({
+                    script: 'This is a test script for voiceover generation.',
+                    voice: 'nova',
+                    speed: 1.0,
+                    format: 'mp3',
+                    quality: 'hd'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    logResult('api-results', '✅ AI Voiceover API working correctly', 'success');
+                } else {
+                    logResult('api-results', `❌ AI Voiceover API error: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                logResult('api-results', `❌ AI Voiceover API failed: ${error.message}`, 'error');
+            });
+        }
+
+        function testCreateThumbnail() {
+            logResult('api-results', 'Testing Create Thumbnail API endpoint...', 'info');
+            
+            fetch('/api/ai/generate-thumbnail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer test-token'
+                },
+                body: JSON.stringify({
+                    prompt: 'A professional thumbnail for a tech video',
+                    platform: 'youtube',
+                    style: 'modern'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    logResult('api-results', '✅ Create Thumbnail API working correctly', 'success');
+                } else {
+                    logResult('api-results', `❌ Create Thumbnail API error: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                logResult('api-results', `❌ Create Thumbnail API failed: ${error.message}`, 'error');
+            });
+        }
+
+        function testSchedulePost() {
+            logResult('api-results', 'Testing Schedule Post functionality...', 'info');
+            
+            // Schedule post would typically use the content creation endpoint
+            fetch('/api/content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer test-token'
+                },
+                body: JSON.stringify({
+                    title: 'Test Scheduled Post',
+                    description: 'This is a test scheduled post',
+                    platform: 'youtube',
+                    contentType: 'video',
+                    status: 'scheduled',
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Tomorrow
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || data.id) {
+                    logResult('api-results', '✅ Schedule Post functionality working correctly', 'success');
+                } else {
+                    logResult('api-results', `❌ Schedule Post error: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                logResult('api-results', `❌ Schedule Post failed: ${error.message}`, 'error');
+            });
+        }
+
+        function testModalComponents() {
+            logResult('modal-results', 'Testing modal component integration...', 'info');
+            
+            // Check if the app is running and modals are available
+            fetch('http://localhost:5173')
+                .then(response => {
+                    if (response.ok) {
+                        logResult('modal-results', '✅ Application is running', 'success');
+                        logResult('modal-results', 'ℹ️ Modal components should be available in the React app', 'info');
+                        logResult('modal-results', 'ℹ️ Test by clicking Quick Actions buttons in Content Studio', 'info');
+                    } else {
+                        logResult('modal-results', '❌ Application is not running', 'error');
+                    }
+                })
+                .catch(error => {
+                    logResult('modal-results', `❌ Cannot access application: ${error.message}`, 'error');
+                });
+        }
+
+        // Auto-run basic tests when page loads
+        window.addEventListener('load', () => {
+            logResult('test-results', '🚀 Quick Actions Test Suite Loaded', 'info');
+            logResult('test-results', '📋 Instructions:', 'info');
+            logResult('test-results', '1. Start the application with "npm run dev"', 'info');
+            logResult('test-results', '2. Navigate to Content Studio page', 'info');
+            logResult('test-results', '3. Test each Quick Actions button', 'info');
+            logResult('test-results', '4. Verify modals open correctly', 'info');
+        });
+    </script>
+</body>
+</html> 

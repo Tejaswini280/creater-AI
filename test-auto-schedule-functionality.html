@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Schedule Functionality Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        .subtitle {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+        .button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .button:active {
+            transform: translateY(0);
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .schedule-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .schedule-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        .schedule-date {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+        .schedule-content {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .schedule-meta {
+            font-size: 12px;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success-message {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            display: none;
+        }
+        .success-message.active {
+            display: block;
+        }
+        .project-info {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .check-icon {
+            color: #10b981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-card">
+            <div class="title">🤖 Auto-Schedule Functionality Demo</div>
+            <p>This demonstrates how the "Schedule Now" button automatically generates and schedules content for your project.</p>
+            
+            <div class="project-info">
+                <div class="subtitle">📋 Sample Project: TrendCraft AI Growth Studio</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px;">
+                    <div><strong>Platforms:</strong> Instagram, LinkedIn</div>
+                    <div><strong>Frequency:</strong> Daily</div>
+                    <div><strong>Themes:</strong> Educational, Behind the Scenes</div>
+                    <div><strong>Timezone:</strong> IST (Indian Standard Time)</div>
+                </div>
+            </div>
+
+            <div class="subtitle">✨ What Auto-Schedule Does:</div>
+            <ul class="feature-list">
+                <li><span class="check-icon">✓</span> Analyzes your project settings (platforms, themes, frequency)</li>
+                <li><span class="check-icon">✓</span> Generates 14 days of relevant content automatically</li>
+                <li><span class="check-icon">✓</span> Calculates optimal posting times for each platform</li>
+                <li><span class="check-icon">✓</span> Schedules content in your selected timezone</li>
+                <li><span class="check-icon">✓</span> Creates a mix of educational, engagement, and promotional posts</li>
+                <li><span class="check-icon">✓</span> Saves everything to your calendar automatically</li>
+            </ul>
+
+            <div style="margin: 24px 0;">
+                <button class="button" onclick="startAutoSchedule()">
+                    ⚡ Start Auto-Schedule Demo
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div style="color: #3b82f6; font-weight: 600;">🤖 AI is generating and scheduling your content...</div>
+                <div style="color: #6b7280; font-size: 14px; margin-top: 8px;">This may take a few seconds</div>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <div style="color: #065f46; font-weight: 600; margin-bottom: 8px;">🎉 Auto-Scheduling Complete!</div>
+                <div style="color: #047857; font-size: 14px;">Successfully generated and scheduled 14 posts for your TrendCraft AI Growth Studio project.</div>
+            </div>
+
+            <div id="scheduleResults" style="display: none;">
+                <div class="subtitle">📅 Generated Schedule Preview:</div>
+                <div class="schedule-grid" id="scheduleGrid"></div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <div class="title">🎯 Content Generation Intelligence</div>
+            <p>The auto-scheduler uses AI to create contextually relevant content based on your project:</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px;">
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">📚 Educational Content</div>
+                    <div style="font-size: 14px; color: #92400e;">
+                        "Did you know? Visual content is 40x more likely to be shared - This is why understanding this concept matters in Digital Marketing."
+                    </div>
+                </div>
+                
+                <div style="background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 600; color: #1e40af; margin-bottom: 8px;">💬 Engagement Posts</div>
+                    <div style="font-size: 14px; color: #1e40af;">
+                        "What's your biggest challenge with educational content? Share in the comments and let's solve it together!"
+                    </div>
+                </div>
+                
+                <div style="background: #f3e8ff; border: 1px solid #8b5cf6; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 600; color: #7c3aed; margin-bottom: 8px;">🎬 Behind the Scenes</div>
+                    <div style="font-size: 14px; color: #7c3aed;">
+                        "Behind the scenes: Here's how we create posts for TrendCraft AI Growth Studio. The process might surprise you!"
+                    </div>
+                </div>
+                
+                <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 600; color: #065f46; margin-bottom: 8px;">🚀 Promotional</div>
+                    <div style="font-size: 14px; color: #065f46;">
+                        "Success story: How TrendCraft AI Growth Studio helped our client achieve amazing results. Your turn next!"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <div class="title">⏰ Smart Timing Optimization</div>
+            <p>Posts are automatically scheduled at optimal times based on your selected platforms:</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+                <div style="text-align: center; padding: 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
+                    <div style="font-weight: 600; color: #dc2626;">Instagram</div>
+                    <div style="font-size: 14px; color: #7f1d1d; margin-top: 4px;">11:00 AM, 2:00 PM, 5:00 PM</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">💼</div>
+                    <div style="font-weight: 600; color: #2563eb;">LinkedIn</div>
+                    <div style="font-size: 14px; color: #1e40af; margin-top: 4px;">8:00 AM, 12:00 PM, 5:00 PM</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🎯</div>
+                    <div style="font-weight: 600; color: #16a34a;">Optimized</div>
+                    <div style="font-size: 14px; color: #15803d; margin-top: 4px;">Based on your timezone</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startAutoSchedule() {
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('scheduleResults').style.display = 'none';
+            document.getElementById('successMessage').classList.remove('active');
+            
+            // Simulate auto-scheduling process
+            setTimeout(() => {
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                
+                // Show success message
+                document.getElementById('successMessage').classList.add('active');
+                
+                // Generate and display schedule
+                generateSchedulePreview();
+                
+                // Show results
+                document.getElementById('scheduleResults').style.display = 'block';
+            }, 3000);
+        }
+
+        function generateSchedulePreview() {
+            const scheduleGrid = document.getElementById('scheduleGrid');
+            scheduleGrid.innerHTML = '';
+            
+            const contentTypes = [
+                { type: 'Educational', content: 'Did you know? Visual content is 40x more likely to be shared on social media', platform: 'Instagram', emoji: '📚' },
+                { type: 'Engagement', content: 'What\'s your biggest challenge with educational content? Share in the comments!', platform: 'LinkedIn', emoji: '💬' },
+                { type: 'Behind the Scenes', content: 'Behind the scenes: Here\'s how we create content for TrendCraft AI Growth Studio', platform: 'Instagram', emoji: '🎬' },
+                { type: 'Educational', content: 'Quick tip: Breaking complex topics into bite-sized pieces can help you boost your online presence', platform: 'LinkedIn', emoji: '💡' },
+                { type: 'Promotional', content: 'Success story: How TrendCraft AI Growth Studio helped our client achieve amazing results', platform: 'Instagram', emoji: '🚀' },
+                { type: 'Engagement', content: 'Poll time! Which do you prefer: Video tutorials or Written guides? Vote in our stories!', platform: 'Instagram', emoji: '📊' }
+            ];
+            
+            const times = ['11:00 AM', '2:00 PM', '5:00 PM', '8:00 AM', '12:00 PM', '6:00 PM'];
+            
+            for (let i = 0; i < 6; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                
+                const item = contentTypes[i];
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'schedule-item';
+                
+                scheduleItem.innerHTML = `
+                    <div class="schedule-date">
+                        ${item.emoji} ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} at ${times[i]}
+                    </div>
+                    <div class="schedule-content">
+                        ${item.content}
+                    </div>
+                    <div class="schedule-meta">
+                        <span>${item.platform}</span>
+                        <span>${item.type}</span>
+                    </div>
+                `;
+                
+                scheduleGrid.appendChild(scheduleItem);
+            }
+        }
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const scheduleItems = document.querySelectorAll('.schedule-item');
+            scheduleItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

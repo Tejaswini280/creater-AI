@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niche Finder Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #8b5cf6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #7c3aed;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #8b5cf6;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #dc2626;
+        }
+        .success {
+            color: #059669;
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #059669;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #e5e7eb;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .opportunities {
+            margin-top: 20px;
+        }
+        .opportunity {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Niche Finder Test</h1>
+        <p>Test the niche analysis functionality to see if it's working properly.</p>
+        
+        <div class="form-group">
+            <label for="category">Category/Topic *</label>
+            <input type="text" id="category" placeholder="e.g., Tech reviews, Fitness, Cooking..." value="tech reviews">
+        </div>
+        
+        <div class="form-group">
+            <label for="region">Region</label>
+            <select id="region">
+                <option value="US">United States</option>
+                <option value="UK">United Kingdom</option>
+                <option value="CA">Canada</option>
+                <option value="AU">Australia</option>
+                <option value="DE">Germany</option>
+                <option value="global">Global</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="competition">Competition Level</label>
+            <select id="competition">
+                <option value="low">Low Competition</option>
+                <option value="medium" selected>Medium Competition</option>
+                <option value="high">High Competition</option>
+                <option value="any">Any Level</option>
+            </select>
+        </div>
+        
+        <button id="analyzeBtn" onclick="analyzeNiche()">🔍 Analyze Niche</button>
+        
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function analyzeNiche() {
+            const category = document.getElementById('category').value.trim();
+            const region = document.getElementById('region').value;
+            const competition = document.getElementById('competition').value;
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resultDiv = document.getElementById('result');
+            
+            if (!category) {
+                showResult('Please enter a category to analyze.', 'error');
+                return;
+            }
+            
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '⏳ Analyzing...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('🔍 Starting niche analysis with data:', { category, region, competition });
+                
+                const response = await fetch('/api/analytics/analyze-niche', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token' // For testing
+                    },
+                    body: JSON.stringify({
+                        category,
+                        region,
+                        competition
+                    })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📡 Response data:', data);
+                
+                if (data.success && data.analysis) {
+                    displayNicheAnalysis(data.analysis);
+                } else {
+                    throw new Error(data.message || 'Failed to analyze niche');
+                }
+                
+            } catch (error) {
+                console.error('❌ Niche analysis error:', error);
+                showResult(`Analysis failed: ${error.message}. Please try again.`, 'error');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '🔍 Analyze Niche';
+            }
+        }
+        
+        function displayNicheAnalysis(analysis) {
+            const resultDiv = document.getElementById('result');
+            
+            let html = `
+                <div class="success">
+                    <h3>✅ Niche Analysis Complete!</h3>
+                    <p>Market insights and opportunities identified for your niche.</p>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" style="color: #059669;">${analysis.profitability || 'Medium'}</div>
+                        <div class="metric-label">Profitability</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="color: #2563eb;">${analysis.difficulty || 'Medium'}</div>
+                        <div class="metric-label">Difficulty</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="color: #8b5cf6;">${analysis.trendScore || '50'}</div>
+                        <div class="metric-label">Trend Score</div>
+                    </div>
+                </div>
+            `;
+            
+            if (analysis.opportunities && analysis.opportunities.length > 0) {
+                html += `
+                    <div class="opportunities">
+                        <h4>Content Opportunities</h4>
+                        ${analysis.opportunities.map(opp => `
+                            <div class="opportunity">
+                                <strong>💡</strong> ${opp}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div style="margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 5px; border-left: 4px solid #3b82f6;">
+                    <h4>📊 Market Insights</h4>
+                    <p>This niche shows <strong>${analysis.profitability || 'medium'}</strong> profit potential with <strong>${analysis.difficulty || 'medium'}</strong> entry difficulty.</p>
+                    <p>Trend score of <strong>${analysis.trendScore || '50'}</strong> indicates ${analysis.trendScore > 70 ? 'high trending potential' : analysis.trendScore > 40 ? 'moderate trending' : 'stable niche'}.</p>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 

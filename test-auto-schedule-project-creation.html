@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Schedule Project Creation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #4CAF50; }
+        .status-error { background: #f44336; }
+        .status-warning { background: #ff9800; }
+        .status-info { background: #2196F3; }
+        .calendar-preview {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .calendar-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .calendar-item:last-child {
+            border-bottom: none;
+        }
+        .calendar-date {
+            font-weight: 500;
+            color: #333;
+        }
+        .calendar-content {
+            flex: 1;
+            margin: 0 15px;
+        }
+        .calendar-platform {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗓️ Auto-Schedule Project Creation Test</h1>
+            <p>Test automatic calendar scheduling when creating projects</p>
+        </div>
+
+        <!-- Project Creation Form -->
+        <div class="test-section">
+            <h3>
+                <span class="status-indicator status-info"></span>
+                Create Project with Auto-Scheduling
+            </h3>
+            
+            <div class="form-group">
+                <label for="projectName">Project Name</label>
+                <input type="text" id="projectName" value="Social Media Growth Campaign" placeholder="Enter project name">
+            </div>
+
+            <div class="form-group">
+                <label for="projectDescription">Project Description</label>
+                <textarea id="projectDescription" placeholder="Describe your project">A comprehensive social media campaign focused on increasing brand awareness and engagement across multiple platforms.</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="contentType">Content Type</label>
+                <select id="contentType">
+                    <option value="social-media">Social Media</option>
+                    <option value="blog">Blog</option>
+                    <option value="video">Video</option>
+                    <option value="podcast">Podcast</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Platforms</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="instagram" value="instagram" checked>
+                        <label for="instagram">Instagram</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="linkedin" value="linkedin" checked>
+                        <label for="linkedin">LinkedIn</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="facebook" value="facebook">
+                        <label for="facebook">Facebook</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="twitter" value="twitter">
+                        <label for="twitter">Twitter</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="youtube" value="youtube">
+                        <label for="youtube">YouTube</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="tiktok" value="tiktok">
+                        <label for="tiktok">TikTok</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category">
+                    <option value="marketing">Marketing</option>
+                    <option value="education">Education</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="business">Business</option>
+                    <option value="lifestyle">Lifestyle</option>
+                    <option value="technology">Technology</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="contentFrequency">Content Frequency</label>
+                <select id="contentFrequency">
+                    <option value="daily">Daily</option>
+                    <option value="alternate">Every Other Day</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="duration">Duration</label>
+                <select id="duration">
+                    <option value="1week">1 Week</option>
+                    <option value="15days">15 Days</option>
+                    <option value="30days">30 Days</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate">
+            </div>
+
+            <div class="form-group">
+                <label for="targetAudience">Target Audience</label>
+                <input type="text" id="targetAudience" value="Young professionals aged 25-35" placeholder="Describe your target audience">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="aiEnhancement" checked>
+                    Enable AI Enhancement & Auto-Scheduling
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="calendarPreference" checked>
+                    AI-Generated Calendar (Auto-Schedule)
+                </label>
+            </div>
+
+            <button class="btn" onclick="createProjectWithAutoSchedule()">
+                <span id="createBtn">🚀 Create Project & Auto-Schedule</span>
+            </button>
+            <button class="btn btn-warning" onclick="getOptimalTimes()">
+                📊 Get Optimal Times
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="test-section">
+            <h3>
+                <span class="status-indicator status-success"></span>
+                Test Results
+            </h3>
+            <div id="results"></div>
+        </div>
+
+        <!-- Calendar Preview -->
+        <div class="test-section" id="calendarSection" style="display: none;">
+            <h3>
+                <span class="status-indicator status-success"></span>
+                📅 Auto-Generated Calendar
+            </h3>
+            <div id="calendarPreview" class="calendar-preview"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set default start date to tomorrow
+        document.getElementById('startDate').value = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+            results.appendChild(resultDiv);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function showLoading(elementId, show = true) {
+            const element = document.getElementById(elementId);
+            if (show) {
+                element.innerHTML = '<span class="loading"></span> Processing...';
+            } else {
+                element.innerHTML = '🚀 Create Project & Auto-Schedule';
+            }
+        }
+
+        function getSelectedPlatforms() {
+            const platforms = [];
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][value]');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked && checkbox.value) {
+                    platforms.push(checkbox.value);
+                }
+            });
+            return platforms;
+        }
+
+        async function createProjectWithAutoSchedule() {
+            showLoading('createBtn', true);
+            showResult('🚀 Starting project creation with auto-scheduling...', 'info');
+
+            try {
+                // Get form data
+                const projectData = {
+                    name: document.getElementById('projectName').value,
+                    description: document.getElementById('projectDescription').value,
+                    contentType: document.getElementById('contentType').value,
+                    channelTypes: getSelectedPlatforms(),
+                    category: document.getElementById('category').value,
+                    duration: document.getElementById('duration').value,
+                    contentFrequency: document.getElementById('contentFrequency').value,
+                    calendarPreference: document.getElementById('calendarPreference').checked ? 'ai-generated' : 'custom',
+                    aiEnhancement: document.getElementById('aiEnhancement').checked,
+                    targetAudience: document.getElementById('targetAudience').value,
+                    tags: ['auto-scheduled', 'test-project'],
+                    isPublic: false,
+                    notificationsEnabled: true,
+                    status: 'active'
+                };
+
+                const contentData = {
+                    title: `${projectData.name} - Initial Content`,
+                    caption: 'Welcome to our new project! Exciting content coming soon.',
+                    contentType: projectData.contentType,
+                    hashtags: ['#newproject', '#socialmedia', '#growth'],
+                    emojis: ['🚀', '✨', '📈'],
+                    media: [],
+                    platforms: projectData.channelTypes,
+                    isScheduled: true,
+                    scheduledAt: new Date(document.getElementById('startDate').value),
+                    status: 'scheduled'
+                };
+
+                const schedulingOptions = {
+                    startDate: new Date(document.getElementById('startDate').value),
+                    duration: projectData.duration,
+                    bulkGeneration: true
+                };
+
+                showResult(`📝 Project Data: ${JSON.stringify(projectData, null, 2)}`, 'info');
+
+                // Step 1: Create enhanced project
+                const response = await fetch('/api/enhanced-projects/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}`
+                    },
+                    body: JSON.stringify({
+                        projectBasics: projectData,
+                        contentCreation: contentData,
+                        schedulingOptions: schedulingOptions
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to create project');
+                }
+
+                showResult(`✅ Project created successfully!`, 'success');
+                showResult(`📊 Project ID: ${result.project.id}`, 'info');
+                showResult(`📝 Total items created: ${result.metadata.totalItems}`, 'info');
+                
+                if (result.scheduledContent && result.scheduledContent.length > 0) {
+                    showResult(`🗓️ Auto-scheduled ${result.scheduledContent.length} posts`, 'success');
+                    displayCalendarPreview(result.scheduledContent);
+                } else if (result.metadata.autoScheduled) {
+                    showResult(`🗓️ Auto-scheduling completed`, 'success');
+                    // Try to get scheduled content
+                    await getAutoScheduledContent(result.project.id);
+                } else {
+                    showResult(`ℹ️ No auto-scheduling performed (calendar preference: ${projectData.calendarPreference})`, 'info');
+                }
+
+                if (result.aiProject) {
+                    showResult(`🤖 AI Project created: ${result.aiProject.id}`, 'success');
+                }
+
+                if (result.aiContent && result.aiContent.length > 0) {
+                    showResult(`🎯 AI Content generated: ${result.aiContent.length} items`, 'success');
+                }
+
+            } catch (error) {
+                console.error('Project creation error:', error);
+                showResult(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                showLoading('createBtn', false);
+            }
+        }
+
+        async function getAutoScheduledContent(projectId) {
+            try {
+                showResult(`🔍 Fetching auto-scheduled content for project ${projectId}...`, 'info');
+
+                const response = await fetch(`/api/auto-schedule/project/${projectId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.data.scheduledContent.length > 0) {
+                    showResult(`📅 Found ${result.data.scheduledContent.length} auto-scheduled posts`, 'success');
+                    displayCalendarPreview(result.data.scheduledContent);
+                } else {
+                    showResult(`ℹ️ No auto-scheduled content found yet`, 'info');
+                }
+
+            } catch (error) {
+                console.error('Get auto-scheduled content error:', error);
+                showResult(`⚠️ Could not fetch auto-scheduled content: ${error.message}`, 'warning');
+            }
+        }
+
+        async function getOptimalTimes() {
+            try {
+                const platforms = getSelectedPlatforms();
+                if (platforms.length === 0) {
+                    showResult('⚠️ Please select at least one platform', 'warning');
+                    return;
+                }
+
+                showResult(`🕐 Getting optimal times for platforms: ${platforms.join(', ')}`, 'info');
+
+                for (const platform of platforms) {
+                    const response = await fetch(`/api/auto-schedule/optimal-times/${platform}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}`
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showResult(`📊 ${platform.toUpperCase()}: ${result.data.optimalTimes.join(', ')} (${result.data.timezone})`, 'success');
+                    } else {
+                        showResult(`❌ Failed to get optimal times for ${platform}: ${result.message}`, 'error');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Get optimal times error:', error);
+                showResult(`❌ Error getting optimal times: ${error.message}`, 'error');
+            }
+        }
+
+        function displayCalendarPreview(scheduledContent) {
+            const calendarSection = document.getElementById('calendarSection');
+            const calendarPreview = document.getElementById('calendarPreview');
+            
+            calendarSection.style.display = 'block';
+            
+            if (!scheduledContent || scheduledContent.length === 0) {
+                calendarPreview.innerHTML = '<p>No scheduled content to display</p>';
+                return;
+            }
+
+            let html = '';
+            scheduledContent.forEach((item, index) => {
+                const date = new Date(item.scheduledAt || item.scheduled_at);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                html += `
+                    <div class="calendar-item">
+                        <div class="calendar-date">${dateStr} ${timeStr}</div>
+                        <div class="calendar-content">
+                            <strong>${item.title || `Post ${index + 1}`}</strong>
+                            <br>
+                            <small>${(item.description || item.caption || '').substring(0, 100)}...</small>
+                        </div>
+                        <div class="calendar-platform">${item.platform || 'Unknown'}</div>
+                    </div>
+                `;
+            });
+
+            calendarPreview.innerHTML = html;
+        }
+
+        // Initialize
+        showResult('🎯 Auto-Schedule Project Creation Test Ready', 'info');
+        showResult('ℹ️ This test will create a project and automatically schedule content to the calendar', 'info');
+    </script>
+</body>
+</html>

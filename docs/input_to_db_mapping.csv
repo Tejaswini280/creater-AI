@@ -1,0 +1,49 @@
+Page,Form,Input_Field,DB_Table,DB_Column,DB_Type,Constraints,FE_Validation,BE_Validation,Status,Notes
+Login,Login Form,Email,users,email,VARCHAR(255),UNIQUE, NOT NULL,Email format, required,Email format, exists check,OK,Primary login identifier
+Login,Login Form,Password,users,password,TEXT,NOT NULL,Min 8 chars, required,bcrypt hash validation,OK,Hashed with bcrypt
+Register,Register Form,Email,users,email,VARCHAR(255),UNIQUE, NOT NULL,Email format, required,Email format, uniqueness,OK,Must be unique across users
+Register,Register Form,First Name,users,first_name,VARCHAR(255),NOT NULL,Required, min 2 chars, String validation,OK,User's given name
+Register,Register Form,Last Name,users,last_name,VARCHAR(255),NOT NULL,Required, min 2 chars, String validation,OK,User's family name
+Register,Register Form,Password,users,password,TEXT,NOT NULL,Min 8 chars, complexity, bcrypt hash,OK,Password strength requirements
+Content Studio,Create Content,Title,content,title,VARCHAR(255),NOT NULL,Required, max 255 chars, String validation,OK,Content headline
+Content Studio,Create Content,Description,content,description,TEXT,NULL,Max 5000 chars, Text validation,OK,Content description/summary
+Content Studio,Create Content,Script,content,script,TEXT,NULL,Max 10000 chars, Text validation,OK,Full content script
+Content Studio,Create Content,Platform,content,platform,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,OK,youtube, instagram, linkedin, etc.
+Content Studio,Create Content,Content Type,content,content_type,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,OK,video, image, text, reel, short
+Content Studio,Create Content,Status,content,status,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,OK,draft, scheduled, published, failed
+Content Studio,Create Content,Tags,content,tags,TEXT[],NULL,Array of strings, Array validation,OK,Content categorization tags
+Content Studio,Create Content,Project ID,content,project_id,INTEGER,FK → projects.id, Optional, valid ID, Foreign key validation,OK,Links to parent project
+New Project,Project Form,Name,projects,name,VARCHAR(255),NOT NULL,Required, max 255 chars, String validation,OK,Project title
+New Project,Project Form,Description,projects,description,TEXT,NULL,Max 2000 chars, Text validation,OK,Project description
+New Project,Project Form,Type,projects,type,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,OK,video, audio, image, script, campaign
+New Project,Project Form,Template,projects,template,VARCHAR(255),NULL,Optional, valid template, String validation,OK,Template identifier
+New Project,Project Form,Platform,projects,platform,VARCHAR(50),NULL,Optional, enum values, Enum validation,OK,Primary target platform
+New Project,Project Form,Target Audience,projects,target_audience,VARCHAR(255),NULL,Max 255 chars, String validation,OK,Target demographic
+New Project,Project Form,Estimated Duration,projects,estimated_duration,VARCHAR(50),NULL,Optional, enum values, String validation,OK,short, medium, long
+New Project,Project Form,Tags,projects,tags,TEXT[],NULL,Array of strings, Array validation,OK,Project categorization
+Scheduler,Schedule Form,Content Select,N/A,N/A,N/A,Required, valid content ID,N/A,Broken,No backend API
+Scheduler,Schedule Form,Platform Select,platform_posts,platform,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,Broken,API missing
+Scheduler,Schedule Form,Date/Time,post_schedules,scheduled_at,TIMESTAMP,NOT NULL,Required, future date, Date validation,Broken,API missing
+Scheduler,Schedule Form,Recurrence,post_schedules,recurrence,VARCHAR(20),DEFAULT 'none',Optional, enum values, Enum validation,Broken,API missing
+AI Generator,Script Generation,Prompt,ai_generation_tasks,prompt,TEXT,NOT NULL,Required, max 2000 chars, Text validation,OK,AI generation prompt
+AI Generator,Script Generation,Platform,ai_generation_tasks,metadata,JSONB,NULL,Optional, enum values, JSON validation,OK,Target platform context
+AI Generator,Script Generation,Content Type,ai_generation_tasks,metadata,JSONB,NULL,Optional, enum values, JSON validation,OK,Content type specification
+AI Generator,Thumbnail Generation,Prompt,ai_generation_tasks,prompt,TEXT,NOT NULL,Required, max 1000 chars, Text validation,OK,Image generation prompt
+AI Generator,Voiceover Generation,Prompt,ai_generation_tasks,prompt,TEXT,NOT NULL,Required, max 1000 chars, Text validation,OK,Audio generation prompt
+AI Generator,Voiceover Generation,Voice,ai_generation_tasks,metadata,JSONB,NULL,Optional, enum values, JSON validation,OK,Voice selection
+LinkedIn,Connect Form,OAuth Connection,N/A,N/A,N/A,N/A,N/A,N/A,Broken,OAuth config missing
+LinkedIn,Post Form,Caption,platform_posts,caption,TEXT,NULL,Max 3000 chars, Text validation,Broken,API not configured
+LinkedIn,Post Form,Hashtags,platform_posts,hashtags,TEXT[],NULL,Array of strings, Array validation,Broken,API not configured
+Templates,Create Form,Title,templates,title,VARCHAR(255),NOT NULL,Required, max 255 chars, String validation,Missing,CRUD not implemented
+Templates,Create Form,Description,templates,description,TEXT,NOT NULL,Required, max 2000 chars, Text validation,Missing,CRUD not implemented
+Templates,Create Form,Category,templates,category,VARCHAR(50),NOT NULL,Required, enum values, Enum validation,Missing,CRUD not implemented
+Templates,Create Form,Content,templates,content,TEXT,NULL,Max 50000 chars, Text validation,Missing,CRUD not implemented
+Templates,Create Form,Tags,templates,tags,TEXT[],NULL,Array of strings, Array validation,Missing,CRUD not implemented
+Assets,Upload Form,File Input,N/A,N/A,N/A,File type, size limits, Multer validation,OK,Cloud storage integration
+Assets,Upload Form,Title,post_media,file_name,VARCHAR(255),NOT NULL,Required, max 255 chars, String validation,OK,Display name
+Assets,Upload Form,Description,post_media,metadata,JSONB,NULL,Max 1000 chars, JSON validation,OK,Asset description
+Assets,Upload Form,Tags,post_media,metadata,JSONB,NULL,Array of strings, Array validation,OK,Asset categorization
+Profile,Update Form,First Name,users,first_name,VARCHAR(255),NOT NULL,Required, min 2 chars, String validation,Partial,API may be incomplete
+Profile,Update Form,Last Name,users,last_name,VARCHAR(255),NOT NULL,Required, min 2 chars, String validation,Partial,API may be incomplete
+Profile,Update Form,Email,users,email,VARCHAR(255),UNIQUE, NOT NULL,Email format, required, Email uniqueness,Partial,API may be incomplete
+Profile,Update Form,Profile Image,users,profile_image_url,VARCHAR(500),NULL,Valid URL, image types, URL validation,Partial,File upload handling

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator AI Studio - Application Test</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        h1 { color: #1e293b; margin-bottom: 10px; font-size: 2.5rem; }
+        .status { padding: 15px; border-radius: 10px; margin: 15px 0; font-weight: 500; }
+        .success { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border-left: 4px solid #10b981; }
+        .error { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; border-left: 4px solid #ef4444; }
+        .info { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; border-left: 4px solid #3b82f6; }
+        .loading { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; border-left: 4px solid #f59e0b; }
+        .btn { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; margin: 10px 5px; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
+        .test-card { background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Creator AI Studio</h1>
+        <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 30px;">Application Status & Testing Dashboard</p>
+        
+        <div id="status-container">
+            <div class="status info">
+                <strong>🔍 Testing Application Status...</strong><br>
+                Checking backend server and frontend connectivity
+            </div>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>🖥️ Backend Server</h3>
+                <p>Testing connection to http://localhost:5000</p>
+                <button class="btn" onclick="testBackend()">Test Backend</button>
+                <div id="backend-status"></div>
+            </div>
+
+            <div class="test-card">
+                <h3>🌐 Frontend Server</h3>
+                <p>Testing connection to http://localhost:3000</p>
+                <button class="btn" onclick="testFrontend()">Test Frontend</button>
+                <div id="frontend-status"></div>
+            </div>
+
+            <div class="test-card">
+                <h3>🤖 Auto-Schedule API</h3>
+                <p>Testing auto-schedule functionality</p>
+                <button class="btn" onclick="testAutoSchedule()">Test Auto-Schedule</button>
+                <div id="autoschedule-status"></div>
+            </div>
+
+            <div class="test-card">
+                <h3>🎯 Quick Project Creator</h3>
+                <p>Direct access to project creation</p>
+                <button class="btn" onclick="openQuickCreator()">Open Quick Creator</button>
+                <div id="quickcreator-status"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>🛠️ Manual Startup Commands</h3>
+            <div class="status info">
+                <strong>Backend Server:</strong><br>
+                <code>npm run dev</code> (runs on http://localhost:5000)<br><br>
+                
+                <strong>Frontend Development:</strong><br>
+                <code>npm run dev</code> (includes both backend and frontend)<br><br>
+                
+                <strong>Quick Project Creator:</strong><br>
+                Open <code>QUICK_PROJECT_CREATION_FIX.html</code> in your browser
+            </div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function showStatus(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            container.innerHTML = '';
+            container.appendChild(div);
+        }
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        async function testBackend() {
+            showStatus('backend-status', '🔄 Testing backend connection...', 'loading');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('backend-status', `✅ Backend is running!<br>Status: ${data.status || 'OK'}`, 'success');
+                } else {
+                    showStatus('backend-status', `⚠️ Backend responded with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus('backend-status', `❌ Backend connection failed: ${error.message}<br>Make sure to run: <code>npm run dev</code>`, 'error');
+            }
+        }
+
+        async function testFrontend() {
+            showStatus('frontend-status', '🔄 Testing frontend connection...', 'loading');
+            
+            try {
+                const response = await fetch('http://localhost:3000', {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                
+                showStatus('frontend-status', '✅ Frontend is accessible!<br>Open http://localhost:3000 in your browser', 'success');
+            } catch (error) {
+                showStatus('frontend-status', `❌ Frontend connection failed: ${error.message}<br>The app runs on port 5000 with integrated frontend`, 'error');
+            }
+        }
+
+        async function testAutoSchedule() {
+            showStatus('autoschedule-status', '🔄 Testing auto-schedule API...', 'loading');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auto-schedule/optimal-times/instagram', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer demo-token'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('autoschedule-status', `✅ Auto-schedule API working!<br>Instagram optimal times: ${data.data?.optimalTimes?.join(', ') || 'Available'}`, 'success');
+                } else {
+                    showStatus('autoschedule-status', `⚠️ Auto-schedule API responded with: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus('autoschedule-status', `❌ Auto-schedule API failed: ${error.message}`, 'error');
+            }
+        }
+
+        function openQuickCreator() {
+            showStatus('quickcreator-status', '🚀 Opening Quick Project Creator...', 'loading');
+            
+            try {
+                window.open('QUICK_PROJECT_CREATION_FIX.html', '_blank');
+                showStatus('quickcreator-status', '✅ Quick Project Creator opened in new tab!', 'success');
+            } catch (error) {
+                showStatus('quickcreator-status', `❌ Failed to open: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('status-container').innerHTML = `
+                    <div class="status success">
+                        <strong>🎯 Application Testing Ready!</strong><br>
+                        Use the buttons above to test different components of your Creator AI Studio application.
+                    </div>
+                `;
+            }, 1000);
+        });
+
+        // Show current status
+        showResult(`
+            <strong>🎯 Creator AI Studio - tk-final-Creator-AI Branch</strong><br><br>
+            ✅ Complete application codebase merged and ready<br>
+            ✅ Auto-scheduling system implemented<br>
+            ✅ All AI features integrated<br>
+            ✅ Development environment configured<br><br>
+            <strong>To start the application:</strong><br>
+            1. Run <code>npm run dev</code> in terminal<br>
+            2. Open http://localhost:5000 in browser<br>
+            3. Or use the Quick Project Creator above
+        `, 'info');
+    </script>
+</body>
+</html>

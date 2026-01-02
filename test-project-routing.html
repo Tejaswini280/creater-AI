@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Routing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .route-test {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .route-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+        .route-item h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .route-item p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Project Routing Test</h1>
+            <p>Test all project creation routes and navigation</p>
+        </div>
+
+        <!-- Current Status -->
+        <div class="test-section">
+            <h3>📊 Current Status</h3>
+            <div class="success">
+                <strong>✅ Fixed:</strong> Dashboard "New Project" buttons now route to /project-wizard
+            </div>
+            <div class="success">
+                <strong>✅ Updated:</strong> QuickActions component routes to /project-wizard
+            </div>
+            <div class="success">
+                <strong>✅ Added:</strong> Project wizard route in App.tsx
+            </div>
+        </div>
+
+        <!-- Route Testing -->
+        <div class="test-section">
+            <h3>🧪 Route Testing</h3>
+            <div class="route-test">
+                <div class="route-item">
+                    <h4>Project Wizard (New)</h4>
+                    <p>Multi-step project creation</p>
+                    <a href="/project-wizard" class="button">Test Route</a>
+                </div>
+                
+                <div class="route-item">
+                    <h4>Old Project Form</h4>
+                    <p>Single-page project creation</p>
+                    <a href="/new-project-enhanced" class="button">Test Route</a>
+                </div>
+                
+                <div class="route-item">
+                    <h4>Dashboard</h4>
+                    <p>Main dashboard with Quick Actions</p>
+                    <a href="/dashboard" class="button">Test Route</a>
+                </div>
+                
+                <div class="route-item">
+                    <h4>Trend Analysis</h4>
+                    <p>Social media trend analysis</p>
+                    <a href="/trend-analysis" class="button">Test Route</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Flow -->
+        <div class="test-section">
+            <h3>🔄 Expected Flow</h3>
+            <div class="info">
+                <strong>Step 1:</strong> User clicks "New Project" on Dashboard
+            </div>
+            <div class="info">
+                <strong>Step 2:</strong> User is redirected to /project-wizard
+            </div>
+            <div class="info">
+                <strong>Step 3:</strong> User sees "Project Basics" step (Step 1 of 4)
+            </div>
+            <div class="info">
+                <strong>Step 4:</strong> User fills form and clicks "Next"
+            </div>
+            <div class="info">
+                <strong>Step 5:</strong> User sees "Content Creation" step (Step 2 of 4)
+            </div>
+            <div class="info">
+                <strong>Step 6:</strong> Process continues through all 4 steps
+            </div>
+            <div class="info">
+                <strong>Step 7:</strong> Project is created and user returns to dashboard
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="test-section">
+            <h3>🔧 Troubleshooting</h3>
+            <div class="warning">
+                <strong>If routing doesn't work:</strong>
+                <ul>
+                    <li>Check browser console for errors</li>
+                    <li>Verify React app is running on correct port</li>
+                    <li>Ensure authentication is working</li>
+                    <li>Check that project-wizard.tsx is properly imported</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Manual Test Steps -->
+        <div class="test-section">
+            <h3>✅ Manual Test Checklist</h3>
+            <div style="background: white; padding: 15px; border-radius: 6px;">
+                <h4>Dashboard Testing:</h4>
+                <label><input type="checkbox"> Dashboard loads correctly</label><br>
+                <label><input type="checkbox"> "New Project" button is visible</label><br>
+                <label><input type="checkbox"> Clicking "New Project" goes to /project-wizard</label><br>
+                <label><input type="checkbox"> Quick Actions "New Project" works</label><br><br>
+                
+                <h4>Project Wizard Testing:</h4>
+                <label><input type="checkbox"> Project wizard loads at /project-wizard</label><br>
+                <label><input type="checkbox"> Shows "Step 1 of 4: Project Basics"</label><br>
+                <label><input type="checkbox"> Progress bar shows 25%</label><br>
+                <label><input type="checkbox"> Form validation works</label><br>
+                <label><input type="checkbox"> "Next" button advances to Step 2</label><br>
+                <label><input type="checkbox"> Step 2 shows "Content Creation"</label><br>
+                <label><input type="checkbox"> Can navigate back to Step 1</label><br>
+                <label><input type="checkbox"> All 4 steps are accessible</label><br>
+                <label><input type="checkbox"> Final step creates project</label><br>
+                <label><input type="checkbox"> Redirects to dashboard on completion</label><br>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="test-section">
+            <h3>⚡ Quick Actions</h3>
+            <a href="/dashboard" class="button">🏠 Go to Dashboard</a>
+            <a href="/project-wizard" class="button">🚀 Start Project Wizard</a>
+            <a href="/trend-analysis" class="button">📊 Trend Analysis</a>
+            <button class="button" onclick="window.location.reload()">🔄 Refresh Page</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔗 Project Routing Test Page Loaded');
+            
+            // Test current URL
+            console.log('Current URL:', window.location.href);
+            
+            // Check if we can access the routes
+            const routes = ['/dashboard', '/project-wizard', '/trend-analysis', '/new-project-enhanced'];
+            
+            routes.forEach(route => {
+                console.log(`Route available: ${route}`);
+            });
+            
+            // Add click tracking
+            const buttons = document.querySelectorAll('.button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.href) {
+                        console.log('Navigating to:', this.href);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

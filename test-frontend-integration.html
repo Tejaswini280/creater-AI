@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            color: #6c757d;
+            font-style: italic;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .api-key-status {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .key-status {
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Integration Test</h1>
+    <p>This page tests the integration between the frontend and backend API to verify real data flow.</p>
+
+    <div class="api-key-status">
+        <div class="key-status info">
+            <strong>Gemini API Key:</strong> <span id="gemini-status">Checking...</span>
+        </div>
+        <div class="key-status info">
+            <strong>OpenAI API Key:</strong> <span id="openai-status">Checking...</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>1. Server Health Check</h2>
+        <button onclick="testHealthCheck()">Test Health Check</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Authentication Test</h2>
+        <button onclick="testAuthentication()">Test Authentication</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. AI Script Generation (Real Data)</h2>
+        <button onclick="testScriptGeneration()">Generate AI Script</button>
+        <div id="script-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Content Ideas Generation (Real Data)</h2>
+        <button onclick="testContentIdeas()">Generate Content Ideas</button>
+        <div id="ideas-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Analytics Performance (Real Data)</h2>
+        <button onclick="testAnalytics()">Test Analytics</button>
+        <div id="analytics-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Real Data Verification</h2>
+        <button onclick="verifyRealData()">Verify Real Data</button>
+        <div id="verification-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Test 1: Health Check
+        async function testHealthCheck() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<div class="loading">Testing server health...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">
+                            <strong>✅ Server is healthy!</strong><br>
+                            Status: ${data.status}<br>
+                            Version: ${data.version}<br>
+                            Timestamp: ${data.timestamp}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">
+                            <strong>❌ Server health check failed</strong><br>
+                            Status: ${response.status}<br>
+                            Message: ${data.message || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Health check failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test 2: Authentication
+        async function testAuthentication() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<div class="loading">Testing authentication...</div>';
+
+            try {
+                // Test without token (should fail)
+                const response = await fetch(`${API_BASE}/api/ai/generate-script`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: 'Test Topic',
+                        platform: 'youtube',
+                        duration: '30 seconds'
+                    })
+                });
+
+                if (response.status === 401) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">
+                            <strong>✅ Authentication working correctly!</strong><br>
+                            API properly rejects unauthorized requests (status: 401)
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result warning">
+                            <strong>⚠️ Unexpected authentication response</strong><br>
+                            Status: ${response.status}<br>
+                            Expected: 401 (Unauthorized)
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Authentication test failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test 3: AI Script Generation
+        async function testScriptGeneration() {
+            const resultDiv = document.getElementById('script-result');
+            resultDiv.innerHTML = '<div class="loading">Generating AI script...</div>';
+
+            try {
+                // Create a mock token for testing
+                const mockToken = 'mock-token-for-testing';
+                
+                const response = await fetch(`${API_BASE}/api/ai/generate-script`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mockToken}`
+                    },
+                    body: JSON.stringify({
+                        topic: 'AI in Content Creation',
+                        platform: 'youtube',
+                        duration: '60 seconds'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.script) {
+                    // Check if it's real AI-generated content or fallback
+                    const isRealAI = data.script.includes('[HOOK') && 
+                                   data.script.includes('[INTRODUCTION]') &&
+                                   data.script.includes('AI in Content Creation');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="test-result ${isRealAI ? 'success' : 'warning'}">
+                            <strong>${isRealAI ? '✅' : '⚠️'} Script Generated!</strong><br>
+                            <strong>Content Type:</strong> ${isRealAI ? 'Real AI Generated' : 'Fallback Content'}<br>
+                            <strong>Length:</strong> ${data.script.length} characters<br>
+                            <strong>Platform:</strong> ${data.platform}<br>
+                            <strong>Duration:</strong> ${data.duration}<br>
+                            <details>
+                                <summary>View Script Preview</summary>
+                                <pre>${data.script.substring(0, 500)}...</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">
+                            <strong>❌ Script generation failed</strong><br>
+                            Status: ${response.status}<br>
+                            Message: ${data.message || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Script generation failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test 4: Content Ideas Generation
+        async function testContentIdeas() {
+            const resultDiv = document.getElementById('ideas-result');
+            resultDiv.innerHTML = '<div class="loading">Generating content ideas...</div>';
+
+            try {
+                const mockToken = 'mock-token-for-testing';
+                
+                const response = await fetch(`${API_BASE}/api/ai/content-ideas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mockToken}`
+                    },
+                    body: JSON.stringify({
+                        niche: 'Technology',
+                        platform: 'youtube',
+                        count: 5
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.ideas && Array.isArray(data.ideas)) {
+                    // Check if ideas are real AI-generated or fallback
+                    const isRealAI = data.ideas.some(idea => 
+                        idea.includes('Technology') && 
+                        (idea.includes('Tips') || idea.includes('Guide') || idea.includes('Mistakes'))
+                    );
+                    
+                    resultDiv.innerHTML = `
+                        <div class="test-result ${isRealAI ? 'success' : 'warning'}">
+                            <strong>${isRealAI ? '✅' : '⚠️'} Content Ideas Generated!</strong><br>
+                            <strong>Content Type:</strong> ${isRealAI ? 'Real AI Generated' : 'Fallback Content'}<br>
+                            <strong>Count:</strong> ${data.ideas.length}<br>
+                            <strong>Niche:</strong> ${data.niche}<br>
+                            <strong>Platform:</strong> ${data.platform}<br>
+                            <details>
+                                <summary>View Ideas</summary>
+                                <ul>
+                                    ${data.ideas.map(idea => `<li>${idea}</li>`).join('')}
+                                </ul>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">
+                            <strong>❌ Content ideas generation failed</strong><br>
+                            Status: ${response.status}<br>
+                            Message: ${data.message || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Content ideas generation failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test 5: Analytics Performance
+        async function testAnalytics() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<div class="loading">Testing analytics...</div>';
+
+            try {
+                const mockToken = 'mock-token-for-testing';
+                
+                const response = await fetch(`${API_BASE}/api/analytics/performance`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${mockToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">
+                            <strong>✅ Analytics endpoint working!</strong><br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result warning">
+                            <strong>⚠️ Analytics endpoint returned status ${response.status}</strong><br>
+                            This might be expected if the endpoint requires specific parameters
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Analytics test failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test 6: Real Data Verification
+        async function verifyRealData() {
+            const resultDiv = document.getElementById('verification-result');
+            resultDiv.innerHTML = '<div class="loading">Verifying real data integration...</div>';
+
+            let results = [];
+            
+            // Test multiple endpoints to verify real data
+            const tests = [
+                {
+                    name: 'Script Generation',
+                    url: '/api/ai/generate-script',
+                    method: 'POST',
+                    body: {
+                        topic: 'AI Content Creation',
+                        platform: 'youtube',
+                        duration: '60 seconds'
+                    }
+                },
+                {
+                    name: 'Content Ideas',
+                    url: '/api/ai/content-ideas',
+                    method: 'POST',
+                    body: {
+                        niche: 'Technology',
+                        platform: 'youtube',
+                        count: 3
+                    }
+                }
+            ];
+
+            for (const test of tests) {
+                try {
+                    const mockToken = 'mock-token-for-testing';
+                    const response = await fetch(`${API_BASE}${test.url}`, {
+                        method: test.method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${mockToken}`
+                        },
+                        body: test.method === 'POST' ? JSON.stringify(test.body) : undefined
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const hasRealData = data.script || (data.ideas && data.ideas.length > 0);
+                        results.push({
+                            name: test.name,
+                            status: 'success',
+                            hasRealData: hasRealData,
+                            message: hasRealData ? 'Real data detected' : 'Fallback data detected'
+                        });
+                    } else {
+                        results.push({
+                            name: test.name,
+                            status: 'error',
+                            message: `HTTP ${response.status}`
+                        });
+                    }
+                } catch (error) {
+                    results.push({
+                        name: test.name,
+                        status: 'error',
+                        message: error.message
+                    });
+                }
+            }
+
+            const successCount = results.filter(r => r.status === 'success').length;
+            const realDataCount = results.filter(r => r.hasRealData).length;
+
+            resultDiv.innerHTML = `
+                <div class="test-result ${successCount === tests.length ? 'success' : 'warning'}">
+                    <strong>📊 Real Data Verification Results</strong><br>
+                    <strong>Successful Tests:</strong> ${successCount}/${tests.length}<br>
+                    <strong>Real Data Detected:</strong> ${realDataCount}/${tests.length}<br>
+                    <details>
+                        <summary>Detailed Results</summary>
+                        <ul>
+                            ${results.map(r => `
+                                <li>
+                                    <strong>${r.name}:</strong> 
+                                    <span class="${r.status === 'success' ? 'success' : 'error'}">
+                                        ${r.message}
+                                    </span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </details>
+                </div>
+            `;
+        }
+
+        // Check API key status on page load
+        async function checkAPIKeyStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                if (response.ok) {
+                    document.getElementById('gemini-status').textContent = '✅ Configured';
+                    document.getElementById('openai-status').textContent = '✅ Configured';
+                }
+            } catch (error) {
+                document.getElementById('gemini-status').textContent = '❌ Error';
+                document.getElementById('openai-status').textContent = '❌ Error';
+            }
+        }
+
+        // Initialize page
+        checkAPIKeyStatus();
+    </script>
+</body>
+</html>

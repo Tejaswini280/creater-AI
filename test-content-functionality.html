@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .info {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .test-url {
+            background: #e5e7eb;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .api-test {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .status.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Content Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Fixed Issues</h2>
+        <ul>
+            <li><span class="success">Update Content Button:</span> Added missing PUT route for content updates</li>
+            <li><span class="success">Edit Button:</span> Added click handlers and form population logic</li>
+            <li><span class="success">Publish Button:</span> Added dedicated publish endpoint and mutation</li>
+            <li><span class="success">API Routes:</span> Added `/api/content/:id` (PUT) and `/api/content/:id/publish` (PUT)</li>
+            <li><span class="success">Error Handling:</span> Proper error handling and user feedback</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test URLs</h2>
+        <p>Test these URLs to verify the fixes work:</p>
+        
+        <div class="test-url">
+            <strong>Content Studio Page:</strong><br>
+            <a href="http://localhost:5000/content-studio" target="_blank">http://localhost:5000/content-studio</a>
+        </div>
+        
+        <div class="test-url">
+            <strong>Content Studio (Edit Mode):</strong><br>
+            <a href="http://localhost:5000/content-studio?id=1" target="_blank">http://localhost:5000/content-studio?id=1</a>
+        </div>
+        
+        <div class="test-url">
+            <strong>Recent Content Page:</strong><br>
+            <a href="http://localhost:5000/content/recent" target="_blank">http://localhost:5000/content/recent</a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 API Endpoints Test</h2>
+        <div class="api-test">
+            <h3>Content Update API Test</h3>
+            <p>Testing PUT /api/content/:id endpoint:</p>
+            <button onclick="testUpdateContent()">Test Update Content</button>
+            <div id="updateResult"></div>
+        </div>
+        
+        <div class="api-test">
+            <h3>Content Publish API Test</h3>
+            <p>Testing PUT /api/content/:id/publish endpoint:</p>
+            <button onclick="testPublishContent()">Test Publish Content</button>
+            <div id="publishResult"></div>
+        </div>
+        
+        <div class="api-test">
+            <h3>Content List API Test</h3>
+            <p>Testing GET /api/content endpoint:</p>
+            <button onclick="testGetContent()">Test Get Content</button>
+            <div id="getResult"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 What to Test</h2>
+        <ol>
+            <li><strong>Content Studio Page:</strong>
+                <ul>
+                    <li>Create new content using the form</li>
+                    <li>Click "Edit" button on any content card → Should populate form for editing</li>
+                    <li>Click "Publish" button on any content card → Should change status to published</li>
+                    <li>Test "Update Content" button when editing → Should save changes</li>
+                    <li>Test "Cancel Edit" button → Should clear form and exit edit mode</li>
+                </ul>
+            </li>
+            <li><strong>Recent Content Page:</strong>
+                <ul>
+                    <li>Click "Edit" button → Should navigate to content studio in edit mode</li>
+                    <li>Click "Analytics" button → Should navigate to analytics page</li>
+                    <li>Test dropdown menu options → Should show all available actions</li>
+                </ul>
+            </li>
+            <li><strong>Error Handling:</strong>
+                <ul>
+                    <li>Try updating content with invalid data → Should show proper error message</li>
+                    <li>Check console for any JavaScript errors</li>
+                    <li>Verify toast notifications appear for success/error states</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Implementation Summary</h2>
+        <ul>
+            <li><strong>Backend Routes Added:</strong>
+                <ul>
+                    <li>PUT /api/content/:id - Update content</li>
+                    <li>PUT /api/content/:id/publish - Publish content</li>
+                </ul>
+            </li>
+            <li><strong>Frontend Features Added:</strong>
+                <ul>
+                    <li>updateContentMutation - For updating content</li>
+                    <li>publishContentMutation - For publishing content</li>
+                    <li>handleEditContent - Populates form for editing</li>
+                    <li>handlePublishContent - Publishes content</li>
+                    <li>Click handlers for Edit and Publish buttons</li>
+                </ul>
+            </li>
+            <li><strong>Error Handling:</strong>
+                <ul>
+                    <li>Proper error messages for failed operations</li>
+                    <li>Loading states during API calls</li>
+                    <li>Toast notifications for user feedback</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <ul>
+            <li>Test all the functionality above</li>
+            <li>Verify no console errors occur</li>
+            <li>Test with real content data</li>
+            <li>Implement content duplication functionality</li>
+            <li>Add content deletion with confirmation</li>
+        </ul>
+    </div>
+
+    <script>
+        // Test functions for API endpoints
+        async function testUpdateContent() {
+            const resultDiv = document.getElementById('updateResult');
+            resultDiv.innerHTML = '<span class="status warning">Testing...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content/1', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: JSON.stringify({
+                        title: 'Updated Test Content',
+                        description: 'This is an updated test content',
+                        platform: 'youtube',
+                        contentType: 'video',
+                        status: 'draft'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="status success">✅ Update API working</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Update API failed</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Update API error: ' + error.message + '</span>';
+            }
+        }
+
+        async function testPublishContent() {
+            const resultDiv = document.getElementById('publishResult');
+            resultDiv.innerHTML = '<span class="status warning">Testing...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content/1/publish', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="status success">✅ Publish API working</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Publish API failed</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Publish API error: ' + error.message + '</span>';
+            }
+        }
+
+        async function testGetContent() {
+            const resultDiv = document.getElementById('getResult');
+            resultDiv.innerHTML = '<span class="status warning">Testing...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="status success">✅ Get Content API working</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Get Content API failed</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Get Content API error: ' + error.message + '</span>';
+            }
+        }
+
+        // Check if app is running
+        fetch('http://localhost:5000/api/content')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ App is running and API is accessible');
+                } else {
+                    console.log('⚠️ App is running but API returned:', response.status);
+                }
+            })
+            .catch(error => {
+                console.log('❌ App is not running or not accessible:', error.message);
+            });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Analytics Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        textarea, select, input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧠 Predictive Analytics - 400 Error Fix Test</h1>
+    
+    <div class="container success">
+        <h3>✅ Fix Summary</h3>
+        <ul>
+            <li><strong>Added audience field</strong> - Frontend now includes required audience parameter</li>
+            <li><strong>Fixed API call</strong> - Proper request format with all required fields</li>
+            <li><strong>Enhanced error handling</strong> - Fallback to demo data when API unavailable</li>
+            <li><strong>Improved UX</strong> - Better form validation and user feedback</li>
+        </ul>
+    </div>
+
+    <div class="container info">
+        <h3>🔧 Test the Fixed Predictive Analytics</h3>
+        <p>This form simulates the fixed frontend component:</p>
+        
+        <div class="form-group">
+            <label for="content">Content to Analyze:</label>
+            <textarea id="content" rows="4" placeholder="Enter your content here for engagement prediction...">10 AI Tools That Will Change Content Creation Forever - A comprehensive guide to the latest AI technologies that are revolutionizing how creators make content.</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="platform">Platform:</label>
+            <select id="platform">
+                <option value="youtube">YouTube</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="facebook">Facebook</option>
+                <option value="linkedin">LinkedIn</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="audience">Target Audience:</label>
+            <select id="audience">
+                <option value="general">General Audience</option>
+                <option value="creators">Content Creators</option>
+                <option value="business">Business Professionals</option>
+                <option value="students">Students</option>
+                <option value="tech">Tech Enthusiasts</option>
+                <option value="lifestyle">Lifestyle</option>
+            </select>
+        </div>
+
+        <button onclick="testPredictiveAnalytics()">🎯 Predict Engagement</button>
+    </div>
+
+    <div id="result" class="container" style="display: none;"></div>
+
+    <script>
+        async function testPredictiveAnalytics() {
+            const content = document.getElementById('content').value;
+            const platform = document.getElementById('platform').value;
+            const audience = document.getElementById('audience').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!content.trim()) {
+                showResult('error', 'Please enter content for analysis');
+                return;
+            }
+
+            showResult('info', 'Analyzing content... This may take a moment.');
+
+            try {
+                const response = await fetch('/api/analytics/predict-performance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        content: content.trim(),
+                        platform: platform,
+                        audience: audience
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('success', `
+                        <h3>🎉 Prediction Successful!</h3>
+                        <p><strong>Predicted Views:</strong> ${data.result.predictedViews?.toLocaleString() || 'N/A'}</p>
+                        <p><strong>Engagement Rate:</strong> ${((data.result.engagementRate || 0.05) * 100).toFixed(1)}%</p>
+                        <p><strong>Viral Potential:</strong> ${data.result.viralPotential || 'N/A'}%</p>
+                        <p><strong>Confidence:</strong> ${((data.result.confidence || 0.8) * 100).toFixed(0)}%</p>
+                        <h4>Recommendations:</h4>
+                        <ul>
+                            ${(data.result.recommendations || []).map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    `);
+                } else {
+                    throw new Error(data.message || 'API request failed');
+                }
+
+            } catch (error) {
+                console.error('Prediction error:', error);
+                
+                // Show demo data as fallback
+                showResult('error', `
+                    <h3>⚠️ API Unavailable - Showing Demo Data</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Demo Predicted Views:</strong> 45,000</p>
+                    <p><strong>Demo Engagement Rate:</strong> 6.2%</p>
+                    <p><strong>Demo Viral Potential:</strong> 78%</p>
+                    <p><em>Note: This is demo data. The actual API requires authentication.</em></p>
+                `);
+            }
+        }
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `container ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+
+    <div class="container info">
+        <h3>📋 What Was Fixed</h3>
+        <ol>
+            <li><strong>400 Bad Request Error:</strong> Added missing <code>audience</code> field to API request</li>
+            <li><strong>Validation Schema:</strong> Frontend now sends all required fields: content, platform, audience</li>
+            <li><strong>Error Handling:</strong> Added fallback demo data when API is unavailable</li>
+            <li><strong>User Experience:</strong> Better form validation and loading states</li>
+            <li><strong>Authentication:</strong> Uses cookies for seamless authentication</li>
+        </ol>
+        
+        <h3>🎯 How to Use</h3>
+        <ol>
+            <li>Login to your application at <a href="http://localhost:5000">http://localhost:5000</a></li>
+            <li>Navigate to Analytics → Predictive AI</li>
+            <li>Fill out the form with your content, platform, and target audience</li>
+            <li>Click "Predict Engagement" to get AI-powered predictions</li>
+        </ol>
+    </div>
+</body>
+</html>

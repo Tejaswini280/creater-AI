@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler End-to-End Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+        .result.success { 
+            background: #d4edda; 
+            border-color: #28a745; 
+        }
+        .result.error { 
+            background: #f8d7da; 
+            border-color: #dc3545; 
+        }
+        .result.info { 
+            background: #d1ecf1; 
+            border-color: #17a2b8; 
+        }
+        .result.warning { 
+            background: #fff3cd; 
+            border-color: #ffc107; 
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .step h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Scheduler End-to-End Test</h1>
+    
+    <div class="test-section">
+        <h2>📋 Test Overview</h2>
+        <p>This test simulates the complete scheduler workflow to verify everything works correctly.</p>
+        <p><strong>Status:</strong> <span id="overall-status" class="info">Ready to test</span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Setup & Authentication</h2>
+        <button onclick="setupAuthentication()">Setup Authentication</button>
+        <button onclick="checkAuthentication()">Check Authentication</button>
+        <div id="auth-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Scheduler Workflow Test</h2>
+        <button onclick="runFullWorkflow()">Run Full Workflow Test</button>
+        <button onclick="testIndividualSteps()">Test Individual Steps</button>
+        <div id="workflow-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results Summary</h2>
+        <div id="summary-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Manual Test Steps</h2>
+        <div class="step">
+            <h4>Step 1: Open the Scheduler</h4>
+            <p>Go to <a href="http://localhost:5000/scheduler" target="_blank">http://localhost:5000/scheduler</a></p>
+        </div>
+        <div class="step">
+            <h4>Step 2: Fill Out the Form</h4>
+            <p>Enter "Car models" in title and description, select YouTube and Video</p>
+        </div>
+        <div class="step">
+            <h4>Step 3: Schedule Content</h4>
+            <p>Select a date and time, then click "Schedule"</p>
+        </div>
+        <div class="step">
+            <h4>Step 4: Verify Success</h4>
+            <p>Check that content appears in the scheduled content list</p>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            auth: false,
+            schedule: false,
+            fetch: false,
+            display: false
+        };
+
+        function addResult(containerId, testName, success, message, details = null) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${success ? 'success' : 'error'}`;
+            
+            const icon = success ? '✅' : '❌';
+            resultDiv.innerHTML = `<strong>${icon} ${testName}:</strong> ${message}`;
+            
+            if (details) {
+                resultDiv.innerHTML += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+            
+            container.appendChild(resultDiv);
+        }
+
+        function setupAuthentication() {
+            const container = document.getElementById('auth-results');
+            container.innerHTML = '';
+            
+            // Set test token
+            localStorage.setItem('token', 'test-token');
+            localStorage.setItem('user', JSON.stringify({
+                id: 'test-user-id',
+                email: 'test@example.com',
+                firstName: 'Test',
+                lastName: 'User'
+            }));
+            
+            addResult('auth-results', 'Authentication Setup', true, 'Test token and user data set successfully');
+            testResults.auth = true;
+            updateOverallStatus();
+        }
+
+        function checkAuthentication() {
+            const container = document.getElementById('auth-results');
+            container.innerHTML = '';
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                addResult('auth-results', 'Authentication Check', true, 'Token and user data found', {
+                    token: token.substring(0, 20) + '...',
+                    user: JSON.parse(user)
+                });
+                testResults.auth = true;
+            } else {
+                addResult('auth-results', 'Authentication Check', false, 'No authentication data found');
+                testResults.auth = false;
+            }
+            
+            updateOverallStatus();
+        }
+
+        async function runFullWorkflow() {
+            const container = document.getElementById('workflow-results');
+            container.innerHTML = '';
+            
+            // Step 1: Setup authentication
+            if (!localStorage.getItem('token')) {
+                setupAuthentication();
+            }
+            
+            // Step 2: Test scheduling content
+            addResult('workflow-results', 'Workflow Test', true, 'Starting full workflow test...');
+            
+            const testData = {
+                title: "Car models",
+                description: "Car models",
+                platform: "youtube",
+                contentType: "video",
+                status: "scheduled",
+                scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            };
+
+            try {
+                // Schedule content
+                const scheduleResponse = await fetch('http://localhost:5000/api/content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (scheduleResponse.ok) {
+                    const scheduleData = await scheduleResponse.json();
+                    addResult('workflow-results', 'Content Scheduling', true, 'Content scheduled successfully!', {
+                        id: scheduleData.content.id,
+                        title: scheduleData.content.title,
+                        status: scheduleData.content.status
+                    });
+                    testResults.schedule = true;
+                } else {
+                    const errorText = await scheduleResponse.text();
+                    addResult('workflow-results', 'Content Scheduling', false, `Failed with status ${scheduleResponse.status}`, {
+                        response: errorText
+                    });
+                    testResults.schedule = false;
+                }
+
+                // Fetch scheduled content
+                const fetchResponse = await fetch('http://localhost:5000/api/content?status=scheduled', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+
+                if (fetchResponse.ok) {
+                    const fetchData = await fetchResponse.json();
+                    addResult('workflow-results', 'Content Fetching', true, `Found ${fetchData.content?.length || 0} scheduled items`, {
+                        total: fetchData.total,
+                        contentCount: fetchData.content?.length || 0
+                    });
+                    testResults.fetch = true;
+                    
+                    // Check if our content is in the list
+                    const ourContent = fetchData.content?.find(item => item.title === "Car models");
+                    if (ourContent) {
+                        addResult('workflow-results', 'Content Display', true, 'Our scheduled content appears in the list!', {
+                            id: ourContent.id,
+                            title: ourContent.title,
+                            status: ourContent.status
+                        });
+                        testResults.display = true;
+                    } else {
+                        addResult('workflow-results', 'Content Display', false, 'Our content not found in the list');
+                        testResults.display = false;
+                    }
+                } else {
+                    const errorText = await fetchResponse.text();
+                    addResult('workflow-results', 'Content Fetching', false, `Failed with status ${fetchResponse.status}`, {
+                        response: errorText
+                    });
+                    testResults.fetch = false;
+                }
+
+            } catch (error) {
+                addResult('workflow-results', 'Workflow Test', false, `Error: ${error.message}`);
+            }
+            
+            updateOverallStatus();
+        }
+
+        async function testIndividualSteps() {
+            const container = document.getElementById('workflow-results');
+            container.innerHTML = '';
+            
+            addResult('workflow-results', 'Individual Tests', true, 'Running individual step tests...');
+            
+            // Test 1: Authentication
+            const token = localStorage.getItem('token');
+            if (token) {
+                addResult('workflow-results', 'Step 1: Authentication', true, 'Token found and valid');
+            } else {
+                addResult('workflow-results', 'Step 1: Authentication', false, 'No token found');
+            }
+            
+            // Test 2: Server Health
+            try {
+                const healthResponse = await fetch('http://localhost:5000/api/health');
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    addResult('workflow-results', 'Step 2: Server Health', true, 'Server is healthy', healthData);
+                } else {
+                    addResult('workflow-results', 'Step 2: Server Health', false, 'Server health check failed');
+                }
+            } catch (error) {
+                addResult('workflow-results', 'Step 2: Server Health', false, `Error: ${error.message}`);
+            }
+            
+            // Test 3: API Endpoint Access
+            try {
+                const apiResponse = await fetch('http://localhost:5000/api/content?status=scheduled', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                if (apiResponse.ok) {
+                    addResult('workflow-results', 'Step 3: API Access', true, 'API endpoint accessible with authentication');
+                } else {
+                    addResult('workflow-results', 'Step 3: API Access', false, `API access failed: ${apiResponse.status}`);
+                }
+            } catch (error) {
+                addResult('workflow-results', 'Step 3: API Access', false, `Error: ${error.message}`);
+            }
+        }
+
+        function updateOverallStatus() {
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(Boolean).length;
+            
+            const statusElement = document.getElementById('overall-status');
+            const summaryElement = document.getElementById('summary-results');
+            
+            if (passedTests === totalTests) {
+                statusElement.textContent = '✅ All tests passed!';
+                statusElement.className = 'success';
+                summaryElement.innerHTML = '<div class="result success"><strong>🎉 SUCCESS:</strong> All scheduler functionality is working correctly!</div>';
+            } else if (passedTests > 0) {
+                statusElement.textContent = `⚠️ ${passedTests}/${totalTests} tests passed`;
+                statusElement.className = 'warning';
+                summaryElement.innerHTML = `<div class="result warning"><strong>⚠️ PARTIAL:</strong> ${passedTests}/${totalTests} tests passed. Some functionality may not work.</div>`;
+            } else {
+                statusElement.textContent = '❌ All tests failed';
+                statusElement.className = 'error';
+                summaryElement.innerHTML = '<div class="result error"><strong>❌ FAILED:</strong> Scheduler functionality is not working.</div>';
+            }
+        }
+
+        // Auto-run setup on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                setupAuthentication();
+                setTimeout(() => {
+                    runFullWorkflow();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html> 

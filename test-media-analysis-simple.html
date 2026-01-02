@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Analysis Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Media Analysis Test (No Authentication)</h1>
+    
+    <div class="test-section">
+        <h2>Test File Upload (Simple)</h2>
+        <p>This test just uploads a file without analysis to check if file upload works.</p>
+        
+        <div>
+            <label for="simpleFileInput">Select a file:</label><br>
+            <input type="file" id="simpleFileInput" accept="image/*,video/*,audio/*">
+        </div>
+        
+        <button onclick="testSimpleUpload()">Test Simple Upload</button>
+        
+        <div id="simpleResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Media Analysis</h2>
+        <p>This test uses the endpoint without authentication to debug the issue.</p>
+        
+        <div>
+            <label for="fileInput">Select a file:</label><br>
+            <input type="file" id="fileInput" accept="image/*,video/*,audio/*">
+        </div>
+        
+        <div>
+            <label for="promptInput">Analysis Prompt (optional):</label><br>
+            <textarea id="promptInput" placeholder="Analyze this media file...">Analyze this image</textarea>
+        </div>
+        
+        <button onclick="testMediaAnalysis()">Test Media Analysis</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test with Authentication</h2>
+        <p>Test with the original authenticated endpoint:</p>
+        
+        <div>
+            <label for="authFileInput">Select a file:</label><br>
+            <input type="file" id="authFileInput" accept="image/*,video/*,audio/*">
+        </div>
+        
+        <div>
+            <label for="authPromptInput">Analysis Prompt (optional):</label><br>
+            <textarea id="authPromptInput" placeholder="Analyze this media file...">Analyze this image</textarea>
+        </div>
+        
+        <button onclick="testWithAuth()">Test with Authentication</button>
+        
+        <div id="authResult"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+
+        async function testSimpleUpload() {
+            const fileInput = document.getElementById('simpleFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('simpleResult', 'Please select a file first.', true);
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                console.log('Sending file for simple upload test:', file.name, 'Type:', file.type);
+
+                const response = await fetch('/api/gemini/test-upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Simple upload response status:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('simpleResult', `✅ Simple upload successful!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const error = await response.text();
+                    showResult('simpleResult', `❌ Simple upload failed (${response.status}):\n${error}`, true);
+                }
+            } catch (error) {
+                showResult('simpleResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        async function testMediaAnalysis() {
+            const fileInput = document.getElementById('fileInput');
+            const promptInput = document.getElementById('promptInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('result', 'Please select a file first.', true);
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('prompt', promptInput.value);
+
+                console.log('Sending file:', file.name, 'Type:', file.type);
+
+                const response = await fetch('/api/gemini/analyze-file-test', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('result', `✅ Analysis successful!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const error = await response.text();
+                    showResult('result', `❌ Analysis failed (${response.status}):\n${error}`, true);
+                }
+            } catch (error) {
+                showResult('result', `❌ Error: ${error.message}`, true);
+            }
+        }
+
+        async function testWithAuth() {
+            const fileInput = document.getElementById('authFileInput');
+            const promptInput = document.getElementById('authPromptInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('authResult', 'Please select a file first.', true);
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('prompt', promptInput.value);
+
+                // Try with test token
+                const response = await fetch('/api/gemini/analyze-file', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: formData
+                });
+
+                console.log('Auth response status:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('authResult', `✅ Analysis successful!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const error = await response.text();
+                    showResult('authResult', `❌ Analysis failed (${response.status}):\n${error}`, true);
+                }
+            } catch (error) {
+                showResult('authResult', `❌ Error: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html> 

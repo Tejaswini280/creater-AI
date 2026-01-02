@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Debug Test</title>
+</head>
+<body>
+    <h1>Token Debug Test</h1>
+    <div id="token-info"></div>
+    <button onclick="testAPI()">Test API Call</button>
+    <div id="result"></div>
+
+    <script>
+        function testAPI() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('token-info').innerHTML = `
+                <p><strong>Token:</strong> ${token ? 'Present' : 'Missing'}</p>
+                <p><strong>User:</strong> ${user ? 'Present' : 'Missing'}</p>
+            `;
+
+            if (!token) {
+                document.getElementById('result').innerHTML = '<p style="color: red;">No token found in localStorage!</p>';
+                return;
+            }
+
+            fetch('http://localhost:5000/api/ai/content-ideas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    niche: 'AI',
+                    platform: 'youtube'
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                document.getElementById('result').innerHTML = `
+                    <p style="color: green;">Success!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <p style="color: red;">Error: ${error.message}</p>
+                `;
+            });
+        }
+
+        // Auto-run on load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('token-info').innerHTML = `
+                <p><strong>Token:</strong> ${token ? 'Present' : 'Missing'}</p>
+                <p><strong>User:</strong> ${user ? 'Present' : 'Missing'}</p>
+                <p><strong>Token Value:</strong> ${token ? token.substring(0, 20) + '...' : 'N/A'}</p>
+            `;
+        };
+    </script>
+</body>
+</html> 

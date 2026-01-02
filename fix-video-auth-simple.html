@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Video Auth - Simple Solution</title>
+</head>
+<body>
+    <h1>Fix Video Auth - Simple Solution</h1>
+    <div id="results"></div>
+    <button onclick="extractTokenFromCookie()">Extract Token from Cookie</button>
+    <button onclick="testVideoGeneration()">Test Video Generation</button>
+    
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function extractTokenFromCookie() {
+            const results = document.getElementById('results');
+            
+            // Get the access_token cookie
+            const accessToken = getCookie('access_token');
+            
+            if (accessToken) {
+                results.innerHTML += '<p style="color: green;">✅ Found access token in cookie!</p>';
+                results.innerHTML += `<p>Token: ${accessToken.substring(0, 20)}...</p>`;
+                
+                // Store it in localStorage for compatibility with existing frontend code
+                localStorage.setItem('token', accessToken);
+                results.innerHTML += '<p>✅ Token stored in localStorage for compatibility</p>';
+                
+                // Also store a dummy user object
+                localStorage.setItem('user', JSON.stringify({
+                    id: 'cookie-user',
+                    email: 'test@example.com',
+                    firstName: 'Test',
+                    lastName: 'User'
+                }));
+                
+                results.innerHTML += '<p>✅ Ready to test video generation!</p>';
+            } else {
+                results.innerHTML += '<p style="color: red;">❌ No access token found in cookies</p>';
+                results.innerHTML += '<p>Please login first at <a href="/login">/login</a></p>';
+            }
+        }
+        
+        async function testVideoGeneration() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p><strong>🎬 Testing Video Generation...</strong></p>';
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                results.innerHTML += '<p style="color: red;">❌ No token in localStorage. Please extract token from cookie first.</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ai/generate-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Generate a vibrant motivational video about achieving your dreams',
+                        style: 'modern',
+                        music: 'upbeat',
+                        duration: 30
+                    })
+                });
+                
+                results.innerHTML += `<p><strong>Response Status:</strong> ${response.status}</p>`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += '<p style="color: green;"><strong>✅ Video generation successful!</strong></p>';
+                    results.innerHTML += `<p><strong>Video URL:</strong> ${data.videoUrl}</p>`;
+                    results.innerHTML += `<p><strong>Model Used:</strong> ${data.metadata?.model || 'Unknown'}</p>`;
+                    
+                    if (data.videoUrl && !data.videoUrl.includes('placeholder') && !data.videoUrl.includes('BigBuckBunny')) {
+                        results.innerHTML += `<video controls width="400" src="${data.videoUrl}">Your browser does not support video.</video>`;
+                        results.innerHTML += '<p style="color: green;"><strong>🎉 Real AI video generated!</strong></p>';
+                    } else {
+                        results.innerHTML += '<p style="color: orange;"><strong>⚠️ Demo/fallback video</strong></p>';
+                    }
+                } else {
+                    const errorData = await response.text();
+                    results.innerHTML += `<p style="color: red;"><strong>❌ Video generation failed:</strong> ${errorData}</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;"><strong>❌ Request failed:</strong> ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

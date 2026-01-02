@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publish Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .info {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .test-url {
+            background: #e5e7eb;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .api-test {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .status.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .content-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .content-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-draft {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .status-published {
+            background: #dcfce7;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Publish Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Issue Analysis</h2>
+        <ul>
+            <li><span class="success">Root Cause Identified:</span> Content ID type mismatch (string vs number)</li>
+            <li><span class="success">Backend Fix:</span> Added parseInt() to convert string IDs to numbers</li>
+            <li><span class="success">Frontend Fix:</span> Fixed content ID comparison in form population</li>
+            <li><span class="success">Enhanced Logging:</span> Added detailed console logging for debugging</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test URLs</h2>
+        <p>Test these URLs to verify the publish functionality works:</p>
+        
+        <div class="test-url">
+            <strong>Content Studio Page:</strong><br>
+            <a href="http://localhost:5000/content-studio" target="_blank">http://localhost:5000/content-studio</a>
+        </div>
+        
+        <div class="test-url">
+            <strong>Recent Content Page:</strong><br>
+            <a href="http://localhost:5000/content/recent" target="_blank">http://localhost:5000/content/recent</a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 API Endpoints Test</h2>
+        <div class="api-test">
+            <h3>Content List API Test</h3>
+            <p>First, let's get the current content to see what we're working with:</p>
+            <button onclick="testGetContent()">Get Current Content</button>
+            <div id="getResult"></div>
+        </div>
+        
+        <div class="api-test">
+            <h3>Publish Content API Test</h3>
+            <p>Test publishing a specific content item (replace '1' with actual content ID):</p>
+            <input type="text" id="contentIdToPublish" placeholder="Enter content ID" value="1" style="padding: 5px; margin: 5px;">
+            <button onclick="testPublishContent()">Test Publish Content</button>
+            <div id="publishResult"></div>
+        </div>
+        
+        <div class="api-test">
+            <h3>Verify Content Update</h3>
+            <p>After publishing, verify the content status was updated:</p>
+            <button onclick="testGetContentAfterPublish()">Verify Content Update</button>
+            <div id="verifyResult"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 What to Test</h2>
+        <ol>
+            <li><strong>Content Studio Page:</strong>
+                <ul>
+                    <li>Look for content items with "Draft" status</li>
+                    <li>Click "Publish" button on a draft content item</li>
+                    <li>Verify the status changes from "Draft" to "Published" immediately</li>
+                    <li>Check browser console for detailed logging</li>
+                </ul>
+            </li>
+            <li><strong>Recent Content Page:</strong>
+                <ul>
+                    <li>Navigate to recent content page</li>
+                    <li>Click "Publish" button on draft content</li>
+                    <li>Verify status updates without page refresh</li>
+                </ul>
+            </li>
+            <li><strong>Error Handling:</strong>
+                <ul>
+                    <li>Try publishing with invalid content ID → Should show error</li>
+                    <li>Check console for any JavaScript errors</li>
+                    <li>Verify toast notifications appear for success/error states</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Implementation Summary</h2>
+        <ul>
+            <li><strong>Backend Fixes:</strong>
+                <ul>
+                    <li>Added parseInt() to convert string IDs to numbers in both update routes</li>
+                    <li>Added validation for invalid content IDs</li>
+                    <li>Fixed publishedAt field type (Date instead of string)</li>
+                </ul>
+            </li>
+            <li><strong>Frontend Fixes:</strong>
+                <ul>
+                    <li>Fixed content ID comparison in form population logic</li>
+                    <li>Added detailed console logging for debugging</li>
+                    <li>Enhanced error handling and user feedback</li>
+                </ul>
+            </li>
+            <li><strong>Testing:</strong>
+                <ul>
+                    <li>Added comprehensive API endpoint testing</li>
+                    <li>Created step-by-step verification process</li>
+                    <li>Included error scenario testing</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Expected Results</h2>
+        <ul>
+            <li>✅ Publish button should work without errors</li>
+            <li>✅ Content status should change from "Draft" to "Published" immediately</li>
+            <li>✅ No page refresh should be required</li>
+            <li>✅ Success toast notification should appear</li>
+            <li>✅ Console should show detailed logging of the process</li>
+            <li>✅ Content list should refresh automatically</li>
+        </ul>
+    </div>
+
+    <script>
+        let currentContent = [];
+
+        // Test functions for API endpoints
+        async function testGetContent() {
+            const resultDiv = document.getElementById('getResult');
+            resultDiv.innerHTML = '<span class="status warning">Loading...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentContent = Array.isArray(data) ? data : (data.content || []);
+                    resultDiv.innerHTML = '<span class="status success">✅ Content loaded successfully</span><br>';
+                    
+                    if (currentContent.length > 0) {
+                        resultDiv.innerHTML += '<h4>Current Content:</h4>';
+                        currentContent.forEach(item => {
+                            const statusClass = item.status === 'published' ? 'status-published' : 'status-draft';
+                            resultDiv.innerHTML += `
+                                <div class="content-item">
+                                    <strong>ID: ${item.id}</strong> - ${item.title}<br>
+                                    <span class="content-status ${statusClass}">${item.status}</span>
+                                    <br>Platform: ${item.platform} | Type: ${item.contentType}
+                                </div>
+                            `;
+                        });
+                    } else {
+                        resultDiv.innerHTML += '<p>No content found. Create some content first.</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Failed to load content</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Error loading content: ' + error.message + '</span>';
+            }
+        }
+
+        async function testPublishContent() {
+            const resultDiv = document.getElementById('publishResult');
+            const contentId = document.getElementById('contentIdToPublish').value;
+            
+            if (!contentId) {
+                resultDiv.innerHTML = '<span class="status error">❌ Please enter a content ID</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<span class="status warning">Publishing...</span>';
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/content/${contentId}/publish`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="status success">✅ Content published successfully!</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Failed to publish content</span><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Error publishing content: ' + error.message + '</span>';
+            }
+        }
+
+        async function testGetContentAfterPublish() {
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.innerHTML = '<span class="status warning">Verifying...</span>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const updatedContent = Array.isArray(data) ? data : (data.content || []);
+                    resultDiv.innerHTML = '<span class="status success">✅ Content verified</span><br>';
+                    
+                    if (updatedContent.length > 0) {
+                        resultDiv.innerHTML += '<h4>Updated Content:</h4>';
+                        updatedContent.forEach(item => {
+                            const statusClass = item.status === 'published' ? 'status-published' : 'status-draft';
+                            resultDiv.innerHTML += `
+                                <div class="content-item">
+                                    <strong>ID: ${item.id}</strong> - ${item.title}<br>
+                                    <span class="content-status ${statusClass}">${item.status}</span>
+                                    <br>Platform: ${item.platform} | Type: ${item.contentType}
+                                </div>
+                            `;
+                        });
+                    }
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">❌ Failed to verify content</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">❌ Error verifying content: ' + error.message + '</span>';
+            }
+        }
+
+        // Check if app is running
+        fetch('http://localhost:5000/api/content')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ App is running and API is accessible');
+                } else {
+                    console.log('⚠️ App is running but API returned:', response.status);
+                }
+            })
+            .catch(error => {
+                console.log('❌ App is not running or not accessible:', error.message);
+            });
+    </script>
+</body>
+</html> 

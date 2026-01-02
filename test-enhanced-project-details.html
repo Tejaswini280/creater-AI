@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Project Details - UX Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .project-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            width: 120px;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+        .ai-banner {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .tool-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15);
+        }
+        .tool-card.ai-generator {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #93c5fd;
+        }
+        .tool-card.templates {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #86efac;
+        }
+        .tool-card.gemini {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            border-color: #c4b5fd;
+        }
+        .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .ai-generator .tool-icon { background: #3b82f6; color: white; }
+        .templates .tool-icon { background: #10b981; color: white; }
+        .gemini .tool-icon { background: #8b5cf6; color: white; }
+        .checklist-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s ease;
+        }
+        .checklist-item:hover {
+            background: #f9fafb;
+        }
+        .checklist-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+        .checklist-number.completed {
+            background: #10b981;
+            color: white;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+        .quick-action:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge.success { background: #dcfce7; color: #166534; }
+        .badge.info { background: #dbeafe; color: #1e40af; }
+        .badge.warning { background: #fef3c7; color: #92400e; }
+        .recommendation-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .recommendation-tag:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Enhanced Header -->
+        <div class="header">
+            <div class="project-title">TrendCraft AI Growth Studio</div>
+            <div class="health-indicator">
+                <span style="color: #3b82f6; font-weight: 500;">⚡ Setup Progress</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 75%;"></div>
+                </div>
+                <span style="color: #3b82f6; font-weight: 600;">75%</span>
+                <span class="badge success">Active</span>
+            </div>
+            <div style="color: #6b7280; font-size: 14px;">Created 30/12/2024 • IST (Indian Standard Time)</div>
+        </div>
+
+        <!-- AI Recommendations Banner -->
+        <div class="ai-banner">
+            <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🧠</div>
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 8px 0; color: #1e40af; font-weight: 600;">AI Recommendations</h3>
+                    <p style="margin: 0 0 12px 0; color: #1e40af; font-size: 14px;">Complete your setup to unlock the full potential of your TrendCraft AI Growth Studio project</p>
+                    <div>
+                        <div class="recommendation-tag">📸 Generate Story Ideas</div>
+                        <div class="recommendation-tag">📅 Generate Weekly Plan</div>
+                        <div class="recommendation-tag">🎓 Plan Content Series</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Enhanced Content Library -->
+                <div class="card">
+                    <div class="card-title">
+                        ✨ AI-Powered Content Studio
+                        <button style="margin-left: auto; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Create Content</button>
+                    </div>
+                    
+                    <div class="tool-grid">
+                        <div class="tool-card ai-generator">
+                            <div class="tool-icon">🧠</div>
+                            <h4 style="margin: 0 0 8px 0; font-weight: 600;">AI Content Generator</h4>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Create posts with AI</p>
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #6b7280;">Perfect for: Daily posts, captions, hashtags. Generate engaging content in seconds based on your brand voice and themes.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge info">Ready to use</span>
+                                <span style="color: #3b82f6;">→</span>
+                            </div>
+                        </div>
+
+                        <div class="tool-card templates">
+                            <div class="tool-icon">📄</div>
+                            <h4 style="margin: 0 0 8px 0; font-weight: 600;">Template Library</h4>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Pre-made templates</p>
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #6b7280;">Perfect for: Quick starts, consistent branding. Choose from professionally designed templates for your industry.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge success">50+ templates</span>
+                                <span style="color: #10b981;">→</span>
+                            </div>
+                        </div>
+
+                        <div class="tool-card gemini">
+                            <div class="tool-icon">⚡</div>
+                            <h4 style="margin: 0 0 8px 0; font-weight: 600;">Gemini Studio</h4>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Advanced AI tools</p>
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #6b7280;">Perfect for: Complex content, research, analysis. Advanced AI capabilities for sophisticated content creation.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge warning">Pro features</span>
+                                <span style="color: #8b5cf6;">→</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Suggestions -->
+                    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 20px;">
+                        <h4 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">💡 Smart Suggestions for Your Project</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; border-radius: 8px; padding: 16px;">
+                                <h5 style="margin: 0 0 8px 0; color: #92400e;">📅 Weekly Content Plan</h5>
+                                <p style="margin: 0 0 12px 0; font-size: 14px; color: #92400e;">Generate a complete week of content based on your weekly schedule</p>
+                                <button style="background: white; border: 1px solid #f59e0b; color: #92400e; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Generate Plan</button>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 1px solid #3b82f6; border-radius: 8px; padding: 16px;">
+                                <h5 style="margin: 0 0 8px 0; color: #1e40af;">🔥 Trending Topics</h5>
+                                <p style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">Discover what's trending in Digital Marketing right now</p>
+                                <button style="background: white; border: 1px solid #3b82f6; color: #1e40af; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Explore Trends</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Strategy Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Content Formats</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">1</div>
+                            <div class="stat-label">Platforms</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Themes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">weekly</div>
+                            <div class="stat-label">Frequency</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI-Powered Posting Insights -->
+                <div class="card">
+                    <div class="card-title">📈 AI-Powered Posting Insights</div>
+                    <div class="insight-card">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <span style="font-size: 20px;">📷</span>
+                            <h5 style="margin: 0; color: #065f46;">Instagram Optimization</h5>
+                        </div>
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong style="color: #065f46;">Best Times:</strong> 11:00 AM, 2:00 PM, 5:00 PM
+                        </div>
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong style="color: #065f46;">Best Days:</strong> Tuesday, Wednesday, Thursday
+                        </div>
+                        <div style="background: #d1fae5; padding: 8px; border-radius: 4px; font-size: 12px; color: #065f46;">
+                            💡 Stories perform best in the evening
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Sidebar -->
+            <div>
+                <!-- Onboarding Checklist -->
+                <div class="card">
+                    <div class="card-title">✅ Getting Started</div>
+                    <div class="checklist-item">
+                        <div class="checklist-number">1</div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">Create your first content</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">Generate or upload your first post</p>
+                            <button style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Start</button>
+                        </div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-number completed">✓</div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #6b7280; text-decoration: line-through;">Connect social platforms</h4>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280;">Link your social media accounts</p>
+                        </div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-number">3</div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">Schedule your first posts</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">Plan when your content goes live</p>
+                            <button style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Start</button>
+                        </div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-number">4</div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">Set up analytics tracking</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">Monitor your performance</p>
+                            <button style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Start</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Timeline -->
+                <div class="card">
+                    <div class="card-title">🕒 Project Timeline</div>
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">Start Date</h4>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #6b7280;">📅</span>
+                            <span style="color: #6b7280; font-size: 14px;">01/01/2026</span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">Duration</h4>
+                        <span class="badge info">3 months</span>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">Budget</h4>
+                        <span class="badge success">$1,000-2,000</span>
+                    </div>
+                </div>
+
+                <!-- Enhanced Quick Actions -->
+                <div class="card">
+                    <div class="card-title">⚡ Quick Actions</div>
+                    <div class="quick-action" style="background: linear-gradient(135deg, #f3e8ff, #fce7f3); border-color: #c4b5fd;">
+                        <span style="color: #8b5cf6;">✨</span>
+                        <span style="flex: 1; font-size: 14px; font-weight: 500;">Generate Content</span>
+                    </div>
+                    <div class="quick-action" style="background: linear-gradient(135deg, #dbeafe, #e0e7ff); border-color: #93c5fd;">
+                        <span style="color: #3b82f6;">📅</span>
+                        <span style="flex: 1; font-size: 14px; font-weight: 500;">Schedule Posts</span>
+                    </div>
+                    <div class="quick-action" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-color: #86efac;">
+                        <span style="color: #10b981;">📊</span>
+                        <span style="flex: 1; font-size: 14px; font-weight: 500;">View Analytics</span>
+                    </div>
+                    <div class="quick-action" style="background: linear-gradient(135deg, #fed7aa, #fdba74); border-color: #fb923c;">
+                        <span style="color: #ea580c;">📈</span>
+                        <span style="flex: 1; font-size: 14px; font-weight: 500;">Discover Trends</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactivity
+        document.querySelectorAll('.tool-card, .quick-action, .recommendation-tag').forEach(element => {
+            element.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+
+        // Animate progress bar on load
+        window.addEventListener('load', function() {
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.width = '0%';
+            setTimeout(() => {
+                progressFill.style.width = '75%';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

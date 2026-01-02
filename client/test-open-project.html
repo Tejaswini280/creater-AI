@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Project Test Setup</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #bee5eb;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .projects-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .project-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .project-item:last-child {
+            border-bottom: none;
+        }
+        code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗂️ Open Project Test Setup</h1>
+        <p>This page sets up test data for the Open Project functionality. Click the button below to populate your browser's localStorage with sample projects and content.</p>
+
+        <button class="button" onclick="setupTestData()">🚀 Setup Test Data</button>
+
+        <div id="results"></div>
+
+        <div class="info">
+            <h3>📋 What this creates:</h3>
+            <div class="projects-list">
+                <div class="project-item"><strong>YouTube Tech Tutorials</strong> (ID: 1) - Video content series</div>
+                <div class="project-item"><strong>Instagram Fitness Journey</strong> (ID: 2) - Social media campaign</div>
+                <div class="project-item"><strong>Podcast: Future of Work</strong> (ID: 3) - Audio interview series</div>
+            </div>
+            <p>Each project includes sample AI-generated content with different statuses (published, scheduled, draft).</p>
+        </div>
+
+        <div class="info">
+            <h3>🧪 How to test:</h3>
+            <ol>
+                <li>Click "Setup Test Data" above</li>
+                <li>Navigate to <code>http://localhost:5173/dashboard</code> (make sure the dev server is running)</li>
+                <li>Look for the "Your Projects" section</li>
+                <li>Click "Open Project" on any project card</li>
+                <li>The modal should open with detailed project information</li>
+                <li>Test the different tabs: Overview, Content, Calendar, Analytics</li>
+                <li>Try the search and filter functionality in the Content tab</li>
+            </ol>
+        </div>
+
+        <div class="info">
+            <h3>✨ Features to test:</h3>
+            <ul>
+                <li><strong>Project Overview:</strong> View project details, channels, content types, target audience</li>
+                <li><strong>AI Content:</strong> Browse AI-generated content with engagement predictions</li>
+                <li><strong>Calendar View:</strong> See scheduled content with visual indicators</li>
+                <li><strong>Analytics:</strong> View performance metrics and platform distribution</li>
+                <li><strong>Content Actions:</strong> Edit, regenerate, pause/resume, and stop content</li>
+                <li><strong>Search & Filter:</strong> Find content by title, hashtags, or filter by status/platform</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const testProjects = [
+            {
+                id: 1,
+                name: "YouTube Tech Tutorials",
+                description: "Creating comprehensive tech tutorials for beginners and intermediate developers",
+                type: "video",
+                tags: ["tech", "tutorials", "youtube", "programming"],
+                createdAt: "2024-01-15T10:00:00Z",
+                status: "active",
+                duration: 30,
+                startDate: "2024-01-15T00:00:00Z",
+                endDate: "2024-02-15T00:00:00Z",
+                targetChannels: ["youtube"],
+                targetAudience: "Developers and tech enthusiasts",
+                brandVoice: "Educational and approachable",
+                contentGoals: ["Educate", "Build community", "Drive engagement"],
+                contentFrequency: "Weekly",
+                contentDescription: "In-depth tutorials covering web development, programming languages, and tech tools",
+                channelType: "Educational",
+                projectType: "Content Series"
+            },
+            {
+                id: 2,
+                name: "Instagram Fitness Journey",
+                description: "Documenting my fitness transformation with daily posts and tips",
+                type: "social",
+                tags: ["fitness", "health", "instagram", "motivation"],
+                createdAt: "2024-01-20T14:30:00Z",
+                status: "active",
+                duration: 90,
+                startDate: "2024-01-20T00:00:00Z",
+                endDate: "2024-04-20T00:00:00Z",
+                targetChannels: ["instagram", "facebook"],
+                targetAudience: "Fitness enthusiasts and beginners",
+                brandVoice: "Motivational and supportive",
+                contentGoals: ["Inspire", "Share progress", "Build community"],
+                contentFrequency: "Daily",
+                contentDescription: "Daily fitness updates, workout tips, nutrition advice, and motivational content",
+                channelType: "Lifestyle",
+                projectType: "Personal Brand"
+            },
+            {
+                id: 3,
+                name: "Podcast: Future of Work",
+                description: "Exploring how technology is reshaping the workplace",
+                type: "audio",
+                tags: ["podcast", "technology", "work", "future"],
+                createdAt: "2024-02-01T09:15:00Z",
+                status: "scheduled",
+                duration: 180,
+                startDate: "2024-02-01T00:00:00Z",
+                endDate: "2024-08-01T00:00:00Z",
+                targetChannels: ["spotify", "apple-podcasts"],
+                targetAudience: "Working professionals and business leaders",
+                brandVoice: "Thoughtful and analytical",
+                contentGoals: ["Inform", "Provoke discussion", "Network"],
+                contentFrequency: "Bi-weekly",
+                contentDescription: "Interviews with industry experts about AI, remote work, and workplace innovation",
+                channelType: "Business",
+                projectType: "Interview Series"
+            }
+        ];
+
+        const testContent = [
+            // Content for YouTube Tech Tutorials project
+            {
+                id: 1,
+                title: "React Hooks Deep Dive",
+                description: "Understanding useState, useEffect, and custom hooks with practical examples",
+                platform: "youtube",
+                contentType: "video",
+                status: "published",
+                createdAt: "2024-01-16T10:00:00Z",
+                scheduledAt: "2024-01-16T15:00:00Z",
+                projectId: 1,
+                hashtags: ["react", "hooks", "javascript", "tutorial"],
+                aiGenerated: true,
+                engagementPrediction: 85,
+                expectedReach: "2.5K-5K",
+                confidence: 92,
+                qualityScore: 88,
+                bestPostingTime: "2:00 PM EST",
+                metadata: {
+                    aiGenerated: true,
+                    recommendations: [
+                        "Add timestamps in description for better navigation",
+                        "Create companion blog post for written tutorial"
+                    ]
+                }
+            },
+            {
+                id: 2,
+                title: "CSS Grid vs Flexbox",
+                description: "When to use CSS Grid and when to use Flexbox for modern layouts",
+                platform: "youtube",
+                contentType: "video",
+                status: "scheduled",
+                createdAt: "2024-01-18T10:00:00Z",
+                scheduledAt: "2024-01-23T14:00:00Z",
+                projectId: 1,
+                hashtags: ["css", "grid", "flexbox", "webdev"],
+                aiGenerated: true,
+                engagementPrediction: 78,
+                expectedReach: "1.8K-3.5K",
+                confidence: 89,
+                qualityScore: 85,
+                bestPostingTime: "1:00 PM EST"
+            },
+            {
+                id: 3,
+                title: "JavaScript ES6 Features",
+                description: "Essential ES6 features every developer should know",
+                platform: "youtube",
+                contentType: "video",
+                status: "draft",
+                createdAt: "2024-01-20T10:00:00Z",
+                projectId: 1,
+                hashtags: ["javascript", "es6", "programming", "tutorial"],
+                aiGenerated: true,
+                engagementPrediction: 72,
+                expectedReach: "1.2K-2.8K",
+                confidence: 87,
+                qualityScore: 82,
+                bestPostingTime: "3:00 PM EST"
+            },
+            // Content for Instagram Fitness Journey project
+            {
+                id: 4,
+                title: "Morning Workout Routine",
+                description: "Start your day right with this energizing 20-minute workout",
+                platform: "instagram",
+                contentType: "video",
+                status: "published",
+                createdAt: "2024-01-21T07:00:00Z",
+                scheduledAt: "2024-01-21T08:00:00Z",
+                projectId: 2,
+                hashtags: ["fitness", "workout", "morning", "motivation"],
+                aiGenerated: false,
+                engagementPrediction: 65,
+                expectedReach: "800-1.5K",
+                confidence: 78,
+                qualityScore: 75,
+                bestPostingTime: "7:00 AM EST"
+            },
+            {
+                id: 5,
+                title: "Healthy Meal Prep Ideas",
+                description: "Quick and nutritious meal ideas for busy days",
+                platform: "instagram",
+                contentType: "image",
+                status: "scheduled",
+                createdAt: "2024-01-22T10:00:00Z",
+                scheduledAt: "2024-01-25T12:00:00Z",
+                projectId: 2,
+                hashtags: ["mealprep", "healthy", "nutrition", "fitness"],
+                aiGenerated: true,
+                engagementPrediction: 58,
+                expectedReach: "600-1.2K",
+                confidence: 82,
+                qualityScore: 79,
+                bestPostingTime: "11:00 AM EST"
+            },
+            // Content for Podcast project
+            {
+                id: 6,
+                title: "AI in the Workplace",
+                description: "How artificial intelligence is transforming modern work environments",
+                platform: "spotify",
+                contentType: "audio",
+                status: "processing",
+                createdAt: "2024-02-05T10:00:00Z",
+                scheduledAt: "2024-02-10T10:00:00Z",
+                projectId: 3,
+                hashtags: ["ai", "workplace", "technology", "future"],
+                aiGenerated: false,
+                engagementPrediction: 45,
+                expectedReach: "300-800",
+                confidence: 76,
+                qualityScore: 80,
+                bestPostingTime: "9:00 AM EST"
+            }
+        ];
+
+        function setupTestData() {
+            try {
+                // Store test data in localStorage
+                localStorage.setItem('localProjects', JSON.stringify(testProjects));
+                localStorage.setItem('localContent', JSON.stringify(testContent));
+
+                const resultsDiv = document.getElementById('results');
+
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Test data setup complete!</h3>
+                        <p>Successfully created ${testProjects.length} test projects and ${testContent.length} content items.</p>
+                    </div>
+
+                    <div class="projects-list">
+                        <h4>📊 Created Projects:</h4>
+                        ${testProjects.map(project => `
+                            <div class="project-item">
+                                <strong>${project.name}</strong> (ID: ${project.id}) - ${project.type}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="info">
+                        <h4>🚀 Next Steps:</h4>
+                        <p>1. Open <a href="http://localhost:5173/dashboard" target="_blank">http://localhost:5173/dashboard</a></p>
+                        <p>2. Click "Open Project" on any project in the "Your Projects" section</p>
+                        <p>3. Explore the modal with Overview, Content, Calendar, and Analytics tabs</p>
+                    </div>
+                `;
+
+                console.log('✅ Test data populated for Open Project functionality!');
+                console.log('📊 Created', testProjects.length, 'test projects');
+                console.log('📝 Created', testContent.length, 'test content items');
+
+            } catch (error) {
+                console.error('❌ Error setting up test data:', error);
+                document.getElementById('results').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #f5c6cb;">
+                        <h3>❌ Error setting up test data</h3>
+                        <p>Please check the browser console for details.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Check if data is already loaded
+        window.addEventListener('load', function() {
+            const existingProjects = localStorage.getItem('localProjects');
+            const existingContent = localStorage.getItem('localContent');
+
+            if (existingProjects && existingContent) {
+                document.getElementById('results').innerHTML = `
+                    <div class="success">
+                        <h3>📊 Existing test data found!</h3>
+                        <p>Test data is already loaded in your browser. You can proceed to test the functionality.</p>
+                        <p><a href="http://localhost:5173/dashboard" target="_blank">Go to Dashboard →</a></p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

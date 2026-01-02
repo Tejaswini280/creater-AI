@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler Fixes Test - Content Scheduling</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .test-step p {
+            margin: 5px 0;
+        }
+        .expected-result {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .actual-result {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #e9ecef;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .issue-section {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            margin: 20px 0;
+        }
+        .fix-section {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+            margin: 20px 0;
+        }
+        .test-checklist {
+            background-color: #e2e3e5;
+            border-left-color: #6c757d;
+        }
+        .test-checklist ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-checklist li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📅 Scheduler Fixes Test - Content Scheduling</h1>
+        <p>This test verifies that the form submission and filter functionality in the Scheduler page work correctly.</p>
+
+        <div class="test-step issue-section">
+            <h3>🐛 Issues Fixed</h3>
+            <p><strong>Issue 1: Form Submission Fails</strong></p>
+            <ul>
+                <li>❌ Form submission was throwing errors</li>
+                <li>❌ Content was not being saved or scheduled</li>
+                <li>❌ Error handling was incomplete</li>
+            </ul>
+            <p><strong>Issue 2: Filter Buttons Not Working</strong></p>
+            <ul>
+                <li>❌ "All Scheduled" and "This Week" buttons had no onClick handlers</li>
+                <li>❌ No filtering logic was implemented</li>
+                <li>❌ Results were not being filtered correctly</li>
+            </ul>
+        </div>
+
+        <div class="test-step fix-section">
+            <h3>✅ Fixes Implemented</h3>
+            <p><strong>Form Submission Fixes:</strong></p>
+            <ul>
+                <li>✅ Fixed API request structure to match backend expectations</li>
+                <li>✅ Added proper error handling with console logging</li>
+                <li>✅ Fixed form reset after successful submission</li>
+                <li>✅ Added proper TypeScript error typing</li>
+            </ul>
+            <p><strong>Filter Button Fixes:</strong></p>
+            <ul>
+                <li>✅ Added onClick handlers to filter buttons</li>
+                <li>✅ Implemented filtering logic with date-fns</li>
+                <li>✅ Added active filter state management</li>
+                <li>✅ Updated UI to show filtered results</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>Test Setup</h3>
+            <p>✅ Navigate to the Scheduler page at <code>localhost:5000/scheduler</code></p>
+            <p>✅ Verify the page loads without errors</p>
+            <p>✅ Confirm the "Schedule Content" button is visible</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Test 1: Form Submission</h3>
+            <p><strong>Step 1:</strong> Click "Schedule Content" button to open the form</p>
+            <p><strong>Step 2:</strong> Fill out the form with test data:</p>
+            <div class="code">
+                Title: "Test Content"
+                Description: "This is a test content description"
+                Platform: Instagram
+                Type: Short/Reel
+                Date: Select a future date
+                Time: Select any time slot
+            </div>
+            <p><strong>Step 3:</strong> Click "Schedule" button</p>
+            <p><strong>Expected Result:</strong> Content should be scheduled successfully with success toast</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Test 2: Filter Functionality</h3>
+            <p><strong>Step 1:</strong> After scheduling content, verify it appears in the list</p>
+            <p><strong>Step 2:</strong> Click "This Week" filter button</p>
+            <p><strong>Expected Result:</strong> Only content scheduled for this week should be visible</p>
+            <p><strong>Step 3:</strong> Click "All Scheduled" filter button</p>
+            <p><strong>Expected Result:</strong> All scheduled content should be visible</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Test 3: Error Handling</h3>
+            <p><strong>Step 1:</strong> Try to submit form without title</p>
+            <p><strong>Expected Result:</strong> Should show validation error</p>
+            <p><strong>Step 2:</strong> Try to submit form without date/time</p>
+            <p><strong>Expected Result:</strong> Should show validation error</p>
+            <p><strong>Step 3:</strong> Check browser console for any errors</p>
+            <p><strong>Expected Result:</strong> No console errors should appear</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Test 4: Form Reset</h3>
+            <p><strong>Step 1:</strong> After successful submission, verify form closes</p>
+            <p><strong>Step 2:</strong> Open form again</p>
+            <p><strong>Expected Result:</strong> Form should be empty and reset</p>
+            <p><strong>Step 3:</strong> Verify date and time are reset to defaults</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Test 5: Filter Button States</h3>
+            <p><strong>Step 1:</strong> Check initial state of filter buttons</p>
+            <p><strong>Expected Result:</strong> "All Scheduled" should be active (default)</p>
+            <p><strong>Step 2:</strong> Click "This Week" button</p>
+            <p><strong>Expected Result:</strong> "This Week" should be highlighted as active</p>
+            <p><strong>Step 3:</strong> Click "All Scheduled" button</p>
+            <p><strong>Expected Result:</strong> "All Scheduled" should be highlighted as active</p>
+        </div>
+
+        <div class="test-step expected-result">
+            <h3>✅ Expected Final Results</h3>
+            <p><strong>Form Submission should:</strong></p>
+            <ul>
+                <li>✅ Accept valid form data</li>
+                <li>✅ Submit to backend successfully</li>
+                <li>✅ Show success toast message</li>
+                <li>✅ Reset form and close after submission</li>
+                <li>✅ Update the content list immediately</li>
+                <li>✅ Handle errors gracefully with proper messages</li>
+            </ul>
+            <p><strong>Filter Buttons should:</strong></p>
+            <ul>
+                <li>✅ Be clickable and responsive</li>
+                <li>✅ Filter content correctly by date range</li>
+                <li>✅ Show visual feedback for active state</li>
+                <li>✅ Update the content list immediately</li>
+                <li>✅ Show appropriate empty state messages</li>
+            </ul>
+        </div>
+
+        <div class="test-step test-checklist">
+            <h3>🔍 Code Verification Checklist</h3>
+            <p><strong>Verify these code changes were implemented:</strong></p>
+            <ul>
+                <li>✅ Added date-fns imports for filtering (startOfWeek, endOfWeek, isWithinInterval)</li>
+                <li>✅ Added activeFilter state management</li>
+                <li>✅ Fixed API request structure in mutationFn</li>
+                <li>✅ Added proper error handling with console.error</li>
+                <li>✅ Implemented filteredContent logic</li>
+                <li>✅ Added onClick handlers to filter buttons</li>
+                <li>✅ Updated button variants to show active state</li>
+                <li>✅ Added form reset functionality</li>
+                <li>✅ Updated empty state messages based on filter</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>🐛 Common Issues to Check</h3>
+            <p><strong>If the form doesn't work, check:</strong></p>
+            <ul>
+                <li>❌ Missing date-fns imports</li>
+                <li>❌ Incorrect API request structure</li>
+                <li>❌ Missing error handling</li>
+                <li>❌ Form validation not working</li>
+                <li>❌ Backend API endpoint not responding</li>
+                <li>❌ Console errors in browser developer tools</li>
+            </ul>
+            <p><strong>If filters don't work, check:</strong></p>
+            <ul>
+                <li>❌ Missing onClick handlers on filter buttons</li>
+                <li>❌ Incorrect date filtering logic</li>
+                <li>❌ Missing activeFilter state</li>
+                <li>❌ FilteredContent not being used in render</li>
+                <li>❌ Date-fns functions not imported correctly</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>📝 Test Results</h3>
+            <p>Use the buttons below to record your test results:</p>
+            <button class="button" onclick="markTestResult('success')">✅ All Tests Passed</button>
+            <button class="button" onclick="markTestResult('partial')">⚠️ Partial Success</button>
+            <button class="button" onclick="markTestResult('error')">❌ Tests Failed</button>
+            <button class="button" onclick="resetTest()">🔄 Reset Test</button>
+        </div>
+
+        <div id="test-result" class="test-step" style="display: none;">
+            <h3 id="result-title">Test Result</h3>
+            <p id="result-message">Test result will appear here</p>
+        </div>
+
+        <div class="test-step">
+            <h3>🔧 Technical Details</h3>
+            <p><strong>Key Changes Made:</strong></p>
+            <div class="code">
+// Added filter state
+const [activeFilter, setActiveFilter] = useState<'all' | 'thisWeek'>('all');
+
+// Fixed API request structure
+const response = await apiRequest('POST', '/api/content', {
+  title: contentData.title,
+  description: contentData.description,
+  platform: contentData.platform,
+  contentType: contentData.contentType,
+  status: 'scheduled',
+  scheduledAt: contentData.scheduledAt
+});
+
+// Added filtering logic
+const filteredContent = scheduledContent?.filter((item: any) => {
+  if (activeFilter === 'all') return true;
+  if (activeFilter === 'thisWeek') {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const scheduledDate = new Date(item.scheduledAt);
+    return isWithinInterval(scheduledDate, { start: weekStart, end: weekEnd });
+  }
+  return true;
+}) || [];
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function markTestResult(result) {
+            const resultDiv = document.getElementById('test-result');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            
+            resultDiv.style.display = 'block';
+            
+            if (result === 'success') {
+                resultDiv.className = 'test-step success';
+                resultTitle.textContent = '✅ All Tests Passed Successfully!';
+                resultMessage.textContent = 'Both form submission and filter functionality are working correctly. The scheduler is fully functional.';
+            } else if (result === 'partial') {
+                resultDiv.className = 'test-step expected-result';
+                resultTitle.textContent = '⚠️ Partial Success';
+                resultMessage.textContent = 'Some functionality is working, but there may be minor issues. Please check the console for errors.';
+            } else {
+                resultDiv.className = 'test-step error';
+                resultTitle.textContent = '❌ Tests Failed';
+                resultMessage.textContent = 'The scheduler is not working as expected. Please check the console for errors and verify the implementation.';
+            }
+        }
+
+        function resetTest() {
+            document.getElementById('test-result').style.display = 'none';
+        }
+
+        // Auto-run test when page loads
+        window.addEventListener('load', function() {
+            console.log('Scheduler Fixes Test loaded. Please follow the test steps above.');
+        });
+    </script>
+</body>
+</html> 

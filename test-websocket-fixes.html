@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Fixes Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .info {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 WebSocket Connection Fixes Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: WebSocket Disable Mechanism</h2>
+        <p>This test verifies that WebSocket connections are properly disabled to prevent connection errors.</p>
+        <button onclick="testWebSocketDisabled()">Test WebSocket Disabled</button>
+        <div id="websocket-test-result"></div>
+        <div id="websocket-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Project Creation Flow</h2>
+        <p>This test verifies that the "Create Project" button navigates to the Project Wizard instead of opening a modal.</p>
+        <button onclick="testProjectCreationFlow()">Test Project Creation Navigation</button>
+        <div id="project-test-result"></div>
+        <div id="project-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Project Details Page Loading</h2>
+        <p>This test verifies that the project details page loads without WebSocket errors.</p>
+        <button onclick="testProjectDetailsLoading()">Test Project Details Loading</button>
+        <div id="details-test-result"></div>
+        <div id="details-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Dashboard Navigation</h2>
+        <p>This test verifies that dashboard navigation works properly without WebSocket interference.</p>
+        <button onclick="testDashboardNavigation()">Test Dashboard Navigation</button>
+        <div id="dashboard-test-result"></div>
+        <div id="dashboard-log" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message) {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setResult(elementId, message, isSuccess) {
+            const resultElement = document.getElementById(elementId);
+            resultElement.innerHTML = `<span class="${isSuccess ? 'success' : 'error'}">${message}</span>`;
+        }
+
+        function testWebSocketDisabled() {
+            log('websocket-log', 'Starting WebSocket disable test...');
+            
+            try {
+                // Try to create a WebSocket connection
+                log('websocket-log', 'Attempting to create WebSocket connection...');
+                const ws = new WebSocket('ws://localhost:5000/test');
+                
+                // If we get here, WebSocket is not disabled
+                setResult('websocket-test-result', '❌ FAILED: WebSocket is not disabled', false);
+                log('websocket-log', 'ERROR: WebSocket connection was allowed');
+                
+                ws.close();
+            } catch (error) {
+                // If we get an error, WebSocket is properly disabled
+                if (error.message.includes('disabled')) {
+                    setResult('websocket-test-result', '✅ SUCCESS: WebSocket is properly disabled', true);
+                    log('websocket-log', 'SUCCESS: WebSocket connection blocked with message: ' + error.message);
+                } else {
+                    setResult('websocket-test-result', '⚠️ PARTIAL: WebSocket blocked but with unexpected error', false);
+                    log('websocket-log', 'WARNING: WebSocket blocked with unexpected error: ' + error.message);
+                }
+            }
+        }
+
+        function testProjectCreationFlow() {
+            log('project-log', 'Starting project creation flow test...');
+            
+            // Check if we're on the dashboard page
+            if (window.location.pathname === '/dashboard' || window.location.pathname === '/') {
+                log('project-log', 'On dashboard page, looking for Create Project button...');
+                
+                // Look for the Create Project button
+                const createProjectButtons = document.querySelectorAll('button');
+                let foundButton = false;
+                
+                createProjectButtons.forEach(button => {
+                    if (button.textContent && button.textContent.includes('New Project')) {
+                        foundButton = true;
+                        log('project-log', 'Found "New Project" button');
+                        
+                        // Check if button has onclick handler that navigates to project-wizard
+                        const onclick = button.getAttribute('onclick') || button.onclick;
+                        if (onclick && onclick.toString().includes('project-wizard')) {
+                            setResult('project-test-result', '✅ SUCCESS: Button navigates to Project Wizard', true);
+                            log('project-log', 'SUCCESS: Button properly configured to navigate to /project-wizard');
+                        } else {
+                            setResult('project-test-result', '❌ FAILED: Button does not navigate to Project Wizard', false);
+                            log('project-log', 'ERROR: Button onclick handler: ' + (onclick ? onclick.toString() : 'none'));
+                        }
+                    }
+                });
+                
+                if (!foundButton) {
+                    setResult('project-test-result', '❌ FAILED: Create Project button not found', false);
+                    log('project-log', 'ERROR: Could not find "New Project" button on page');
+                }
+            } else {
+                log('project-log', 'Not on dashboard page, navigating to test...');
+                setResult('project-test-result', '⚠️ INFO: Navigate to dashboard to test this feature', false);
+            }
+        }
+
+        function testProjectDetailsLoading() {
+            log('details-log', 'Starting project details loading test...');
+            
+            // Create a test project in localStorage
+            const testProject = {
+                id: 'test-project-' + Date.now(),
+                name: 'Test Project for WebSocket Fix',
+                description: 'A test project to verify WebSocket fixes work',
+                contentType: 'Social Media',
+                status: 'draft',
+                createdAt: new Date().toISOString()
+            };
+            
+            log('details-log', 'Creating test project in localStorage...');
+            
+            try {
+                // Store test project
+                const localProjects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+                localProjects.push(testProject);
+                localStorage.setItem('localProjects', JSON.stringify(localProjects));
+                localStorage.setItem('currentProjectId', testProject.id);
+                
+                log('details-log', 'Test project created with ID: ' + testProject.id);
+                
+                // Test navigation to project details
+                const testUrl = `/project-details?id=${testProject.id}`;
+                log('details-log', 'Testing navigation to: ' + testUrl);
+                
+                setResult('details-test-result', '✅ SUCCESS: Test project created, ready for navigation test', true);
+                log('details-log', 'SUCCESS: You can now navigate to project details to test WebSocket fixes');
+                log('details-log', 'URL to test: ' + window.location.origin + testUrl);
+                
+            } catch (error) {
+                setResult('details-test-result', '❌ FAILED: Could not create test project', false);
+                log('details-log', 'ERROR: ' + error.message);
+            }
+        }
+
+        function testDashboardNavigation() {
+            log('dashboard-log', 'Starting dashboard navigation test...');
+            
+            // Test basic navigation functions
+            try {
+                log('dashboard-log', 'Testing window.location access...');
+                const currentUrl = window.location.href;
+                log('dashboard-log', 'Current URL: ' + currentUrl);
+                
+                log('dashboard-log', 'Testing localStorage access...');
+                const token = localStorage.getItem('token');
+                log('dashboard-log', 'Token exists: ' + (token ? 'Yes' : 'No'));
+                
+                log('dashboard-log', 'Testing navigation functions...');
+                if (typeof window.history !== 'undefined' && typeof window.history.pushState === 'function') {
+                    log('dashboard-log', 'History API available');
+                    setResult('dashboard-test-result', '✅ SUCCESS: Dashboard navigation functions are working', true);
+                } else {
+                    log('dashboard-log', 'History API not available');
+                    setResult('dashboard-test-result', '❌ FAILED: History API not available', false);
+                }
+                
+            } catch (error) {
+                setResult('dashboard-test-result', '❌ FAILED: Navigation test error', false);
+                log('dashboard-log', 'ERROR: ' + error.message);
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', function() {
+            console.log('🔧 WebSocket Fixes Test Page Loaded');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('🌐 User Agent:', navigator.userAgent);
+            
+            // Show current status
+            document.body.insertAdjacentHTML('afterbegin', `
+                <div class="test-section">
+                    <h2>Current Status</h2>
+                    <p><strong>URL:</strong> ${window.location.href}</p>
+                    <p><strong>WebSocket Available:</strong> ${typeof WebSocket !== 'undefined' ? 'Yes' : 'No'}</p>
+                    <p><strong>WebSocket Disabled:</strong> ${typeof WebSocket !== 'undefined' && WebSocket.toString().includes('disabled') ? 'Yes' : 'No'}</p>
+                    <p><strong>Local Storage:</strong> ${typeof localStorage !== 'undefined' ? 'Available' : 'Not Available'}</p>
+                </div>
+            `);
+        });
+    </script>
+</body>
+</html>

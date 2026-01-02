@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Wizard Step Progression Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-section.success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .test-section.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .test-section.warning {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .step {
+            text-align: center;
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 0 5px;
+        }
+        .step.active {
+            background: #007bff;
+            color: white;
+        }
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+        .step.pending {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+        .form-simulation {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .form-field {
+            margin: 10px 0;
+        }
+        .form-field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-field input, .form-field select, .form-field textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .validation-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .checkbox-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .checkbox-item.selected {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧙 Project Wizard Step Progression Test</h1>
+        <p>Testing the exact flow: Dashboard → New Project → Project Basics → Content Creation → Integrations → Schedule & Plan</p>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step-1">
+                <div>📝</div>
+                <div>Project Basics</div>
+            </div>
+            <div class="step pending" id="step-2">
+                <div>🎨</div>
+                <div>Content Creation</div>
+            </div>
+            <div class="step pending" id="step-3">
+                <div>🔗</div>
+                <div>Integrations</div>
+            </div>
+            <div class="step pending" id="step-4">
+                <div>📅</div>
+                <div>Schedule & Plan</div>
+            </div>
+        </div>
+
+        <!-- Current Step Display -->
+        <div id="current-step-display" class="test-section">
+            <h3>Current Step: <span id="current-step-name">Project Basics</span></h3>
+            <p>Step <span id="current-step-number">1</span> of 4</p>
+        </div>
+
+        <!-- Form Simulation -->
+        <div id="form-container">
+            <!-- Step 1: Project Basics -->
+            <div id="step-1-form" class="form-simulation">
+                <h3>📝 Step 1: Project Basics</h3>
+                
+                <div class="form-field">
+                    <label for="project-name">Project Name *</label>
+                    <input type="text" id="project-name" placeholder="Enter your project name..." />
+                    <div id="project-name-error" class="validation-error" style="display: none;">Project name must be at least 3 characters</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="project-description">Project Description</label>
+                    <textarea id="project-description" placeholder="Describe your project goals and objectives..." rows="3"></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label>Content Type *</label>
+                    <div class="checkbox-group" id="content-types">
+                        <div class="checkbox-item" data-value="fitness">🏃 Fitness</div>
+                        <div class="checkbox-item" data-value="tech">📱 Technology</div>
+                        <div class="checkbox-item" data-value="lifestyle">✨ Lifestyle</div>
+                        <div class="checkbox-item" data-value="business">💼 Business</div>
+                        <div class="checkbox-item" data-value="education">📚 Education</div>
+                    </div>
+                    <div id="content-type-error" class="validation-error" style="display: none;">Please select a content type</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="category">Category *</label>
+                    <select id="category">
+                        <option value="">Select a category</option>
+                        <option value="beginner">Beginner Level</option>
+                        <option value="intermediate">Intermediate Level</option>
+                        <option value="advanced">Advanced Level</option>
+                        <option value="professional">Professional Level</option>
+                    </select>
+                    <div id="category-error" class="validation-error" style="display: none;">Please select a category</div>
+                </div>
+
+                <div class="form-field">
+                    <label>Project Goals *</label>
+                    <div class="checkbox-group" id="project-goals">
+                        <div class="checkbox-item" data-value="brand-awareness">Increase Brand Awareness</div>
+                        <div class="checkbox-item" data-value="website-traffic">Drive Website Traffic</div>
+                        <div class="checkbox-item" data-value="generate-leads">Generate Leads</div>
+                        <div class="checkbox-item" data-value="boost-engagement">Boost Engagement</div>
+                        <div class="checkbox-item" data-value="build-community">Build Community</div>
+                        <div class="checkbox-item" data-value="increase-sales">Increase Sales</div>
+                    </div>
+                    <div id="goals-error" class="validation-error" style="display: none;">Please select at least one goal</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Content Creation -->
+            <div id="step-2-form" class="form-simulation" style="display: none;">
+                <h3>🎨 Step 2: Content Creation</h3>
+                
+                <div class="form-field">
+                    <label>Content Formats *</label>
+                    <div class="checkbox-group" id="content-formats">
+                        <div class="checkbox-item" data-value="video">📹 Video Content</div>
+                        <div class="checkbox-item" data-value="image">🖼️ Image Posts</div>
+                        <div class="checkbox-item" data-value="carousel">📱 Carousel Posts</div>
+                        <div class="checkbox-item" data-value="stories">📖 Stories</div>
+                        <div class="checkbox-item" data-value="reels">🎬 Reels/Shorts</div>
+                        <div class="checkbox-item" data-value="live">🔴 Live Streams</div>
+                    </div>
+                    <div id="content-formats-error" class="validation-error" style="display: none;">Please select at least one content format</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="posting-frequency">Posting Frequency *</label>
+                    <select id="posting-frequency">
+                        <option value="">Select posting frequency</option>
+                        <option value="daily">Daily</option>
+                        <option value="3-times-week">3 times per week</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="bi-weekly">Bi-weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                    <div id="posting-frequency-error" class="validation-error" style="display: none;">Please select posting frequency</div>
+                </div>
+
+                <div class="form-field">
+                    <label>Content Themes *</label>
+                    <div class="checkbox-group" id="content-themes">
+                        <div class="checkbox-item" data-value="educational">Educational Content</div>
+                        <div class="checkbox-item" data-value="behind-scenes">Behind the Scenes</div>
+                        <div class="checkbox-item" data-value="user-generated">User Generated Content</div>
+                        <div class="checkbox-item" data-value="product-showcase">Product Showcases</div>
+                        <div class="checkbox-item" data-value="industry-news">Industry News</div>
+                        <div class="checkbox-item" data-value="tips-tutorials">Tips & Tutorials</div>
+                    </div>
+                    <div id="content-themes-error" class="validation-error" style="display: none;">Please select at least one theme</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="brand-voice">Brand Voice *</label>
+                    <select id="brand-voice">
+                        <option value="">Select brand voice</option>
+                        <option value="professional">Professional</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="authoritative">Authoritative</option>
+                        <option value="playful">Playful</option>
+                        <option value="inspirational">Inspirational</option>
+                        <option value="educational">Educational</option>
+                    </select>
+                    <div id="brand-voice-error" class="validation-error" style="display: none;">Please select brand voice</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="content-length">Content Length *</label>
+                    <select id="content-length">
+                        <option value="">Select content length</option>
+                        <option value="short">Short (< 100 words)</option>
+                        <option value="medium">Medium (100-300 words)</option>
+                        <option value="long">Long (300+ words)</option>
+                        <option value="mixed">Mixed lengths</option>
+                    </select>
+                    <div id="content-length-error" class="validation-error" style="display: none;">Please select content length</div>
+                </div>
+            </div>
+
+            <!-- Step 3: Integrations -->
+            <div id="step-3-form" class="form-simulation" style="display: none;">
+                <h3>🔗 Step 3: Integrations</h3>
+                
+                <div class="form-field">
+                    <label>Social Media Platforms *</label>
+                    <div class="checkbox-group" id="platforms">
+                        <div class="checkbox-item" data-value="instagram">📷 Instagram</div>
+                        <div class="checkbox-item" data-value="facebook">📘 Facebook</div>
+                        <div class="checkbox-item" data-value="linkedin">💼 LinkedIn</div>
+                        <div class="checkbox-item" data-value="youtube">📺 YouTube</div>
+                        <div class="checkbox-item" data-value="twitter">🐦 Twitter/X</div>
+                        <div class="checkbox-item" data-value="tiktok">🎵 TikTok</div>
+                    </div>
+                    <div id="platforms-error" class="validation-error" style="display: none;">Please select at least one platform</div>
+                </div>
+
+                <div class="form-field">
+                    <label>AI Tools (Optional)</label>
+                    <div class="checkbox-group" id="ai-tools">
+                        <div class="checkbox-item" data-value="content-generation">Content Generation</div>
+                        <div class="checkbox-item" data-value="image-creation">Image Creation</div>
+                        <div class="checkbox-item" data-value="video-editing">Video Editing</div>
+                        <div class="checkbox-item" data-value="hashtag-research">Hashtag Research</div>
+                        <div class="checkbox-item" data-value="analytics">Analytics</div>
+                        <div class="checkbox-item" data-value="scheduling">Scheduling</div>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <input type="checkbox" id="auto-schedule"> Enable automatic scheduling
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label for="timezone">Time Zone</label>
+                    <select id="timezone">
+                        <option value="UTC">UTC</option>
+                        <option value="EST">Eastern Time</option>
+                        <option value="PST">Pacific Time</option>
+                        <option value="GMT">Greenwich Mean Time</option>
+                        <option value="IST">India Standard Time</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 4: Schedule & Plan -->
+            <div id="step-4-form" class="form-simulation" style="display: none;">
+                <h3>📅 Step 4: Schedule & Plan</h3>
+                
+                <div class="form-field">
+                    <label for="start-date">Project Start Date *</label>
+                    <input type="date" id="start-date" />
+                    <div id="start-date-error" class="validation-error" style="display: none;">Please select a start date</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="duration">Project Duration *</label>
+                    <select id="duration">
+                        <option value="">Select project duration</option>
+                        <option value="1-month">1 Month</option>
+                        <option value="3-months">3 Months</option>
+                        <option value="6-months">6 Months</option>
+                        <option value="1-year">1 Year</option>
+                        <option value="ongoing">Ongoing</option>
+                    </select>
+                    <div id="duration-error" class="validation-error" style="display: none;">Please select project duration</div>
+                </div>
+
+                <div class="form-field">
+                    <label for="budget">Budget (Optional)</label>
+                    <select id="budget">
+                        <option value="">Select budget range</option>
+                        <option value="under-1000">Under $1,000</option>
+                        <option value="1000-5000">$1,000 - $5,000</option>
+                        <option value="5000-10000">$5,000 - $10,000</option>
+                        <option value="10000-plus">$10,000+</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="team-members">Team Members (Optional)</label>
+                    <textarea id="team-members" placeholder="Enter team member emails, separated by commas..." rows="3"></textarea>
+                </div>
+
+                <div style="background: #e7f3ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                    <h4 style="color: #0066cc; margin: 0 0 10px 0;">Ready to Create Your Project?</h4>
+                    <p style="color: #0066cc; margin: 0; font-size: 14px;">
+                        Review all the information above and click "Create Project" to finalize your social media project setup.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div style="display: flex; justify-content: space-between; margin: 30px 0; padding: 20px; background: white; border-radius: 8px; border: 1px solid #ddd;">
+            <button class="button" id="prev-btn" onclick="previousStep()" disabled>← Previous</button>
+            <button class="button" id="next-btn" onclick="nextStep()">Next →</button>
+            <button class="button success" id="create-btn" onclick="createProject()" style="display: none;">✅ Create Project</button>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-section" id="test-results">
+            <h3>🧪 Test Results</h3>
+            <div id="test-log" class="test-result info">Ready to test step progression...</div>
+        </div>
+
+        <!-- Test Controls -->
+        <div style="text-align: center; margin: 30px 0;">
+            <button class="button success" onclick="runAutomatedTest()">🚀 Run Automated Test</button>
+            <button class="button" onclick="resetTest()">🔄 Reset Test</button>
+            <button class="button" onclick="fillSampleData()">📝 Fill Sample Data</button>
+        </div>
+
+        <!-- Debug Information -->
+        <div class="test-section" id="debug-info">
+            <h3>🔍 Debug Information</h3>
+            <div id="debug-log" class="test-result info">
+                <strong>Current State:</strong><br>
+                - Current Step: <span id="debug-current-step">1</span><br>
+                - Form Valid: <span id="debug-form-valid">false</span><br>
+                - Required Fields: <span id="debug-required-fields">Not checked</span><br>
+                - Validation Errors: <span id="debug-validation-errors">None</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let projectData = {};
+        let testLog = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            updateDebugInfo();
+            log('Project Wizard Step Progression Test initialized');
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Checkbox groups
+            document.querySelectorAll('.checkbox-group').forEach(group => {
+                group.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('checkbox-item')) {
+                        e.target.classList.toggle('selected');
+                        updateDebugInfo();
+                    }
+                });
+            });
+
+            // Form inputs
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('change', updateDebugInfo);
+                input.addEventListener('input', updateDebugInfo);
+            });
+        }
+
+        // Log function
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push({ message: logEntry, type });
+            
+            const logDiv = document.getElementById('test-log');
+            logDiv.className = `test-result ${type}`;
+            logDiv.innerHTML = testLog.map(entry => 
+                `<div class="${entry.type}">${entry.message}</div>`
+            ).join('');
+            
+            console.log(logEntry);
+        }
+
+        // Update step indicator
+        function updateStepIndicator() {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.classList.remove('active', 'completed', 'pending');
+                
+                if (i < currentStep) {
+                    step.classList.add('completed');
+                } else if (i === currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.add('pending');
+                }
+            }
+
+            // Update current step display
+            const stepNames = ['Project Basics', 'Content Creation', 'Integrations', 'Schedule & Plan'];
+            document.getElementById('current-step-name').textContent = stepNames[currentStep - 1];
+            document.getElementById('current-step-number').textContent = currentStep;
+        }
+
+        // Show current step form
+        function showCurrentStepForm() {
+            // Hide all forms
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step-${i}-form`).style.display = 'none';
+            }
+            
+            // Show current form
+            document.getElementById(`step-${currentStep}-form`).style.display = 'block';
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = currentStep === 1;
+            document.getElementById('next-btn').style.display = currentStep === 4 ? 'none' : 'inline-block';
+            document.getElementById('create-btn').style.display = currentStep === 4 ? 'inline-block' : 'none';
+        }
+
+        // Validate current step
+        function validateCurrentStep() {
+            let isValid = true;
+            let errors = [];
+
+            // Clear previous errors
+            document.querySelectorAll('.validation-error').forEach(error => {
+                error.style.display = 'none';
+            });
+
+            switch (currentStep) {
+                case 1:
+                    // Project name
+                    const projectName = document.getElementById('project-name').value.trim();
+                    if (projectName.length < 3) {
+                        document.getElementById('project-name-error').style.display = 'block';
+                        errors.push('Project name must be at least 3 characters');
+                        isValid = false;
+                    }
+
+                    // Content type
+                    const selectedContentType = document.querySelector('#content-types .checkbox-item.selected');
+                    if (!selectedContentType) {
+                        document.getElementById('content-type-error').style.display = 'block';
+                        errors.push('Please select a content type');
+                        isValid = false;
+                    }
+
+                    // Category
+                    const category = document.getElementById('category').value;
+                    if (!category) {
+                        document.getElementById('category-error').style.display = 'block';
+                        errors.push('Please select a category');
+                        isValid = false;
+                    }
+
+                    // Goals
+                    const selectedGoals = document.querySelectorAll('#project-goals .checkbox-item.selected');
+                    if (selectedGoals.length === 0) {
+                        document.getElementById('goals-error').style.display = 'block';
+                        errors.push('Please select at least one goal');
+                        isValid = false;
+                    }
+                    break;
+
+                case 2:
+                    // Content formats
+                    const selectedFormats = document.querySelectorAll('#content-formats .checkbox-item.selected');
+                    if (selectedFormats.length === 0) {
+                        document.getElementById('content-formats-error').style.display = 'block';
+                        errors.push('Please select at least one content format');
+                        isValid = false;
+                    }
+
+                    // Posting frequency
+                    const postingFrequency = document.getElementById('posting-frequency').value;
+                    if (!postingFrequency) {
+                        document.getElementById('posting-frequency-error').style.display = 'block';
+                        errors.push('Please select posting frequency');
+                        isValid = false;
+                    }
+
+                    // Content themes
+                    const selectedThemes = document.querySelectorAll('#content-themes .checkbox-item.selected');
+                    if (selectedThemes.length === 0) {
+                        document.getElementById('content-themes-error').style.display = 'block';
+                        errors.push('Please select at least one theme');
+                        isValid = false;
+                    }
+
+                    // Brand voice
+                    const brandVoice = document.getElementById('brand-voice').value;
+                    if (!brandVoice) {
+                        document.getElementById('brand-voice-error').style.display = 'block';
+                        errors.push('Please select brand voice');
+                        isValid = false;
+                    }
+
+                    // Content length
+                    const contentLength = document.getElementById('content-length').value;
+                    if (!contentLength) {
+                        document.getElementById('content-length-error').style.display = 'block';
+                        errors.push('Please select content length');
+                        isValid = false;
+                    }
+                    break;
+
+                case 3:
+                    // Platforms
+                    const selectedPlatforms = document.querySelectorAll('#platforms .checkbox-item.selected');
+                    if (selectedPlatforms.length === 0) {
+                        document.getElementById('platforms-error').style.display = 'block';
+                        errors.push('Please select at least one platform');
+                        isValid = false;
+                    }
+                    break;
+
+                case 4:
+                    // Start date
+                    const startDate = document.getElementById('start-date').value;
+                    if (!startDate) {
+                        document.getElementById('start-date-error').style.display = 'block';
+                        errors.push('Please select a start date');
+                        isValid = false;
+                    }
+
+                    // Duration
+                    const duration = document.getElementById('duration').value;
+                    if (!duration) {
+                        document.getElementById('duration-error').style.display = 'block';
+                        errors.push('Please select project duration');
+                        isValid = false;
+                    }
+                    break;
+            }
+
+            return { isValid, errors };
+        }
+
+        // Next step
+        function nextStep() {
+            const validation = validateCurrentStep();
+            
+            if (!validation.isValid) {
+                log(`Step ${currentStep} validation failed: ${validation.errors.join(', ')}`, 'error');
+                return;
+            }
+
+            // Save current step data
+            saveCurrentStepData();
+            
+            if (currentStep < 4) {
+                currentStep++;
+                updateStepIndicator();
+                showCurrentStepForm();
+                updateDebugInfo();
+                log(`Advanced to step ${currentStep}: ${['Project Basics', 'Content Creation', 'Integrations', 'Schedule & Plan'][currentStep - 1]}`, 'success');
+            }
+        }
+
+        // Previous step
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepIndicator();
+                showCurrentStepForm();
+                updateDebugInfo();
+                log(`Went back to step ${currentStep}: ${['Project Basics', 'Content Creation', 'Integrations', 'Schedule & Plan'][currentStep - 1]}`, 'info');
+            }
+        }
+
+        // Save current step data
+        function saveCurrentStepData() {
+            const stepData = {};
+            
+            switch (currentStep) {
+                case 1:
+                    stepData.name = document.getElementById('project-name').value;
+                    stepData.description = document.getElementById('project-description').value;
+                    stepData.contentType = document.querySelector('#content-types .checkbox-item.selected')?.dataset.value;
+                    stepData.category = document.getElementById('category').value;
+                    stepData.goals = Array.from(document.querySelectorAll('#project-goals .checkbox-item.selected')).map(el => el.dataset.value);
+                    projectData.basics = stepData;
+                    break;
+                case 2:
+                    stepData.contentFormats = Array.from(document.querySelectorAll('#content-formats .checkbox-item.selected')).map(el => el.dataset.value);
+                    stepData.postingFrequency = document.getElementById('posting-frequency').value;
+                    stepData.contentThemes = Array.from(document.querySelectorAll('#content-themes .checkbox-item.selected')).map(el => el.dataset.value);
+                    stepData.brandVoice = document.getElementById('brand-voice').value;
+                    stepData.contentLength = document.getElementById('content-length').value;
+                    projectData.content = stepData;
+                    break;
+                case 3:
+                    stepData.platforms = Array.from(document.querySelectorAll('#platforms .checkbox-item.selected')).map(el => el.dataset.value);
+                    stepData.aiTools = Array.from(document.querySelectorAll('#ai-tools .checkbox-item.selected')).map(el => el.dataset.value);
+                    stepData.autoSchedule = document.getElementById('auto-schedule').checked;
+                    stepData.timezone = document.getElementById('timezone').value;
+                    projectData.integrations = stepData;
+                    break;
+                case 4:
+                    stepData.startDate = document.getElementById('start-date').value;
+                    stepData.duration = document.getElementById('duration').value;
+                    stepData.budget = document.getElementById('budget').value;
+                    stepData.teamMembers = document.getElementById('team-members').value.split(',').map(m => m.trim()).filter(Boolean);
+                    projectData.schedule = stepData;
+                    break;
+            }
+            
+            log(`Saved step ${currentStep} data: ${Object.keys(stepData).length} fields`, 'info');
+        }
+
+        // Create project
+        function createProject() {
+            const validation = validateCurrentStep();
+            
+            if (!validation.isValid) {
+                log(`Final step validation failed: ${validation.errors.join(', ')}`, 'error');
+                return;
+            }
+
+            saveCurrentStepData();
+            
+            log('🎉 Project creation successful!', 'success');
+            log(`Project data: ${JSON.stringify(projectData, null, 2)}`, 'info');
+            
+            alert('🎉 Project Created Successfully!\n\nAll steps completed and data saved. In a real application, this would redirect to the dashboard.');
+        }
+
+        // Update debug info
+        function updateDebugInfo() {
+            const validation = validateCurrentStep();
+            
+            document.getElementById('debug-current-step').textContent = currentStep;
+            document.getElementById('debug-form-valid').textContent = validation.isValid;
+            document.getElementById('debug-required-fields').textContent = validation.errors.length === 0 ? 'All valid' : `${validation.errors.length} errors`;
+            document.getElementById('debug-validation-errors').textContent = validation.errors.length === 0 ? 'None' : validation.errors.join(', ');
+        }
+
+        // Fill sample data
+        function fillSampleData() {
+            // Step 1
+            document.getElementById('project-name').value = 'Sample Social Media Project';
+            document.getElementById('project-description').value = 'A comprehensive social media campaign for brand awareness';
+            document.querySelector('#content-types .checkbox-item[data-value="business"]').classList.add('selected');
+            document.getElementById('category').value = 'intermediate';
+            document.querySelector('#project-goals .checkbox-item[data-value="brand-awareness"]').classList.add('selected');
+            document.querySelector('#project-goals .checkbox-item[data-value="boost-engagement"]').classList.add('selected');
+
+            // Step 2
+            document.querySelector('#content-formats .checkbox-item[data-value="video"]').classList.add('selected');
+            document.querySelector('#content-formats .checkbox-item[data-value="image"]').classList.add('selected');
+            document.getElementById('posting-frequency').value = '3-times-week';
+            document.querySelector('#content-themes .checkbox-item[data-value="educational"]').classList.add('selected');
+            document.querySelector('#content-themes .checkbox-item[data-value="tips-tutorials"]').classList.add('selected');
+            document.getElementById('brand-voice').value = 'professional';
+            document.getElementById('content-length').value = 'medium';
+
+            // Step 3
+            document.querySelector('#platforms .checkbox-item[data-value="instagram"]').classList.add('selected');
+            document.querySelector('#platforms .checkbox-item[data-value="linkedin"]').classList.add('selected');
+            document.querySelector('#ai-tools .checkbox-item[data-value="content-generation"]').classList.add('selected');
+            document.getElementById('auto-schedule').checked = true;
+            document.getElementById('timezone').value = 'EST';
+
+            // Step 4
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('start-date').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('duration').value = '3-months';
+            document.getElementById('budget').value = '1000-5000';
+            document.getElementById('team-members').value = 'john@example.com, sarah@example.com';
+
+            updateDebugInfo();
+            log('Sample data filled in all steps', 'success');
+        }
+
+        // Run automated test
+        function runAutomatedTest() {
+            log('🚀 Starting automated test...', 'info');
+            
+            // Fill sample data first
+            fillSampleData();
+            
+            // Test each step progression
+            setTimeout(() => {
+                log('Testing step 1 → 2 progression...', 'info');
+                nextStep();
+                
+                setTimeout(() => {
+                    log('Testing step 2 → 3 progression...', 'info');
+                    nextStep();
+                    
+                    setTimeout(() => {
+                        log('Testing step 3 → 4 progression...', 'info');
+                        nextStep();
+                        
+                        setTimeout(() => {
+                            log('Testing final project creation...', 'info');
+                            createProject();
+                            
+                            log('✅ Automated test completed successfully!', 'success');
+                        }, 1000);
+                    }, 1000);
+                }, 1000);
+            }, 1000);
+        }
+
+        // Reset test
+        function resetTest() {
+            currentStep = 1;
+            projectData = {};
+            testLog = [];
+            
+            // Clear all form data
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                }
+            });
+            
+            // Clear all selections
+            document.querySelectorAll('.checkbox-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Clear all errors
+            document.querySelectorAll('.validation-error').forEach(error => {
+                error.style.display = 'none';
+            });
+            
+            updateStepIndicator();
+            showCurrentStepForm();
+            updateDebugInfo();
+            
+            document.getElementById('test-log').className = 'test-result info';
+            document.getElementById('test-log').textContent = 'Test reset - ready to start again...';
+            
+            log('Test reset completed', 'info');
+        }
+
+        // Initialize the display
+        updateStepIndicator();
+        showCurrentStepForm();
+    </script>
+</body>
+</html>

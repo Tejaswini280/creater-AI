@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refresh Loop Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔄 Refresh Loop Fix Verification Test</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Test Instructions</h3>
+            <p>This test will verify that the refresh loop issues have been resolved:</p>
+            <ol>
+                <li>Click "Start Test" to begin monitoring</li>
+                <li>Navigate to the app at <a href="http://localhost:5000" target="_blank">http://localhost:5000</a></li>
+                <li>Monitor the console logs for excessive re-renders</li>
+                <li>Check that the app loads without continuous refreshing</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <button onclick="startTest()">Start Test</button>
+            <button onclick="stopTest()">Stop Test</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+            <button onclick="checkAppStatus()">Check App Status</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="testResults">
+                <p>Click "Start Test" to begin monitoring...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Console Logs</h3>
+            <div id="consoleLogs" class="log">
+                <p>Console logs will appear here...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Fixes Applied</h3>
+            <ul>
+                <li>✅ Fixed useAuth hook infinite loop</li>
+                <li>✅ Added proper dependency arrays to useEffect hooks</li>
+                <li>✅ Prevented duplicate app initialization</li>
+                <li>✅ Added auth state change detection to Router</li>
+                <li>✅ Improved redirect loop prevention</li>
+                <li>✅ Added render count tracking and throttling</li>
+                <li>✅ Disabled problematic WebSocket connections</li>
+                <li>✅ Optimized QueryClient configuration</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let testRunning = false;
+        let renderCount = 0;
+        let lastRenderTime = 0;
+        let authStateChanges = 0;
+        let redirectAttempts = 0;
+        let startTime = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('consoleLogs');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateResults() {
+            const results = document.getElementById('testResults');
+            const duration = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+            
+            results.innerHTML = `
+                <div class="test-section ${renderCount < 10 ? 'success' : renderCount < 20 ? 'warning' : 'error'}">
+                    <h4>Render Count: ${renderCount}</h4>
+                    <p>${renderCount < 10 ? '✅ Good' : renderCount < 20 ? '⚠️ Moderate' : '❌ High'} - Expected: < 10 renders</p>
+                </div>
+                <div class="test-section ${authStateChanges < 5 ? 'success' : 'warning'}">
+                    <h4>Auth State Changes: ${authStateChanges}</h4>
+                    <p>${authStateChanges < 5 ? '✅ Good' : '⚠️ High'} - Expected: < 5 changes</p>
+                </div>
+                <div class="test-section ${redirectAttempts < 3 ? 'success' : 'error'}">
+                    <h4>Redirect Attempts: ${redirectAttempts}</h4>
+                    <p>${redirectAttempts < 3 ? '✅ Good' : '❌ High'} - Expected: < 3 attempts</p>
+                </div>
+                <div class="test-section info">
+                    <h4>Test Duration: ${duration}s</h4>
+                    <p>Status: ${testRunning ? '🟢 Running' : '🔴 Stopped'}</p>
+                </div>
+            `;
+        }
+
+        function startTest() {
+            if (testRunning) return;
+            
+            testRunning = true;
+            startTime = Date.now();
+            renderCount = 0;
+            authStateChanges = 0;
+            redirectAttempts = 0;
+            
+            log('🚀 Starting refresh loop test...', 'info');
+            
+            // Monitor for excessive renders
+            const originalConsoleLog = console.log;
+            console.log = function(...args) {
+                const message = args.join(' ');
+                if (message.includes('Router render') || message.includes('App render')) {
+                    renderCount++;
+                    log(`🔄 Render detected: ${message}`, 'warning');
+                }
+                if (message.includes('Auth redirect') || message.includes('auth-redirect-login')) {
+                    redirectAttempts++;
+                    log(`🔄 Redirect detected: ${message}`, 'error');
+                }
+                if (message.includes('Auth:') || message.includes('isAuthenticated')) {
+                    authStateChanges++;
+                    log(`🔐 Auth state change: ${message}`, 'info');
+                }
+                originalConsoleLog.apply(console, args);
+            };
+
+            // Monitor for page reloads
+            let lastPageLoad = performance.now();
+            window.addEventListener('beforeunload', () => {
+                const now = performance.now();
+                if (now - lastPageLoad < 5000) { // Less than 5 seconds
+                    log('⚠️ Rapid page reload detected!', 'error');
+                }
+                lastPageLoad = now;
+            });
+
+            updateResults();
+            log('✅ Test monitoring started', 'success');
+        }
+
+        function stopTest() {
+            testRunning = false;
+            log('🛑 Test stopped', 'info');
+            updateResults();
+        }
+
+        function clearLogs() {
+            document.getElementById('consoleLogs').innerHTML = '<p>Console logs cleared...</p>';
+        }
+
+        function checkAppStatus() {
+            fetch('http://localhost:5000')
+                .then(response => {
+                    if (response.ok) {
+                        log('✅ App is accessible', 'success');
+                    } else {
+                        log('❌ App returned error: ' + response.status, 'error');
+                    }
+                })
+                .catch(error => {
+                    log('❌ App not accessible: ' + error.message, 'error');
+                });
+        }
+
+        // Auto-update results every 2 seconds
+        setInterval(() => {
+            if (testRunning) {
+                updateResults();
+            }
+        }, 2000);
+
+        // Initial results
+        updateResults();
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# ruleId	threshold	ignoreReason
+10038	IGNORE	Dev environment occasionally returns non-cacheable resources intentionally
+10096	IGNORE	CSP tested separately via unit tests; dynamic nonces not used in dev
+

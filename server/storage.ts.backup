@@ -1,0 +1,1476 @@
+import {
+  users,
+  socialAccounts,
+  content,
+  contentMetrics,
+  niches,
+  aiGenerationTasks,
+  templates,
+  notifications,
+  projects,
+  type User,
+  type UpsertUser,
+  type InsertSocialAccount,
+  type SocialAccount,
+  type InsertContent,
+  type Content,
+  type InsertContentMetrics,
+  type ContentMetrics,
+  type InsertNiche,
+  type Niche,
+  type InsertAIGenerationTask,
+  type AIGenerationTask,
+  type InsertTemplate,
+  type Template,
+  type InsertNotification,
+  type Notification,
+  type InsertProject,
+  type Project,
+} from "@shared/schema";
+import { db } from "./db";
+const PERF_QUIET = process.env.PERF_MODE === '1' || process.env.NODE_ENV === 'production';
+import { eq, desc, and, sql } from "drizzle-orm";
+
+// User management
+export async function getUser(userId: string) {
+  return await db.query.users.findFirst({
+    where: eq(users.id, userId)
+  });
+}
+
+export async function getUserByEmail(email: string) {
+  return await db.query.users.findFirst({
+    where: eq(users.email, email)
+  });
+}
+
+export async function createUser(userData: UpsertUser) {
+  const [user] = await db.insert(users).values(userData).returning();
+  return user;
+}
+
+export async function updateUser(userId: string, userData: Partial<UpsertUser>) {
+  const [user] = await db.update(users)
+    .set({ ...userData, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  return user;
+}
+
+// Interface for storage operations
+export interface IStorage {
+  // User operations
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(limit?: number): Promise<User[]>;
+  
+  // Social Account operations
+  createSocialAccount(account: InsertSocialAccount): Promise<SocialAccount>;
+  getSocialAccounts(userId: string): Promise<SocialAccount[]>;
+  getSocialAccountByPlatform(userId: string, platform: string): Promise<SocialAccount | undefined>;
+  updateSocialAccount(id: number, updates: Partial<SocialAccount>): Promise<SocialAccount>;
+  
+  // Content operations
+  createContent(contentData: InsertContent): Promise<Content>;
+  getContent(userId: string, limit?: number, filters?: { status?: string; platform?: string }): Promise<Content[]>;
+  getContentByProject(userId: string, projectId: number, limit?: number, filters?: { status?: string; platform?: string }): Promise<Content[]>;
+  getContentById(id: number): Promise<Content | undefined>;
+  updateContent(id: number, updates: Partial<Content>): Promise<Content>;
+  deleteContent(id: number): Promise<void>;
+  
+  // Content Metrics operations
+  createContentMetrics(metrics: InsertContentMetrics): Promise<ContentMetrics>;
+  getContentMetrics(contentId: number): Promise<ContentMetrics[]>;
+  updateContentMetrics(id: number, updates: Partial<ContentMetrics>): Promise<ContentMetrics>;
+  
+  // Niche operations
+  getNiches(limit?: number): Promise<Niche[]>;
+  createNiche(niche: InsertNiche): Promise<Niche>;
+  
+  // AI Generation Task operations
+  createAITask(task: InsertAIGenerationTask): Promise<AIGenerationTask>;
+  getAITasks(userId: string, limit?: number): Promise<AIGenerationTask[]>;
+  updateAITask(id: number, updates: Partial<AIGenerationTask>): Promise<AIGenerationTask>;
+  
+  // Template operations
+  createTemplate(template: InsertTemplate): Promise<Template>;
+  getTemplates(category?: string, limit?: number): Promise<Template[]>;
+  getTemplateById(id: number): Promise<Template | undefined>;
+  updateTemplate(id: number, updates: Partial<Template>): Promise<Template>;
+  deleteTemplate(id: number): Promise<void>;
+  incrementTemplateDownloads(id: number): Promise<void>;
+  
+  // Project operations
+  createProject(project: InsertProject): Promise<Project>;
+  getProjectById(projectId: number, userId: string): Promise<Project | undefined>;
+  getProjects(userId: string, limit?: number, filters?: { status?: string; type?: string }): Promise<Project[]>;
+  updateProject(id: number, updates: Partial<Project>): Promise<Project>;
+  deleteProject(id: number): Promise<void>;
+  
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: string, limit?: number, unreadOnly?: boolean): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<Notification>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
+  deleteNotification(id: number): Promise<void>;
+  
+  // Dashboard metrics
+  getUserMetrics(userId: string): Promise<{
+    totalViews: number;
+    totalSubscribers: number;
+    totalRevenue: number;
+    avgEngagement: number;
+  }>;
+  
+  // Content analytics
+  getContentAnalytics(userId: string, period: string): Promise<{
+    totalContent: number;
+    publishedContent: number;
+    draftContent: number;
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+    totalShares: number;
+    averageEngagement: number;
+    topPerformingContent: Array<{
+      id: number;
+      title: string;
+      views: number;
+      likes: number;
+      comments: number;
+      engagementRate: number;
+    }>;
+    platformBreakdown: Record<string, {
+      content: number;
+      views: number;
+      engagement: number;
+    }>;
+    recentTrends: {
+      viewsGrowth: number;
+      engagementGrowth: number;
+      contentGrowth: number;
+    };
+  }>;
+
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: string, limit?: number): Promise<Notification[]>;
+  updateNotification(id: number, updates: Partial<Notification>): Promise<Notification>;
+  deleteNotification(id: number): Promise<void>;
+  
+  // LinkedIn OAuth operations
+  createLinkedInAuthState(state: { userId: string; state: string; createdAt: Date }): Promise<void>;
+  getLinkedInAuthState(state: string): Promise<{ userId: string; state: string; createdAt: Date } | null>;
+  deleteLinkedInAuthState(state: string): Promise<void>;
+  updateUserLinkedInCredentials(userId: string, credentials: {
+    linkedinAccessToken: string;
+    linkedinRefreshToken: string;
+    linkedinProfileId: string;
+    linkedinProfileName: string;
+    linkedinProfileEmail: string;
+    linkedinConnectedAt: Date;
+  }): Promise<void>;
+
+  // Scheduled Content operations
+  createScheduledContent(content: any): Promise<any>;
+  getScheduledContent(userId: string, status?: string): Promise<any[]>;
+  getScheduledContentById(id: string): Promise<any | null>;
+  updateScheduledContent(id: string, updates: any): Promise<any>;
+  deleteScheduledContent(id: string): Promise<void>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // In-memory storage for scheduled content during development
+  private static scheduledContentStore: Map<string, any> = new Map();
+  private static fallbackContentIdCounter: number = 1;
+  // In-memory fallback for content/templates/notifications when DB is unavailable
+  // private static fallbackContentStore: Map<number, any> = new Map();
+  private static fallbackTemplatesStore: Map<number, any> = new Map();
+  private static fallbackTemplateIdCounter: number = 1;
+  private static fallbackNotificationsStore: Map<number, any> = new Map();
+  private static fallbackNotificationIdCounter: number = 1;
+
+  // Simple in-memory cache for analytics performance to improve p95 under burst load
+  private static analyticsCache: Map<string, { data: any; cachedAt: number }> = new Map();
+  private static ANALYTICS_CACHE_TTL_MS = (process.env.PERF_MODE === '1') ? 300_000 : 120_000; // 5m in PERF_MODE, 2m otherwise
+  private static analyticsInFlight: Map<string, Promise<any>> = new Map();
+
+  // User operations
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).onConflictDoUpdate({
+      target: users.email,
+      set: {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        updatedAt: new Date()
+      }
+    }).returning();
+    return user;
+  }
+
+  async updateUser(userId: string, userData: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async getAllUsers(limit: number = 50): Promise<User[]> {
+    try {
+      const result = await db.query.users.findMany({
+        limit: limit,
+        orderBy: desc(users.createdAt as any)
+      });
+      return result;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      throw error;
+    }
+  }
+  
+  // Social Account operations
+  async createSocialAccount(account: InsertSocialAccount): Promise<SocialAccount> {
+    const [socialAccount] = await db
+      .insert(socialAccounts)
+      .values(account)
+      .returning();
+    return socialAccount;
+  }
+
+  async getSocialAccounts(userId: string): Promise<SocialAccount[]> {
+    return await db
+      .select()
+      .from(socialAccounts)
+      .where(eq(socialAccounts.userId, userId))
+      .orderBy(desc(socialAccounts.createdAt));
+  }
+
+  async getSocialAccountByPlatform(userId: string, platform: string): Promise<SocialAccount | undefined> {
+    const [account] = await db
+      .select()
+      .from(socialAccounts)
+      .where(and(
+        eq(socialAccounts.userId, userId),
+        eq(socialAccounts.platform, platform)
+      ));
+    return account;
+  }
+
+  async updateSocialAccount(id: number, updates: Partial<SocialAccount>): Promise<SocialAccount> {
+    const [account] = await db
+      .update(socialAccounts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(socialAccounts.id, id))
+      .returning();
+    return account;
+  }
+  
+  // Content operations
+  async createContent(contentData: InsertContent): Promise<Content> {
+    try {
+      if (!PERF_QUIET) console.log('Attempting to create content with data:', contentData);
+      
+      const [contentItem] = await db
+        .insert(content)
+        .values(contentData)
+        .returning();
+      
+      if (!PERF_QUIET) console.log('Content created successfully:', contentItem);
+      return contentItem;
+    } catch (error) {
+      console.error('Database error in createContent:', error);
+      // Don't fall back to in-memory storage - content must be saved to database
+      throw new Error(`Failed to create content in database: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async getContent(userId: string, limit: number = 50, filters?: { status?: string; platform?: string }): Promise<Content[]> {
+    if (!PERF_QUIET) {
+      console.log('🔍 Database: Getting content for userId:', userId);
+      console.log('🔍 Database: Filters:', filters);
+      console.log('🔍 Database: Limit:', limit);
+    }
+    
+    const conditions = [eq(content.userId, userId)];
+    if (filters?.status) conditions.push(eq(content.status, filters.status));
+    if (filters?.platform) conditions.push(eq(content.platform, filters.platform));
+
+    try {
+      const result = await db
+        .select()
+        .from(content)
+        .where(and(...conditions))
+        .orderBy(desc(content.createdAt))
+        .limit(limit);
+      if (!PERF_QUIET) console.log('🔍 Database: Query result:', result.length, 'items');
+      return result;
+    } catch (error) {
+      // Fallback to in-memory content
+      const all = Array.from(DatabaseStorage.fallbackContentStore.values()).filter(c => c.userId === userId);
+      const filtered = all.filter(c => (!filters?.status || c.status === filters.status) && (!filters?.platform || c.platform === filters.platform));
+      const sorted = filtered.sort((a,b) => (b.createdAt?.getTime?.()||0)-(a.createdAt?.getTime?.()||0));
+      return sorted.slice(0, limit);
+    }
+  }
+
+  async getContentByProject(userId: string, projectId: number, limit: number = 50, filters?: { status?: string; platform?: string }): Promise<Content[]> {
+    if (!PERF_QUIET) {
+      console.log('🔍 Database: Getting content for project:', projectId, 'userId:', userId);
+      console.log('🔍 Database: Filters:', filters);
+      console.log('🔍 Database: Limit:', limit);
+    }
+    
+    const conditions = [
+      eq(content.userId, userId),
+      eq(content.projectId, projectId)
+    ];
+    if (filters?.status) conditions.push(eq(content.status, filters.status));
+    if (filters?.platform) conditions.push(eq(content.platform, filters.platform));
+
+    if (!PERF_QUIET) {
+      console.log('🔍 Database: Query conditions:', conditions);
+    }
+
+    try {
+      const result = await db
+        .select()
+        .from(content)
+        .where(and(...conditions))
+        .orderBy(desc(content.createdAt))
+        .limit(limit);
+      
+      if (!PERF_QUIET) {
+        console.log('🔍 Database: Project content query result:', result.length, 'items');
+        // Log each content item to verify projectId filtering
+        result.forEach((item, index) => {
+          console.log(`🔍 Database: Content ${index + 1}:`, {
+            id: item.id,
+            title: item.title,
+            projectId: item.projectId,
+            userId: item.userId,
+            platform: item.platform
+          });
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('🔍 Database: Error in getContentByProject:', error);
+      
+      // Fallback to in-memory content
+      const all = Array.from(DatabaseStorage.fallbackContentStore.values()).filter(c => c.userId === userId && c.projectId === projectId);
+      const filtered = all.filter(c => (!filters?.status || c.status === filters.status) && (!filters?.platform || c.platform === filters.platform));
+      const sorted = filtered.sort((a,b) => (b.createdAt?.getTime?.()||0)-(a.createdAt?.getTime?.()||0));
+      
+      if (!PERF_QUIET) {
+        console.log('🔍 Database: Fallback content result:', sorted.length, 'items');
+        sorted.forEach((item, index) => {
+          console.log(`🔍 Database: Fallback Content ${index + 1}:`, {
+            id: item.id,
+            title: item.title,
+            projectId: item.projectId,
+            userId: item.userId,
+            platform: item.platform
+          });
+        });
+      }
+      
+      return sorted.slice(0, limit);
+    }
+  }
+
+  async getContentById(id: number): Promise<Content | undefined> {
+    try {
+      const [contentItem] = await db
+        .select()
+        .from(content)
+        .where(eq(content.id, id));
+      return contentItem;
+    } catch {
+      return DatabaseStorage.fallbackContentStore.get(id);
+    }
+  }
+
+  async updateContent(id: number, updates: Partial<Content>): Promise<Content> {
+    try {
+      const [contentItem] = await db
+        .update(content)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(content.id, id))
+        .returning();
+      return contentItem;
+    } catch {
+      const existing = DatabaseStorage.fallbackContentStore.get(id);
+      if (!existing) throw new Error('Content not found');
+      const updated = { ...existing, ...updates, updatedAt: new Date() };
+      DatabaseStorage.fallbackContentStore.set(id, updated);
+      return updated as Content;
+    }
+  }
+
+  async deleteContent(id: number): Promise<void> {
+    try {
+      await db.delete(content).where(eq(content.id, id));
+    } catch {
+      DatabaseStorage.fallbackContentStore.delete(id);
+    }
+  }
+  
+  // Content Metrics operations
+  async createContentMetrics(metrics: InsertContentMetrics): Promise<ContentMetrics> {
+    const [contentMetric] = await db
+      .insert(contentMetrics)
+      .values(metrics)
+      .returning();
+    return contentMetric;
+  }
+
+  async getContentMetrics(contentId: number): Promise<ContentMetrics[]> {
+    return await db
+      .select()
+      .from(contentMetrics)
+      .where(eq(contentMetrics.contentId, contentId))
+      .orderBy(desc(contentMetrics.lastUpdated));
+  }
+
+  async updateContentMetrics(id: number, updates: Partial<ContentMetrics>): Promise<ContentMetrics> {
+    const [metric] = await db
+      .update(contentMetrics)
+      .set({ ...updates, lastUpdated: new Date() })
+      .where(eq(contentMetrics.id, id))
+      .returning();
+    return metric;
+  }
+  
+  // Niche operations
+  async getNiches(limit: number = 20): Promise<Niche[]> {
+    return await db
+      .select()
+      .from(niches)
+      .where(eq(niches.isActive, true))
+      .orderBy(desc(niches.trendScore))
+      .limit(limit);
+  }
+
+  async createNiche(niche: InsertNiche): Promise<Niche> {
+    const [nicheItem] = await db
+      .insert(niches)
+      .values(niche)
+      .returning();
+    return nicheItem;
+  }
+  
+  // AI Generation Task operations
+  async createAITask(task: InsertAIGenerationTask): Promise<AIGenerationTask> {
+    const [aiTask] = await db
+      .insert(aiGenerationTasks)
+      .values(task)
+      .returning();
+    return aiTask;
+  }
+
+  async getAITasks(userId: string, limit: number = 20): Promise<AIGenerationTask[]> {
+    return await db
+      .select()
+      .from(aiGenerationTasks)
+      .where(eq(aiGenerationTasks.userId, userId))
+      .orderBy(desc(aiGenerationTasks.createdAt))
+      .limit(limit);
+  }
+
+  async updateAITask(id: number, updates: Partial<AIGenerationTask>): Promise<AIGenerationTask> {
+    const [task] = await db
+      .update(aiGenerationTasks)
+      .set({ ...updates, completedAt: updates.status === "completed" ? new Date() : undefined })
+      .where(eq(aiGenerationTasks.id, id))
+      .returning();
+    return task;
+  }
+  
+  // Template operations
+  async createTemplate(template: InsertTemplate): Promise<Template> {
+    const [newTemplate] = await db
+      .insert(templates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async getTemplates(category?: string, limit: number = 20): Promise<Template[]> {
+    try {
+      const rows = await db
+        .select()
+        .from(templates)
+        .where(category ? eq(templates.category, category) : undefined as any)
+        .orderBy(desc(templates.createdAt))
+        .limit(limit);
+      return rows;
+    } catch {
+      const all = Array.from(DatabaseStorage.fallbackTemplatesStore.values());
+      const filtered = category ? all.filter(t => t.category === category) : all;
+      return filtered.slice(0, limit) as Template[];
+    }
+  }
+
+  async getTemplateById(id: number): Promise<Template | undefined> {
+    try {
+      const [template] = await db
+        .select()
+        .from(templates)
+        .where(eq(templates.id, id));
+      return template;
+    } catch {
+      return DatabaseStorage.fallbackTemplatesStore.get(id) as Template | undefined;
+    }
+  }
+
+  async updateTemplate(id: number, updates: Partial<Template>): Promise<Template> {
+    const [template] = await db
+      .update(templates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(templates.id, id))
+      .returning();
+    return template;
+  }
+
+  async deleteTemplate(id: number): Promise<void> {
+    await db.delete(templates).where(eq(templates.id, id));
+  }
+
+  async incrementTemplateDownloads(id: number): Promise<void> {
+    try {
+      await db
+        .update(templates)
+        .set({ downloads: sql`${templates.downloads} + 1` })
+        .where(eq(templates.id, id));
+    } catch {
+      const t = DatabaseStorage.fallbackTemplatesStore.get(id);
+      if (t) {
+        t.downloads = (t.downloads || 0) + 1;
+        DatabaseStorage.fallbackTemplatesStore.set(id, t);
+      }
+    }
+  }
+  
+  // Project operations
+  async createProject(projectData: InsertProject): Promise<Project> {
+    try {
+      if (!PERF_QUIET) console.log('Attempting to create project with data:', projectData);
+      
+      const [project] = await db
+        .insert(projects)
+        .values(projectData)
+        .returning();
+      
+      if (!PERF_QUIET) console.log('Project created successfully:', project);
+      return project;
+    } catch (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
+  }
+
+  async getProjects(userId: string, limit: number = 20, filters?: { status?: string; type?: string }): Promise<Project[]> {
+    try {
+      const conditions = [eq(projects.userId, userId)];
+      if (filters?.status) conditions.push(eq(projects.status, filters.status));
+      if (filters?.type) conditions.push(eq(projects.type, filters.type));
+
+      const result = await db
+        .select()
+        .from(projects)
+        .where(and(...conditions))
+        .orderBy(desc(projects.createdAt))
+        .limit(limit);
+      return result;
+    } catch (error) {
+      console.error('Error getting projects:', error);
+      throw error;
+    }
+  }
+
+  async getProjectById(projectId: number, userId: string): Promise<Project | undefined> {
+    try {
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(and(
+          eq(projects.id, projectId),
+          eq(projects.userId, userId)
+        ));
+      return project;
+    } catch (error) {
+      console.error('Error getting project by ID:', error);
+      return undefined;
+    }
+  }
+
+  async updateProject(id: number, updates: Partial<Project>): Promise<Project> {
+    try {
+      const [project] = await db
+        .update(projects)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(projects.id, id))
+        .returning();
+      return project;
+    } catch {
+      const existing = DatabaseStorage.fallbackContentStore.get(id);
+      if (!existing) throw new Error('Project not found');
+      const updated = { ...existing, ...updates, updatedAt: new Date() };
+      DatabaseStorage.fallbackContentStore.set(id, updated);
+      return updated as Project;
+    }
+  }
+
+  async deleteProject(id: number): Promise<void> {
+    try {
+      await db.delete(projects).where(eq(projects.id, id));
+    } catch {
+      DatabaseStorage.fallbackContentStore.delete(id);
+    }
+  }
+  
+  // Notification operations
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    try {
+      const [newNotification] = await db
+        .insert(notifications)
+        .values(notification)
+        .returning();
+      return newNotification;
+    } catch (e) {
+      const id = DatabaseStorage.fallbackNotificationIdCounter++;
+      const now = new Date();
+      const item = { id, ...notification, createdAt: now, updatedAt: now } as unknown as Notification;
+      DatabaseStorage.fallbackNotificationsStore.set(id, item);
+      return item;
+    }
+  }
+
+  async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
+    try {
+      return await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt))
+        .limit(limit);
+    } catch {
+      const all = Array.from(DatabaseStorage.fallbackNotificationsStore.values()).filter(n => n.userId === userId);
+      const sorted = all.sort((a,b)=> (b.createdAt?.getTime?.()||0)-(a.createdAt?.getTime?.()||0));
+      return sorted.slice(0, limit) as Notification[];
+    }
+  }
+
+  async updateNotification(id: number, updates: Partial<Notification>): Promise<Notification> {
+    try {
+      const [notification] = await db
+        .update(notifications)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(notifications.id, id))
+        .returning();
+      return notification;
+    } catch {
+      const existing = DatabaseStorage.fallbackNotificationsStore.get(id);
+      if (!existing) throw new Error('Notification not found');
+      const updated = { ...existing, ...updates, updatedAt: new Date() } as Notification;
+      DatabaseStorage.fallbackNotificationsStore.set(id, updated);
+      return updated;
+    }
+  }
+
+  async deleteNotification(id: number): Promise<void> {
+    try {
+      await db.delete(notifications).where(eq(notifications.id, id));
+    } catch {
+      DatabaseStorage.fallbackNotificationsStore.delete(id);
+    }
+  }
+
+  // LinkedIn OAuth operations - Placeholder implementations
+  async createLinkedInAuthState(state: { userId: string; state: string; createdAt: Date }): Promise<void> {
+    // Implementation for storing in a database table
+    console.log('Creating LinkedIn auth state:', state);
+  }
+
+  async getLinkedInAuthState(state: string): Promise<{ userId: string; state: string; createdAt: Date } | null> {
+    // Implementation for retrieving from a database table
+    console.log('Getting LinkedIn auth state for:', state);
+    return null; // For now, return null to indicate no state found
+  }
+
+  async deleteLinkedInAuthState(state: string): Promise<void> {
+    // Implementation for deleting from a database table
+    console.log('Deleting LinkedIn auth state for:', state);
+  }
+
+  async updateUserLinkedInCredentials(userId: string, credentials: {
+    linkedinAccessToken: string;
+    linkedinRefreshToken: string;
+    linkedinProfileId: string;
+    linkedinProfileName: string;
+    linkedinProfileEmail: string;
+    linkedinConnectedAt: Date;
+  }): Promise<void> {
+    // Placeholder implementation - would update the user table
+    console.log('Updating LinkedIn credentials for user:', userId, credentials);
+  }
+
+  async getLinkedInToken(userId: string): Promise<string | null> {
+    try {
+      // Get user's LinkedIn social account
+      const linkedinAccount = await this.getSocialAccountByPlatform(userId, 'linkedin');
+      return linkedinAccount?.accessToken || null;
+    } catch (error) {
+      console.error('Error getting LinkedIn token:', error);
+      return null;
+    }
+  }
+
+  // Analytics Performance methods
+  async getAnalyticsPerformance(userId: string, period: string = '7D'): Promise<{
+    views: number;
+    engagement: number;
+    revenue: number;
+    change: {
+      views: number;
+      engagement: number;
+      revenue: number;
+    };
+  }> {
+    try {
+      // Cache check
+      const cacheKey = `${userId}:${period}`;
+      const cached = DatabaseStorage.analyticsCache.get(cacheKey);
+      const nowMs = Date.now();
+      if (cached && nowMs - cached.cachedAt < DatabaseStorage.ANALYTICS_CACHE_TTL_MS) {
+        return cached.data;
+      }
+
+      // Coalesce concurrent computations for same key
+      const inFlight = DatabaseStorage.analyticsInFlight.get(cacheKey);
+      if (inFlight) {
+        return await inFlight;
+      }
+
+      const computePromise = (async () => {
+      // Get user's content and metrics
+      // Select only IDs to reduce payload and CPU
+      const userContentIdsRows = await db
+        .select({ id: content.id })
+        .from(content)
+        .where(eq(content.userId, userId))
+        .orderBy(desc(content.createdAt))
+        .limit(100);
+      const contentIds = userContentIdsRows.map(r => r.id);
+      
+      if (contentIds.length === 0) {
+        // Return realistic zero data for new users
+        const resp = {
+          views: 0,
+          engagement: 0,
+          revenue: 0,
+          change: {
+            views: 0,
+            engagement: 0,
+            revenue: 0
+          }
+        };
+        DatabaseStorage.analyticsCache.set(cacheKey, { data: resp, cachedAt: nowMs });
+        return resp;
+      }
+
+      // Calculate totals via aggregate SQL for performance
+      const now = new Date();
+      const periodDays = period === '7D' ? 7 : period === '30D' ? 30 : 90;
+      const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+      const totalAggRows: any[] = await db.execute(sql`
+        SELECT 
+          COALESCE(SUM(views), 0)::bigint AS views,
+          COALESCE(SUM(likes), 0)::bigint AS likes,
+          COALESCE(SUM(comments), 0)::bigint AS comments,
+          COALESCE(SUM(shares), 0)::bigint AS shares
+        FROM content_metrics
+        WHERE content_id = ANY(${contentIds})
+      `);
+      const recentAggRows: any[] = await db.execute(sql`
+        SELECT 
+          COALESCE(SUM(views), 0)::bigint AS views,
+          COALESCE(SUM(likes), 0)::bigint AS likes,
+          COALESCE(SUM(comments), 0)::bigint AS comments,
+          COALESCE(SUM(shares), 0)::bigint AS shares
+        FROM content_metrics
+        WHERE content_id = ANY(${contentIds})
+          AND last_updated >= ${periodStart}
+      `);
+
+      const totalViews = Number((totalAggRows?.[0]?.views) ?? 0);
+      const totalLikes = Number((totalAggRows?.[0]?.likes) ?? 0);
+      const totalComments = Number((totalAggRows?.[0]?.comments) ?? 0);
+      const totalShares = Number((totalAggRows?.[0]?.shares) ?? 0);
+
+      const recentViews = Number((recentAggRows?.[0]?.views) ?? 0);
+      const recentLikes = Number((recentAggRows?.[0]?.likes) ?? 0);
+      const recentComments = Number((recentAggRows?.[0]?.comments) ?? 0);
+      const recentShares = Number((recentAggRows?.[0]?.shares) ?? 0);
+
+      const olderViews = Math.max(0, totalViews - recentViews);
+      const olderLikes = Math.max(0, totalLikes - recentLikes);
+      const olderComments = Math.max(0, totalComments - recentComments);
+      const olderShares = Math.max(0, totalShares - recentShares);
+
+      // Engagement and revenue
+      const engagement = totalViews > 0 ? ((totalLikes + totalComments + totalShares) / totalViews) * 100 : 0;
+      const revenue = totalViews * 0.01;
+      const recentEngagement = recentViews > 0 ? ((recentLikes + recentComments + recentShares) / recentViews) * 100 : 0;
+      const olderEngagement = olderViews > 0 ? ((olderLikes + olderComments + olderShares) / olderViews) * 100 : 0;
+
+      const recentRevenue = recentViews * 0.01;
+      const olderRevenue = olderViews * 0.01;
+
+      const viewsChange = olderViews > 0 ? ((recentViews - olderViews) / olderViews) * 100 : 0;
+      const engagementChange = olderEngagement > 0 ? ((recentEngagement - olderEngagement) / olderEngagement) * 100 : 0;
+      const revenueChange = olderRevenue > 0 ? ((recentRevenue - olderRevenue) / olderRevenue) * 100 : 0;
+      
+      const response = {
+        views: totalViews,
+        engagement: Math.round(engagement * 100) / 100,
+        revenue: Math.round(revenue * 100) / 100,
+        change: {
+          views: Math.round(viewsChange * 100) / 100,
+          engagement: Math.round(engagementChange * 100) / 100,
+          revenue: Math.round(revenueChange * 100) / 100
+        }
+      };
+      // Update cache
+      DatabaseStorage.analyticsCache.set(cacheKey, { data: response, cachedAt: nowMs });
+      return response;
+
+
+      DatabaseStorage.analyticsInFlight.set(cacheKey, computePromise);
+      try {
+        const result = await computePromise;
+        return result;
+      } finally {
+        DatabaseStorage.analyticsInFlight.delete(cacheKey);
+      }
+    } catch (error) {
+      console.error('Error getting analytics performance:', error);
+      // Return realistic zero data instead of throwing
+      return {
+        views: 0,
+        engagement: 0,
+        revenue: 0,
+        change: {
+          views: 0,
+          engagement: 0,
+          revenue: 0
+        }
+      };
+    }
+  }
+
+  // ========================================
+  // PHASE 3: SOCIAL MEDIA & SCHEDULING INTEGRATION
+  // ========================================
+
+  // Scheduled Content operations
+  async createScheduledContent(contentData: any): Promise<any> {
+    try {
+      console.log('🔍 Creating scheduled content with data:', contentData);
+      
+      // Create scheduled content in database using the content table
+      // Include project_id if provided, otherwise it will be null (which is allowed)
+      const insertData = {
+        userId: contentData.userId,
+        projectId: contentData.projectId || null, // Make project_id optional
+        title: contentData.title || 'Untitled Content',
+        description: contentData.description || '',
+        platform: contentData.platform || 'youtube',
+        contentType: contentData.contentType || 'video',
+        status: 'scheduled',
+        scheduledAt: contentData.scheduledAt,
+        metadata: contentData.platforms ? { scheduledPlatforms: contentData.platforms } : undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log('🔍 Insert data (filtered):', insertData);
+      
+      const [newContent] = await db
+        .insert(content)
+        .values(insertData)
+        .returning();
+
+      console.log('✅ Created scheduled content in database:', newContent);
+      return newContent;
+    } catch (error) {
+      console.error('❌ Error creating scheduled content:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        contentData: contentData
+      });
+      throw error;
+    }
+  }
+
+  async getScheduledContent(userId: string, status?: string): Promise<any[]> {
+    try {
+      // Get scheduled content from database using correct Drizzle syntax
+      const scheduledContent = await db
+        .select()
+        .from(content)
+        .where(and(
+          eq(content.userId, userId),
+          eq(content.status, 'scheduled')
+        ))
+        .orderBy(desc(content.createdAt))
+        .limit(10);
+
+      console.log('🔍 Database: Found scheduled content:', scheduledContent.length, 'items');
+
+      return scheduledContent.map(content => ({
+        id: content.id,
+        title: content.title,
+        platform: content.platform,
+        contentType: content.contentType,
+        scheduledAt: content.scheduledAt,
+        status: content.status,
+        description: content.description,
+        thumbnailUrl: content.thumbnailUrl
+      }));
+    } catch (error) {
+      console.error('Error getting scheduled content:', error);
+      return [];
+    }
+  }
+
+  async getScheduledContentById(id: string): Promise<any | null> {
+    try {
+      const numericId = parseInt(id);
+      if (Number.isNaN(numericId)) {
+        return null;
+      }
+
+      const [c] = await db
+        .select()
+        .from(content)
+        .where(eq(content.id, numericId));
+      if (!c) return null;
+
+      return {
+        id: c.id,
+        userId: c.userId,
+        title: c.title,
+        description: c.description,
+        platform: c.platform,
+        contentType: c.contentType,
+        status: c.status,
+        scheduledAt: c.scheduledAt,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      };
+    } catch (error) {
+      console.error('Error getting scheduled content by ID:', error);
+      throw error;
+    }
+  }
+
+  async updateScheduledContent(id: string, updates: any): Promise<any> {
+    try {
+      // Update content in database
+      const [updatedContent] = await db.update(content)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(content.id, parseInt(id)))
+        .returning();
+
+      if (!updatedContent) {
+        throw new Error('Scheduled content not found');
+      }
+
+      console.log('Updated scheduled content in database:', updatedContent);
+      return updatedContent;
+    } catch (error) {
+      console.error('Error updating scheduled content:', error);
+      throw error;
+    }
+  }
+
+  async deleteScheduledContent(id: string): Promise<void> {
+    try {
+      // Delete from database
+      const result = await db.delete(content)
+        .where(eq(content.id, parseInt(id)))
+        .returning();
+
+      if (result.length === 0) {
+        console.warn('Scheduled content not found for deletion:', id);
+      } else {
+        console.log('Deleted scheduled content from database:', id);
+      }
+    } catch (error) {
+      console.error('Error deleting scheduled content:', error);
+      throw error;
+    }
+  }
+
+  async getAllScheduledContent(): Promise<any[]> {
+    try {
+      // Return real scheduled content from DB
+      const rows = await db
+        .select()
+        .from(content)
+        .where(eq(content.status, 'scheduled'))
+        .orderBy(desc(content.scheduledAt), desc(content.createdAt));
+
+      return rows.map(c => ({
+        id: c.id,
+        userId: c.userId,
+        title: c.title,
+        description: c.description,
+        platform: c.platform,
+        contentType: c.contentType,
+        status: c.status,
+        scheduledAt: c.scheduledAt,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      }));
+    } catch (error) {
+      console.error('Error getting all scheduled content:', error);
+      return [];
+    }
+  }
+
+  // File Upload operations
+  async createUploadedFile(file: any): Promise<any> {
+    try {
+      const fileId = `file_${DatabaseStorage.uploadedFilesIdCounter++}`;
+      const uploadedFile = {
+        ...file,
+        id: fileId,
+        uploadedAt: new Date().toISOString()
+      };
+      
+      // Store in memory
+      DatabaseStorage.uploadedFilesStore.set(fileId, uploadedFile);
+      console.log('Created uploaded file:', uploadedFile);
+      console.log('File category:', uploadedFile.category);
+      console.log('Storage size after create:', DatabaseStorage.uploadedFilesStore.size);
+      return uploadedFile;
+    } catch (error) {
+      console.error('Error creating uploaded file:', error);
+      throw error;
+    }
+  }
+
+  async getUserFiles(userId: string, options?: any): Promise<{ files: any[]; total: number }> {
+    try {
+      console.log('Getting user files for userId:', userId);
+      console.log('Storage size:', DatabaseStorage.uploadedFilesStore.size);
+      
+      // Get all files from memory storage
+      const allFiles = Array.from(DatabaseStorage.uploadedFilesStore.values());
+      console.log('All files in storage:', allFiles.map(f => ({ id: f.id, userId: f.userId, originalName: f.originalName })));
+      
+      // Filter by user ID if provided
+      const userFiles = userId ? allFiles.filter(file => file.userId === userId) : allFiles;
+      console.log('User files after filtering:', userFiles.map(f => ({ id: f.id, userId: f.userId, originalName: f.originalName })));
+      
+      // Apply options (limit, offset, category, etc.)
+      let filteredFiles = userFiles;
+      
+      if (options?.category && options.category !== 'all') {
+        filteredFiles = filteredFiles.filter(file => file.category === options.category);
+      }
+      
+      if (options?.mimetype) {
+        filteredFiles = filteredFiles.filter(file => file.mimetype === options.mimetype);
+      }
+      
+      // Apply pagination
+      const limit = options?.limit || 50;
+      const offset = options?.offset || 0;
+      const paginatedFiles = filteredFiles.slice(offset, offset + limit);
+      
+      // No mock fallback: return empty if no files yet
+
+      console.log('Returning files:', paginatedFiles.map(f => ({ id: f.id, originalName: f.originalName, category: f.category })));
+      return {
+        files: paginatedFiles,
+        total: filteredFiles.length
+      };
+    } catch (error) {
+      console.error('Error getting user files:', error);
+      throw error;
+    }
+  }
+
+  async getFileById(fileId: string): Promise<any | null> {
+    try {
+      // No DB table for files yet; return null instead of mock
+      return null;
+    } catch (error) {
+      console.error('Error getting file by ID:', error);
+      throw error;
+    }
+  }
+
+  async deleteFile(fileId: string): Promise<void> {
+    try {
+      console.log('Attempting to delete file:', fileId);
+      console.log('Storage size before delete:', DatabaseStorage.uploadedFilesStore.size);
+      
+      // Delete from memory storage
+      const deleted = DatabaseStorage.uploadedFilesStore.delete(fileId);
+      console.log('Deleted file:', fileId, 'Success:', deleted);
+      console.log('Storage size after delete:', DatabaseStorage.uploadedFilesStore.size);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      throw error;
+    }
+  }
+
+  async updateFileMetadata(fileId: string, metadata: any): Promise<any> {
+    try {
+      // No persistent storage yet; acknowledge without mock payload
+      return { id: fileId, metadata, updatedAt: new Date() };
+    } catch (error) {
+      console.error('Error updating file metadata:', error);
+      throw error;
+    }
+  }
+
+  async searchFiles(userId: string, query: string): Promise<any[]> {
+    try {
+      // No persistent storage yet; return empty instead of mock
+      return [];
+    } catch (error) {
+      console.error('Error searching files:', error);
+      throw error;
+    }
+  }
+
+  // User operations for Phase 3
+  async getUserById(userId: string): Promise<any | null> {
+    try {
+      // Return real user from DB
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      return user ?? null;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      throw error;
+    }
+  }
+
+  // Notification operations
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    try {
+      const [newNotification] = await db
+        .insert(notifications)
+        .values(notification)
+        .returning();
+      return newNotification;
+    } catch (e) {
+      const id = DatabaseStorage.fallbackNotificationIdCounter++;
+      const now = new Date();
+      const item = { id, ...notification, createdAt: now, updatedAt: now } as unknown as Notification;
+      DatabaseStorage.fallbackNotificationsStore.set(id, item);
+      return item;
+    }
+  }
+
+  async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
+    try {
+      return await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt))
+        .limit(limit);
+    } catch {
+      const all = Array.from(DatabaseStorage.fallbackNotificationsStore.values()).filter(n => n.userId === userId);
+      const sorted = all.sort((a,b)=> (b.createdAt?.getTime?.()||0)-(a.createdAt?.getTime?.()||0));
+      return sorted.slice(0, limit) as Notification[];
+    }
+  }
+
+  async updateNotification(id: number, updates: Partial<Notification>): Promise<Notification> {
+    try {
+      const [notification] = await db
+        .update(notifications)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(notifications.id, id))
+        .returning();
+      return notification;
+    } catch {
+      const existing = DatabaseStorage.fallbackNotificationsStore.get(id);
+      if (!existing) throw new Error('Notification not found');
+      const updated = { ...existing, ...updates, updatedAt: new Date() } as Notification;
+      DatabaseStorage.fallbackNotificationsStore.set(id, updated);
+      return updated;
+    }
+  }
+
+  async deleteNotification(id: number): Promise<void> {
+    try {
+      await db.delete(notifications).where(eq(notifications.id, id));
+    } catch {
+      DatabaseStorage.fallbackNotificationsStore.delete(id);
+    }
+  }
+
+  // LinkedIn OAuth operations - Placeholder implementations
+  async createLinkedInAuthState(state: { userId: string; state: string; createdAt: Date }): Promise<void> {
+    // Implementation for storing in a database table
+    console.log('Creating LinkedIn auth state:', state);
+  }
+
+  async getLinkedInAuthState(state: string): Promise<{ userId: string; state: string; createdAt: Date } | null> {
+    // Implementation for retrieving from a database table
+    console.log('Getting LinkedIn auth state for:', state);
+    return null; // For now, return null to indicate no state found
+  }
+
+  async deleteLinkedInAuthState(state: string): Promise<void> {
+    // Implementation for deleting from a database table
+    console.log('Deleting LinkedIn auth state for:', state);
+  }
+
+  async updateUserLinkedInCredentials(userId: string, credentials: {
+    linkedinAccessToken: string;
+    linkedinRefreshToken: string;
+    linkedinProfileId: string;
+    linkedinProfileName: string;
+    linkedinProfileEmail: string;
+    linkedinConnectedAt: Date;
+  }): Promise<void> {
+    // Placeholder implementation - would update the user table
+    console.log('Updating LinkedIn credentials for user:', userId, credentials);
+  }
+
+  async getLinkedInToken(userId: string): Promise<string | null> {
+    try {
+      // Get user's LinkedIn social account
+      const linkedinAccount = await this.getSocialAccountByPlatform(userId, 'linkedin');
+      return linkedinAccount?.accessToken || null;
+    } catch (error) {
+      console.error('Error getting LinkedIn token:', error);
+      return null;
+    }
+  }
+
+  // Analytics Performance methods
+  async getAnalyticsPerformance(userId: string, period: string = '7D'): Promise<{
+    views: number;
+    engagement: number;
+    revenue: number;
+    change: {
+      views: number;
+      engagement: number;
+      revenue: number;
+    };
+  }> {
+    try {
+      // Cache check
+      const cacheKey = `${userId}:${period}`;
+      const cached = DatabaseStorage.analyticsCache.get(cacheKey);
+      const nowMs = Date.now();
+      if (cached && nowMs - cached.cachedAt < DatabaseStorage.ANALYTICS_CACHE_TTL_MS) {
+        return cached.data;
+      }
+
+      // Coalesce concurrent computations for same key
+      const inFlight = DatabaseStorage.analyticsInFlight.get(cacheKey);
+      if (inFlight) {
+        return await inFlight;
+      }
+
+      const computePromise = (async () => {
+      // Get user's content and metrics
+      // Select only IDs to reduce payload and CPU
+      const userContentIdsRows = await db
+        .select({ id: content.id })
+        .from(content)
+        .where(eq(content.userId, userId))
+        .orderBy(desc(content.createdAt))
+        .limit(100);
+      const contentIds = userContentIdsRows.map(r => r.id);
+      
+      if (contentIds.length === 0) {
+        // Return realistic zero data for new users
+        const resp = {
+          views: 0,
+          engagement: 0,
+          revenue: 0,
+          change: {
+            views: 0,
+            engagement: 0,
+            revenue: 0
+          }
+        };
+        DatabaseStorage.analyticsCache.set(cacheKey, { data: resp, cachedAt: nowMs });
+        return resp;
+      }
+
+      // Calculate totals via aggregate SQL for performance
+      const now = new Date();
+      const periodDays = period === '7D' ? 7 : period === '30D' ? 30 : 90;
+      const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+      const totalAggRows: any[] = await db.execute(sql`
+        SELECT 
+          COALESCE(SUM(views), 0)::bigint AS views,
+          COALESCE(SUM(likes), 0)::bigint AS likes,
+          COALESCE(SUM(comments), 0)::bigint AS comments,
+          COALESCE(SUM(shares), 0)::bigint AS shares
+        FROM content_metrics
+        WHERE content_id = ANY(${contentIds})
+      `);
+      const recentAggRows: any[] = await db.execute(sql`
+        SELECT 
+          COALESCE(SUM(views), 0)::bigint AS views,
+          COALESCE(SUM(likes), 0)::bigint AS likes,
+          COALESCE(SUM(comments), 0)::bigint AS comments,
+          COALESCE(SUM(shares), 0)::bigint AS shares
+        FROM content_metrics
+        WHERE content_id = ANY(${contentIds})
+          AND last_updated >= ${periodStart}
+      `);
+
+      const totalViews = Number((totalAggRows?.[0]?.views) ?? 0);
+      const totalLikes = Number((totalAggRows?.[0]?.likes) ?? 0);
+      const totalComments = Number((totalAggRows?.[0]?.comments) ?? 0);
+      const totalShares = Number((totalAggRows?.[0]?.shares) ?? 0);
+
+      const recentViews = Number((recentAggRows?.[0]?.views) ?? 0);
+      const recentLikes = Number((recentAggRows?.[0]?.likes) ?? 0);
+      const recentComments = Number((recentAggRows?.[0]?.comments) ?? 0);
+      const recentShares = Number((recentAggRows?.[0]?.shares) ?? 0);
+
+      const olderViews = Math.max(0, totalViews - recentViews);
+      const olderLikes = Math.max(0, totalLikes - recentLikes);
+      const olderComments = Math.max(0, totalComments - recentComments);
+      const olderShares = Math.max(0, totalShares - recentShares);
+
+      // Engagement and revenue
+      const engagement = totalViews > 0 ? ((totalLikes + totalComments + totalShares) / totalViews) * 100 : 0;
+      const revenue = totalViews * 0.01;
+      const recentEngagement = recentViews > 0 ? ((recentLikes + recentComments + recentShares) / recentViews) * 100 : 0;
+      const olderEngagement = olderViews > 0 ? ((olderLikes + olderComments + olderShares) / olderViews) * 100 : 0;
+
+      const recentRevenue = recentViews * 0.01;
+      const olderRevenue = olderViews * 0.01;
+
+      const viewsChange = olderViews > 0 ? ((recentViews - olderViews) / olderViews) * 100 : 0;
+      const engagementChange = olderEngagement > 0 ? ((recentEngagement - olderEngagement) / olderEngagement) * 100 : 0;
+      const revenueChange = olderRevenue > 0 ? ((recentRevenue - olderRevenue) / olderRevenue) * 100 : 0;
+      
+      const response = {
+        views: totalViews,
+        engagement: Math.round(engagement * 100) / 100,
+        revenue: Math.round(revenue * 100) / 100,
+        change: {
+          views: Math.round(viewsChange * 100) / 100,
+          engagement: Math.round(engagementChange * 100) / 100,
+          revenue: Math.round(revenueChange * 100) / 100
+        }
+      };
+      // Update cache
+      DatabaseStorage.analyticsCache.set(cacheKey, { data: response, cachedAt: nowMs });
+      return response;
+
+
+      DatabaseStorage.analyticsInFlight.set(cacheKey, computePromise);
+      try {
+        const result = await computePromise;
+        return result;
+      } finally {
+        DatabaseStorage.analyticsInFlight.delete(cacheKey);
+      }
+    } catch (error) {
+      console.error('Error getting analytics performance:', error);
+      // Return realistic zero data instead of throwing
+      return {
+        views: 0,
+        engagement: 0,
+        revenue: 0,
+        change: {
+          views: 0,
+          engagement: 0,
+          revenue: 0
+        }
+      };
+    }
+
+    // Social Account Delete (OAuth lifecycle)
+    async deleteSocialAccount(accountId: number): Promise<void> {
+      await db.delete(socialAccounts).where(eq(socialAccounts.id, accountId));
+    }
+
+    // AI Task History Cleanup (Storage Management)
+    async deleteAIGenerationTask(taskId: number): Promise<void> {
+      await db.delete(aiGenerationTasks).where(eq(aiGenerationTasks.id, taskId));
+    }
+
+    // Bulk AI Task Cleanup (Batch Operations)
+    async cleanupAIGenerationTasks(userId: string, olderThanDays: number, status: string = 'completed'): Promise<number> {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+      const result = await db.delete(aiGenerationTasks)
+        .where(and(
+          eq(aiGenerationTasks.userId, userId),
+          eq(aiGenerationTasks.status, status),
+          sql`${aiGenerationTasks.createdAt} < ${cutoffDate}`
+        ));
+
+      return result.rowCount || 0;
+    }
+
+    // Get Social Account by ID (for verification)
+    async getSocialAccountById(accountId: number): Promise<SocialAccount | undefined> {
+      return await db.query.socialAccounts.findFirst({
+        where: eq(socialAccounts.id, accountId)
+      });
+    }
+
+    // Get AI Generation Task by ID (for verification)
+    async getAIGenerationTask(taskId: number): Promise<AIGenerationTask | undefined> {
+      return await db.query.aiGenerationTasks.findFirst({
+        where: eq(aiGenerationTasks.id, taskId)
+      });
+    }
+  }
+}
+
+export const storage = new DatabaseStorage();

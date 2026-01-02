@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Content Access Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+        .result.success { 
+            background: #d4edda; 
+            border-color: #28a745; 
+        }
+        .result.error { 
+            background: #f8d7da; 
+            border-color: #dc3545; 
+        }
+        .result.info { 
+            background: #d1ecf1; 
+            border-color: #17a2b8; 
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend Content Access Test</h1>
+    
+    <div class="test-section">
+        <h2>📋 Test Overview</h2>
+        <p>This test verifies that the frontend can properly access scheduled content with authentication.</p>
+        <p><strong>Status:</strong> <span id="test-status" class="info">Ready to test</span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Actions</h2>
+        <button onclick="testWithAuth()">Test with Authentication</button>
+        <button onclick="testWithoutAuth()">Test without Authentication</button>
+        <button onclick="testFrontendSimulation()">Simulate Frontend Query</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Results Summary</h2>
+        <div id="summary">
+            <p>Click the test buttons above to run tests.</p>
+        </div>
+    </div>
+
+    <script>
+        function addResult(testName, success, message, details = null) {
+            const container = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${success ? 'success' : 'error'}`;
+            
+            const icon = success ? '✅' : '❌';
+            resultDiv.innerHTML = `<strong>${icon} ${testName}:</strong> ${message}`;
+            
+            if (details) {
+                resultDiv.innerHTML += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+            
+            container.appendChild(resultDiv);
+        }
+
+        async function testWithAuth() {
+            document.getElementById('test-status').textContent = 'Testing with authentication...';
+            document.getElementById('test-status').className = 'info';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content?status=scheduled', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Authenticated Request', true, `Success! Found ${data.content?.length || 0} scheduled items`, {
+                        total: data.total,
+                        contentCount: data.content?.length || 0,
+                        filters: data.filters
+                    });
+                    
+                    if (data.content && data.content.length > 0) {
+                        addResult('Content Details', true, 'Scheduled content found:', data.content.slice(0, 3));
+                    }
+                } else {
+                    addResult('Authenticated Request', false, `Failed with status ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Authenticated Request', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testWithoutAuth() {
+            document.getElementById('test-status').textContent = 'Testing without authentication...';
+            document.getElementById('test-status').className = 'info';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/content?status=scheduled');
+                
+                if (response.status === 401) {
+                    addResult('Unauthenticated Request', true, 'Correctly rejected without authentication (401)');
+                } else {
+                    addResult('Unauthenticated Request', false, `Unexpected status: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Unauthenticated Request', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testFrontendSimulation() {
+            document.getElementById('test-status').textContent = 'Simulating frontend query...';
+            document.getElementById('test-status').className = 'info';
+            
+            try {
+                // Simulate the frontend apiRequest function
+                const token = 'test-token'; // This would come from localStorage in real frontend
+                
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch('http://localhost:5000/api/content?status=scheduled', {
+                    headers: headers
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Frontend Simulation', true, `Frontend query successful! Found ${data.content?.length || 0} items`, {
+                        success: data.success,
+                        total: data.total,
+                        contentCount: data.content?.length || 0
+                    });
+                    
+                    document.getElementById('test-status').textContent = '✅ Frontend can access scheduled content!';
+                    document.getElementById('test-status').className = 'success';
+                } else {
+                    addResult('Frontend Simulation', false, `Frontend query failed with status ${response.status}`);
+                    document.getElementById('test-status').textContent = '❌ Frontend cannot access scheduled content';
+                    document.getElementById('test-status').className = 'error';
+                }
+            } catch (error) {
+                addResult('Frontend Simulation', false, `Frontend simulation error: ${error.message}`);
+                document.getElementById('test-status').textContent = '❌ Frontend simulation failed';
+                document.getElementById('test-status').className = 'error';
+            }
+        }
+
+        // Auto-run frontend simulation on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testFrontendSimulation();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

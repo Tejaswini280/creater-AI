@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Navigation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { margin: 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .project-card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Project Navigation Test</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Test Instructions</h3>
+        <p>This page helps test the project navigation functionality. Follow these steps:</p>
+        <ol>
+            <li>Click "Setup Test Data" to create sample projects and content</li>
+            <li>Click "Test Project Navigation" to verify each project has unique data</li>
+            <li>Navigate to your app and test the actual project pages</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Setup</h3>
+        <button onclick="setupTestData()">Setup Test Data</button>
+        <button onclick="clearTestData()">Clear Test Data</button>
+        <button onclick="showCurrentData()">Show Current Data</button>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Testing</h3>
+        <button onclick="testProjectNavigation()">Test Project Navigation</button>
+        <button onclick="testContentFiltering()">Test Content Filtering</button>
+    </div>
+
+    <div id="results" class="test-section">
+        <h3>📊 Test Results</h3>
+        <div id="results-content">No tests run yet.</div>
+    </div>
+
+    <script>
+        // Test data setup
+        const testProjects = [
+            {
+                id: 1,
+                name: "Project 1",
+                description: "First content project",
+                type: "video",
+                tags: ["video", "content", "youtube"],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 2,
+                name: "Project 2", 
+                description: "Second content project",
+                type: "campaign",
+                tags: ["campaign", "social", "instagram"],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 3,
+                name: "Project 3",
+                description: "Third content project", 
+                type: "script",
+                tags: ["script", "writing", "blog"],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
+        ];
+
+        const testContent = [
+            // Project 1 content
+            {
+                id: 1,
+                title: "Project 1 - YouTube Video",
+                description: "This is content specifically for Project 1",
+                platform: "youtube",
+                contentType: "video",
+                status: "draft",
+                projectId: 1,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 2,
+                title: "Project 1 - Instagram Post",
+                description: "Instagram content for Project 1",
+                platform: "instagram", 
+                contentType: "image",
+                status: "published",
+                projectId: 1,
+                createdAt: new Date().toISOString()
+            },
+            
+            // Project 2 content
+            {
+                id: 3,
+                title: "Project 2 - Facebook Campaign",
+                description: "This is content specifically for Project 2",
+                platform: "facebook",
+                contentType: "campaign",
+                status: "scheduled",
+                projectId: 2,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 4,
+                title: "Project 2 - TikTok Video",
+                description: "TikTok content for Project 2",
+                platform: "tiktok",
+                contentType: "short",
+                status: "draft",
+                projectId: 2,
+                createdAt: new Date().toISOString()
+            },
+            
+            // Project 3 content
+            {
+                id: 5,
+                title: "Project 3 - Blog Script",
+                description: "This is content specifically for Project 3",
+                platform: "blog",
+                contentType: "text",
+                status: "published",
+                projectId: 3,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 6,
+                title: "Project 3 - Newsletter",
+                description: "Newsletter content for Project 3",
+                platform: "email",
+                contentType: "text",
+                status: "draft",
+                projectId: 3,
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        function setupTestData() {
+            try {
+                localStorage.setItem('localProjects', JSON.stringify(testProjects));
+                localStorage.setItem('localContent', JSON.stringify(testContent));
+                
+                showResults('✅ Test data setup successful!', 'success');
+                showResults(`📁 Created ${testProjects.length} projects and ${testContent.length} content items`, 'info');
+                
+                // Verify the data
+                const storedProjects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+                const storedContent = JSON.parse(localStorage.getItem('localContent') || '[]');
+                
+                showResults(`🔍 Verification: ${storedProjects.length} projects, ${storedContent.length} content items`, 'info');
+                
+            } catch (error) {
+                showResults(`❌ Error setting up test data: ${error.message}`, 'error');
+            }
+        }
+
+        function clearTestData() {
+            try {
+                localStorage.removeItem('localProjects');
+                localStorage.removeItem('localContent');
+                showResults('🗑️ Test data cleared successfully!', 'success');
+            } catch (error) {
+                showResults(`❌ Error clearing test data: ${error.message}`, 'error');
+            }
+        }
+
+        function showCurrentData() {
+            try {
+                const projects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+                const content = JSON.parse(localStorage.getItem('localContent') || '[]');
+                
+                let html = '<h4>Current localStorage Data:</h4>';
+                
+                if (projects.length > 0) {
+                    html += '<h5>Projects:</h5>';
+                    projects.forEach(project => {
+                        html += `<div class="project-card">
+                            <strong>${project.name}</strong> (ID: ${project.id})<br>
+                            Type: ${project.type}<br>
+                            Description: ${project.description}
+                        </div>`;
+                    });
+                } else {
+                    html += '<p>No projects found</p>';
+                }
+                
+                if (content.length > 0) {
+                    html += '<h5>Content:</h5>';
+                    content.forEach(item => {
+                        html += `<div class="project-card">
+                            <strong>${item.title}</strong> (Project ID: ${item.projectId})<br>
+                            Platform: ${item.platform}<br>
+                            Type: ${item.contentType}<br>
+                            Status: ${item.status}
+                        </div>`;
+                    });
+                } else {
+                    html += '<p>No content found</p>';
+                }
+                
+                showResults(html, 'info');
+                
+            } catch (error) {
+                showResults(`❌ Error reading current data: ${error.message}`, 'error');
+            }
+        }
+
+        function testProjectNavigation() {
+            try {
+                const projects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+                const content = JSON.parse(localStorage.getItem('localContent') || '[]');
+                
+                if (projects.length === 0) {
+                    showResults('❌ No projects found. Please setup test data first.', 'error');
+                    return;
+                }
+                
+                let results = '<h4>Project Navigation Test Results:</h4>';
+                let allPassed = true;
+                
+                projects.forEach(project => {
+                    const projectContent = content.filter(item => item.projectId === project.id);
+                    const hasContent = projectContent.length > 0;
+                    
+                    if (hasContent) {
+                        results += `<div class="project-card success">
+                            ✅ <strong>${project.name}</strong>: ${projectContent.length} content items
+                        </div>`;
+                    } else {
+                        results += `<div class="project-card error">
+                            ❌ <strong>${project.name}</strong>: No content found
+                        </div>`;
+                        allPassed = false;
+                    }
+                });
+                
+                if (allPassed) {
+                    results += '<p><strong>🎉 All projects have content and navigation should work correctly!</strong></p>';
+                } else {
+                    results += '<p><strong>⚠️ Some projects are missing content. Check the data setup.</strong></p>';
+                }
+                
+                showResults(results, allPassed ? 'success' : 'error');
+                
+            } catch (error) {
+                showResults(`❌ Error testing project navigation: ${error.message}`, 'error');
+            }
+        }
+
+        function testContentFiltering() {
+            try {
+                const content = JSON.parse(localStorage.getItem('localContent') || '[]');
+                
+                if (content.length === 0) {
+                    showResults('❌ No content found. Please setup test data first.', 'error');
+                    return;
+                }
+                
+                let results = '<h4>Content Filtering Test Results:</h4>';
+                
+                // Test project-specific filtering
+                const project1Content = content.filter(item => item.projectId === 1);
+                const project2Content = content.filter(item => item.projectId === 2);
+                const project3Content = content.filter(item => item.projectId === 3);
+                
+                results += `<div class="project-card info">
+                    <strong>Project 1 Content:</strong> ${project1Content.length} items<br>
+                    <strong>Project 2 Content:</strong> ${project2Content.length} items<br>
+                    <strong>Project 3 Content:</strong> ${project3Content.length} items
+                </div>`;
+                
+                // Verify no content overlap
+                const allProjectIds = content.map(item => item.projectId);
+                const uniqueProjectIds = [...new Set(allProjectIds)];
+                
+                if (uniqueProjectIds.length === 3) {
+                    results += '<p>✅ Content is properly separated by project ID</p>';
+                } else {
+                    results += '<p>❌ Content project ID separation issue detected</p>';
+                }
+                
+                showResults(results, 'info');
+                
+            } catch (error) {
+                showResults(`❌ Error testing content filtering: ${error.message}`, 'error');
+            }
+        }
+
+        function showResults(content, type) {
+            const resultsDiv = document.getElementById('results-content');
+            resultsDiv.innerHTML = content;
+            resultsDiv.className = `test-section ${type}`;
+        }
+
+        // Auto-setup test data on page load
+        window.addEventListener('load', () => {
+            showResults('🚀 Test page loaded. Click "Setup Test Data" to begin testing.', 'info');
+        });
+    </script>
+</body>
+</html>

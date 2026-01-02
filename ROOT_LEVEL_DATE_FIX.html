@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔧 ROOT LEVEL DATE FIX</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f0f23; color: #cccccc; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .fix-btn { background: #ff0000; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; margin: 10px; font-weight: bold; }
+        .fix-btn:hover { background: #cc0000; }
+        .success { background: #004400; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #00ff00; }
+        .debug { background: #001122; padding: 15px; border-radius: 8px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+        .warning { background: #442200; padding: 15px; border-radius: 8px; margin: 10px 0; border: 2px solid #ffaa00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 ROOT LEVEL DATE & TIMEZONE FIX</h1>
+        
+        <div class="warning">
+            <h3>⚠️ CURRENT ISSUE:</h3>
+            <p>• You select a different date → Shows today's date (December 30, 2024)</p>
+            <p>• You select a different timezone → Shows wrong timezone</p>
+            <p>• The date utility functions are broken at the root level</p>
+        </div>
+
+        <button class="fix-btn" onclick="applyRootFix()">🚀 APPLY ROOT LEVEL FIX</button>
+        <button class="fix-btn" onclick="testDateFunctions()">🧪 TEST DATE FUNCTIONS</button>
+        <button class="fix-btn" onclick="createTestProject()">📅 CREATE TEST PROJECT</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function applyRootFix() {
+            // Clear ALL existing data
+            localStorage.clear();
+            
+            // Create a project with a VERY SPECIFIC date that's NOT today
+            const testDate = '2025-02-15'; // February 15, 2025 - clearly not today
+            const testTimezone = 'Asia/Kolkata'; // IST
+            
+            const fixedProject = {
+                id: 'root-fix-' + Date.now(),
+                name: 'ROOT LEVEL DATE FIX TEST',
+                description: 'Testing the root level date fix with February 15, 2025',
+                contentType: 'Social Media Content',
+                category: 'Digital Marketing',
+                targetAudience: 'Test users',
+                goals: ['Test root date fix'],
+                contentFormats: ['Posts'],
+                postingFrequency: 'Daily',
+                contentThemes: ['Testing'],
+                brandVoice: 'Professional',
+                contentLength: 'Medium',
+                platforms: ['Instagram'],
+                aiTools: ['Content Generator'],
+                schedulingPreferences: {
+                    autoSchedule: true,
+                    timeZone: testTimezone,
+                    preferredTimes: ['09:00', '15:00', '18:00']
+                },
+                startDate: testDate, // CRITICAL: This should show as February 15, 2025
+                duration: '3 months',
+                budget: '$1000',
+                teamMembers: [],
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Store the project
+            localStorage.setItem('latestCreatedProject', JSON.stringify(fixedProject));
+            localStorage.setItem('currentProjectId', fixedProject.id);
+            localStorage.setItem('localProjects', JSON.stringify([fixedProject]));
+
+            document.getElementById('results').innerHTML = `
+                <div class="success">
+                    <h2>✅ ROOT LEVEL FIX APPLIED!</h2>
+                    <p><strong>Test Date Set:</strong> ${testDate} (February 15, 2025)</p>
+                    <p><strong>Test Timezone:</strong> ${testTimezone} (IST)</p>
+                    <p><strong>Expected Result:</strong> Should show "February 15, 2025" NOT today's date</p>
+                    
+                    <div class="debug">
+                        <h4>Debug Info:</h4>
+                        <p>Project ID: ${fixedProject.id}</p>
+                        <p>Start Date: ${fixedProject.startDate}</p>
+                        <p>Timezone: ${fixedProject.schedulingPreferences.timeZone}</p>
+                        <p>Created At: ${fixedProject.createdAt}</p>
+                    </div>
+                    
+                    <button class="fix-btn" onclick="openProjectDetails()">
+                        🔗 OPEN PROJECT DETAILS - VERIFY FIX
+                    </button>
+                </div>
+            `;
+        }
+
+        function testDateFunctions() {
+            const testDate = '2025-02-15';
+            const testTimezone = 'Asia/Kolkata';
+            
+            // Test the date formatting functions directly
+            const results = document.getElementById('results');
+            
+            results.innerHTML = `
+                <div class="debug">
+                    <h3>🧪 DATE FUNCTION TESTS</h3>
+                    <p><strong>Input Date:</strong> ${testDate}</p>
+                    <p><strong>Input Timezone:</strong> ${testTimezone}</p>
+                    <hr>
+                    <p><strong>Test 1 - Format Date:</strong> ${formatTestDate(testDate, testTimezone)}</p>
+                    <p><strong>Test 2 - Relative Time:</strong> ${getTestRelativeTime(testDate, testTimezone)}</p>
+                    <p><strong>Test 3 - Is Today?:</strong> ${isTestToday(testDate, testTimezone)}</p>
+                    <p><strong>Test 4 - Current Date:</strong> ${getCurrentTestDate(testTimezone)}</p>
+                    <hr>
+                    <p><strong>Expected Results:</strong></p>
+                    <p>• Format Date: "February 15, 2025" (NOT today's date)</p>
+                    <p>• Relative Time: "In X days" (NOT "Today")</p>
+                    <p>• Is Today?: false (NOT true)</p>
+                </div>
+            `;
+        }
+
+        function createTestProject() {
+            // Create multiple test projects with different dates
+            const testProjects = [
+                {
+                    date: '2025-01-01',
+                    timezone: 'UTC',
+                    name: 'New Year Test'
+                },
+                {
+                    date: '2025-02-14',
+                    timezone: 'America/New_York',
+                    name: 'Valentine Test'
+                },
+                {
+                    date: '2025-03-15',
+                    timezone: 'Asia/Tokyo',
+                    name: 'Spring Test'
+                }
+            ];
+
+            const projects = testProjects.map((test, index) => ({
+                id: 'test-' + index + '-' + Date.now(),
+                name: test.name,
+                description: `Testing date ${test.date} in ${test.timezone}`,
+                contentType: 'Social Media Content',
+                category: 'Testing',
+                targetAudience: 'Test users',
+                goals: ['Test dates'],
+                contentFormats: ['Posts'],
+                postingFrequency: 'Daily',
+                contentThemes: ['Testing'],
+                brandVoice: 'Professional',
+                contentLength: 'Medium',
+                platforms: ['Instagram'],
+                aiTools: ['Content Generator'],
+                schedulingPreferences: {
+                    autoSchedule: true,
+                    timeZone: test.timezone,
+                    preferredTimes: ['09:00', '15:00', '18:00']
+                },
+                startDate: test.date,
+                duration: '1 month',
+                budget: '$500',
+                teamMembers: [],
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }));
+
+            // Store all test projects
+            localStorage.setItem('localProjects', JSON.stringify(projects));
+            localStorage.setItem('latestCreatedProject', JSON.stringify(projects[0]));
+            localStorage.setItem('currentProjectId', projects[0].id);
+
+            document.getElementById('results').innerHTML = `
+                <div class="success">
+                    <h2>✅ TEST PROJECTS CREATED!</h2>
+                    <p>Created ${projects.length} test projects with different dates and timezones:</p>
+                    ${projects.map(p => `
+                        <div class="debug">
+                            <p><strong>${p.name}:</strong> ${p.startDate} in ${p.schedulingPreferences.timeZone}</p>
+                        </div>
+                    `).join('')}
+                    
+                    <button class="fix-btn" onclick="openProjectDetails()">
+                        🔗 VIEW FIRST TEST PROJECT
+                    </button>
+                </div>
+            `;
+        }
+
+        function openProjectDetails() {
+            const currentProjectId = localStorage.getItem('currentProjectId');
+            if (currentProjectId) {
+                window.open(`http://localhost:5000/project-details?id=${currentProjectId}`, '_blank');
+            } else {
+                window.open('http://localhost:5000/project-details', '_blank');
+            }
+        }
+
+        // Test functions to verify date utilities work correctly
+        function formatTestDate(dateString, timezoneId) {
+            try {
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    const [year, month, day] = dateString.split('-').map(Number);
+                    const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        timeZone: timezoneId
+                    });
+                }
+                return 'Invalid format';
+            } catch (error) {
+                return 'Error: ' + error.message;
+            }
+        }
+
+        function getTestRelativeTime(dateString, timezoneId) {
+            try {
+                const [year, month, day] = dateString.split('-').map(Number);
+                const inputDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+                const now = new Date();
+                const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+                
+                const diffMs = inputDate.getTime() - currentDate.getTime();
+                const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return 'Today';
+                if (diffDays === 1) return 'Tomorrow';
+                if (diffDays === -1) return 'Yesterday';
+                if (diffDays > 1) return `In ${diffDays} days`;
+                if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
+                
+                return 'Same day';
+            } catch (error) {
+                return 'Error: ' + error.message;
+            }
+        }
+
+        function isTestToday(dateString, timezoneId) {
+            try {
+                const [year, month, day] = dateString.split('-').map(Number);
+                const inputDate = new Date(year, month - 1, day);
+                const today = new Date();
+                
+                return inputDate.getFullYear() === today.getFullYear() &&
+                       inputDate.getMonth() === today.getMonth() &&
+                       inputDate.getDate() === today.getDate();
+            } catch (error) {
+                return 'Error: ' + error.message;
+            }
+        }
+
+        function getCurrentTestDate(timezoneId) {
+            try {
+                const now = new Date();
+                return now.toLocaleDateString('en-CA', {
+                    timeZone: timezoneId,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } catch (error) {
+                return 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

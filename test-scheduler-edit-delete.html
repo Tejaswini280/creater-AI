@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler Edit/Delete Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Scheduler Edit/Delete Functionality Test</h1>
+    <p>This test verifies that the edit and delete buttons in the content scheduler page are working correctly.</p>
+
+    <div class="test-section">
+        <h2>📋 Test Overview</h2>
+        <div class="step">
+            <strong>Test 1:</strong> Verify edit button functionality
+        </div>
+        <div class="step">
+            <strong>Test 2:</strong> Verify delete button functionality  
+        </div>
+        <div class="step">
+            <strong>Test 3:</strong> Verify form updates correctly when editing
+        </div>
+        <div class="step">
+            <strong>Test 4:</strong> Verify API endpoints are working
+        </div>
+        <div class="step">
+            <strong>Test 5:</strong> Verify UI state management
+        </div>
+    </div>
+
+    <div class="test-grid">
+        <div class="test-section">
+            <h3>🔧 Manual Test Steps</h3>
+            <div class="step">
+                1. Navigate to <a href="http://localhost:5000/scheduler" target="_blank">Scheduler Page</a>
+            </div>
+            <div class="step">
+                2. Verify scheduled content is displayed with edit/delete buttons
+            </div>
+            <div class="step">
+                3. Click edit button on any scheduled content
+            </div>
+            <div class="step">
+                4. Verify form opens with content data pre-filled
+            </div>
+            <div class="step">
+                5. Modify content and click "Update"
+            </div>
+            <div class="step">
+                6. Verify content is updated in the list
+            </div>
+            <div class="step">
+                7. Click delete button on any scheduled content
+            </div>
+            <div class="step">
+                8. Confirm deletion in dialog
+            </div>
+            <div class="step">
+                9. Verify content is removed from the list
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Automated Tests</h3>
+            <button onclick="runAPITests()">Test API Endpoints</button>
+            <button onclick="testEditFunctionality()">Test Edit Flow</button>
+            <button onclick="testDeleteFunctionality()">Test Delete Flow</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+            
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Test Log</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let logMessages = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logMessages.push(logEntry);
+            
+            const logElement = document.getElementById('log');
+            logElement.innerHTML = logMessages.map(msg => `<div>${msg}</div>`).join('');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function addResult(testName, success, message) {
+            testResults.push({ testName, success, message });
+            const resultsDiv = document.getElementById('results');
+            
+            const resultClass = success ? 'success' : 'error';
+            const resultHTML = `
+                <div class="test-result ${resultClass}">
+                    <strong>${testName}:</strong> ${success ? 'PASS' : 'FAIL'} - ${message}
+                </div>
+            `;
+            
+            resultsDiv.innerHTML += resultHTML;
+        }
+
+        async function testAPIEndpoint(method, endpoint, expectedStatus = 200) {
+            try {
+                log(`Testing ${method} ${endpoint}`);
+                
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const success = response.status === expectedStatus;
+                const message = `Status: ${response.status}`;
+                
+                addResult(`${method} ${endpoint}`, success, message);
+                log(`${method} ${endpoint}: ${success ? 'PASS' : 'FAIL'} - ${message}`);
+                
+                return success;
+            } catch (error) {
+                addResult(`${method} ${endpoint}`, false, `Error: ${error.message}`);
+                log(`${method} ${endpoint}: FAIL - Error: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function runAPITests() {
+            log('Starting API endpoint tests...');
+            
+            // Test GET scheduled content
+            await testAPIEndpoint('GET', '/api/content?status=scheduled');
+            
+            // Test PUT update scheduled content (with mock ID)
+            await testAPIEndpoint('PUT', '/api/content/schedule/test-id', 400); // Should fail with invalid ID
+            
+            // Test DELETE scheduled content (with mock ID)
+            await testAPIEndpoint('DELETE', '/api/content/schedule/test-id', 400); // Should fail with invalid ID
+            
+            log('API endpoint tests completed');
+        }
+
+        async function testEditFunctionality() {
+            log('Testing edit functionality...');
+            
+            // Test 1: Check if edit handlers are defined
+            try {
+                const response = await fetch('http://localhost:5000/scheduler');
+                const html = await response.text();
+                
+                const hasEditHandler = html.includes('handleEditContent') || html.includes('onClick');
+                const hasEditButton = html.includes('Edit') && html.includes('onClick');
+                
+                addResult('Edit Handler Defined', hasEditHandler, 'Edit handler found in scheduler page');
+                addResult('Edit Button with Handler', hasEditButton, 'Edit button with click handler found');
+                
+                log(`Edit handler test: ${hasEditHandler ? 'PASS' : 'FAIL'}`);
+                log(`Edit button test: ${hasEditButton ? 'PASS' : 'FAIL'}`);
+            } catch (error) {
+                addResult('Edit Functionality Test', false, `Error: ${error.message}`);
+                log(`Edit functionality test: FAIL - ${error.message}`);
+            }
+        }
+
+        async function testDeleteFunctionality() {
+            log('Testing delete functionality...');
+            
+            // Test 1: Check if delete handlers are defined
+            try {
+                const response = await fetch('http://localhost:5000/scheduler');
+                const html = await response.text();
+                
+                const hasDeleteHandler = html.includes('handleDeleteContent') || html.includes('onClick');
+                const hasDeleteButton = html.includes('Trash2') && html.includes('onClick');
+                
+                addResult('Delete Handler Defined', hasDeleteHandler, 'Delete handler found in scheduler page');
+                addResult('Delete Button with Handler', hasDeleteButton, 'Delete button with click handler found');
+                
+                log(`Delete handler test: ${hasDeleteHandler ? 'PASS' : 'FAIL'}`);
+                log(`Delete button test: ${hasDeleteButton ? 'PASS' : 'FAIL'}`);
+            } catch (error) {
+                addResult('Delete Functionality Test', false, `Error: ${error.message}`);
+                log(`Delete functionality test: FAIL - ${error.message}`);
+            }
+        }
+
+        async function runAllTests() {
+            log('Running all tests...');
+            testResults = [];
+            document.getElementById('results').innerHTML = '';
+            
+            await runAPITests();
+            await testEditFunctionality();
+            await testDeleteFunctionality();
+            
+            const passedTests = testResults.filter(r => r.success).length;
+            const totalTests = testResults.length;
+            
+            log(`All tests completed: ${passedTests}/${totalTests} passed`);
+            
+            if (passedTests === totalTests) {
+                addResult('OVERALL RESULT', true, `All ${totalTests} tests passed! ✅`);
+            } else {
+                addResult('OVERALL RESULT', false, `${passedTests}/${totalTests} tests passed ❌`);
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            log('Scheduler Edit/Delete Test Suite loaded');
+            log('Ready to run tests. Click "Run All Tests" to start.');
+        });
+    </script>
+</body>
+</html> 

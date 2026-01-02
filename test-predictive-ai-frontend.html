@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive AI Analytics - Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .results h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .metric-value {
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        .recommendations {
+            margin-top: 15px;
+        }
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        .recommendations li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .recommendations li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .instructions {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .instructions h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+        }
+        .instructions ol {
+            color: #374151;
+            line-height: 1.6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Predictive AI Analytics Testing</h1>
+            <p>Test all Predictive AI features for your analytics system</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 How to Test Predictive AI Features</h3>
+            <ol>
+                <li><strong>Performance Prediction:</strong> Enter content details and get AI-powered performance predictions</li>
+                <li><strong>Competitor Analysis:</strong> Analyze your niche and discover competitor insights</li>
+                <li><strong>Monetization Strategy:</strong> Generate revenue strategies based on your content type</li>
+                <li><strong>Content Trends:</strong> Discover trending topics and market opportunities</li>
+            </ol>
+            <p><strong>Note:</strong> This test page simulates the Predictive AI functionality. For full integration, use the main analytics dashboard at <a href="http://localhost:5000/analytics" target="_blank">http://localhost:5000/analytics</a></p>
+        </div>
+
+        <div class="grid">
+            <!-- Performance Prediction Test -->
+            <div class="test-section">
+                <h2>📈 Performance Prediction</h2>
+                <form id="performanceForm">
+                    <div class="form-group">
+                        <label for="contentTitle">Content Title/Topic</label>
+                        <input type="text" id="contentTitle" placeholder="e.g., Ultimate Guide to AI Tools 2025" value="Ultimate AI Content Creation Guide">
+                    </div>
+                    <div class="form-group">
+                        <label for="platform">Platform</label>
+                        <select id="platform">
+                            <option value="youtube">YouTube</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audience">Target Audience</label>
+                        <select id="audience">
+                            <option value="content creators">Content Creators</option>
+                            <option value="business">Business Professionals</option>
+                            <option value="general">General Audience</option>
+                            <option value="tech">Tech Enthusiasts</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">🚀 Predict Performance</button>
+                </form>
+                
+                <div class="loading" id="performanceLoading">
+                    <div class="spinner"></div>
+                    <p>Analyzing performance potential...</p>
+                </div>
+                
+                <div id="performanceResults"></div>
+            </div>
+
+            <!-- Competitor Analysis Test -->
+            <div class="test-section">
+                <h2>🔍 Competitor Analysis</h2>
+                <form id="competitorForm">
+                    <div class="form-group">
+                        <label for="niche">Niche to Analyze</label>
+                        <input type="text" id="niche" placeholder="e.g., tech tutorials, fitness, cooking" value="AI and technology">
+                    </div>
+                    <div class="form-group">
+                        <label for="competitorPlatform">Platform</label>
+                        <select id="competitorPlatform">
+                            <option value="youtube">YouTube</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="linkedin">LinkedIn</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">🔍 Analyze Competitors</button>
+                </form>
+                
+                <div class="loading" id="competitorLoading">
+                    <div class="spinner"></div>
+                    <p>Analyzing competitor landscape...</p>
+                </div>
+                
+                <div id="competitorResults"></div>
+            </div>
+
+            <!-- Monetization Strategy Test -->
+            <div class="test-section">
+                <h2>💰 Monetization Strategy</h2>
+                <form id="monetizationForm">
+                    <div class="form-group">
+                        <label for="contentNiche">Your Content Niche</label>
+                        <input type="text" id="contentNiche" placeholder="e.g., tech reviews, lifestyle, education" value="Technology tutorials">
+                    </div>
+                    <div class="form-group">
+                        <label for="monetizationAudience">Target Audience</label>
+                        <select id="monetizationAudience">
+                            <option value="content creators">Content Creators</option>
+                            <option value="professionals">Business Professionals</option>
+                            <option value="students">Students & Learners</option>
+                            <option value="entrepreneurs">Entrepreneurs</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">💡 Generate Strategy</button>
+                </form>
+                
+                <div class="loading" id="monetizationLoading">
+                    <div class="spinner"></div>
+                    <p>Generating monetization strategy...</p>
+                </div>
+                
+                <div id="monetizationResults"></div>
+            </div>
+
+            <!-- Content Trends Test -->
+            <div class="test-section">
+                <h2>📊 Content Trends</h2>
+                <form id="trendsForm">
+                    <div class="form-group">
+                        <label for="trendNiche">Niche for Trend Analysis</label>
+                        <input type="text" id="trendNiche" placeholder="e.g., artificial intelligence, social media" value="Artificial Intelligence">
+                    </div>
+                    <div class="form-group">
+                        <label for="timeframe">Analysis Timeframe</label>
+                        <select id="timeframe">
+                            <option value="7 days">Last 7 Days</option>
+                            <option value="30 days">Last 30 Days</option>
+                            <option value="90 days">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">📈 Analyze Trends</button>
+                </form>
+                
+                <div class="loading" id="trendsLoading">
+                    <div class="spinner"></div>
+                    <p>Analyzing content trends...</p>
+                </div>
+                
+                <div id="trendsResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock API responses for testing
+        const mockResponses = {
+            performance: {
+                predictedViews: Math.floor(Math.random() * 100000) + 10000,
+                engagementRate: (Math.random() * 0.1 + 0.03).toFixed(3),
+                viralPotential: Math.floor(Math.random() * 40) + 30,
+                confidence: (Math.random() * 0.3 + 0.7).toFixed(2),
+                recommendations: [
+                    "Optimize your thumbnail with bright colors and clear text",
+                    "Include a compelling hook in the first 10 seconds",
+                    "Use trending hashtags relevant to your niche",
+                    "Post at optimal times (2-4 PM or 7-9 PM)",
+                    "Engage with your audience in the comments within the first hour"
+                ],
+                factors: {
+                    positive: ["Strong topic relevance", "Good content quality", "Trending niche"],
+                    negative: ["High competition", "Timing considerations"]
+                }
+            },
+            competitors: {
+                topCompetitors: [
+                    { name: "TechGuru Pro", followers: "2.5M", strategy: "Educational content with tutorials" },
+                    { name: "AI Explained", followers: "1.8M", strategy: "Simplified AI concepts for beginners" },
+                    { name: "Future Tech", followers: "1.2M", strategy: "Latest tech news and reviews" }
+                ],
+                contentGaps: [
+                    "Beginner-friendly AI tutorials",
+                    "Practical AI implementation guides",
+                    "AI ethics and safety discussions",
+                    "AI tools comparison videos"
+                ],
+                winningStrategies: [
+                    "Consistent weekly upload schedule",
+                    "Interactive community engagement",
+                    "Cross-platform content distribution",
+                    "Collaboration with other creators"
+                ],
+                marketOpportunities: [
+                    "Emerging AI tools coverage",
+                    "Industry-specific AI applications",
+                    "AI for small businesses",
+                    "AI accessibility content"
+                ]
+            },
+            monetization: {
+                expectedRevenue: {
+                    sixMonth: "$1,200-3,500",
+                    oneYear: "$5,000-15,000"
+                },
+                revenueStreams: [
+                    {
+                        type: "Ad Revenue",
+                        potential: 85,
+                        description: "Platform monetization and sponsored ads",
+                        timeline: "3-6 months",
+                        requirements: ["1K subscribers", "4K watch hours"]
+                    },
+                    {
+                        type: "Course Sales",
+                        potential: 92,
+                        description: "Online courses and educational content",
+                        timeline: "6-12 months",
+                        requirements: ["Expertise establishment", "Course creation"]
+                    },
+                    {
+                        type: "Sponsorships",
+                        potential: 78,
+                        description: "Brand partnerships and sponsored content",
+                        timeline: "6-9 months",
+                        requirements: ["Engaged audience", "Brand alignment"]
+                    }
+                ],
+                productIdeas: [
+                    "AI Tools Masterclass ($199)",
+                    "Content Creator's AI Toolkit ($49)",
+                    "Monthly AI Newsletter ($9.99/month)",
+                    "1-on-1 AI Consulting ($150/hour)"
+                ],
+                timelineToMonetization: "6-12 months for significant revenue"
+            },
+            trends: {
+                trendingTopics: [
+                    { topic: "ChatGPT Alternatives", growth: 156, competition: "High", opportunity: "Medium" },
+                    { topic: "AI Image Generation", growth: 134, competition: "Medium", opportunity: "High" },
+                    { topic: "AI Automation Tools", growth: 98, competition: "Low", opportunity: "Very High" },
+                    { topic: "AI Ethics Discussion", growth: 87, competition: "Low", opportunity: "High" }
+                ],
+                platformTrends: {
+                    youtube: ["Long-form tutorials", "AI tool reviews", "Case studies"],
+                    tiktok: ["Quick AI tips", "Before/after demos", "AI art challenges"],
+                    instagram: ["AI-generated content", "Tool screenshots", "Process videos"],
+                    linkedin: ["AI in business", "Industry insights", "Professional tips"]
+                },
+                recommendations: [
+                    "Focus on AI automation tools - low competition, high opportunity",
+                    "Create beginner-friendly content to capture growing audience",
+                    "Leverage cross-platform distribution for maximum reach",
+                    "Consider AI ethics content for thought leadership"
+                ]
+            }
+        };
+
+        // Simulate API delay
+        function simulateAPICall(duration = 2000) {
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+
+        // Performance Prediction Form
+        document.getElementById('performanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('performanceLoading');
+            const results = document.getElementById('performanceResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            await simulateAPICall(2500);
+            
+            loading.classList.remove('show');
+            
+            const data = mockResponses.performance;
+            
+            results.innerHTML = `
+                <div class="results">
+                    <h3>🎯 Performance Prediction Results</h3>
+                    <div class="metric">
+                        <span class="metric-label">📈 Predicted Views</span>
+                        <span class="metric-value">${data.predictedViews.toLocaleString()}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">💬 Engagement Rate</span>
+                        <span class="metric-value">${(data.engagementRate * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">🚀 Viral Potential</span>
+                        <span class="metric-value">${data.viralPotential}%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">🎯 Confidence Score</span>
+                        <span class="metric-value">${(data.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="recommendations">
+                        <h4>💡 AI Recommendations</h4>
+                        <ul>
+                            ${data.recommendations.slice(0, 3).map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Competitor Analysis Form
+        document.getElementById('competitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('competitorLoading');
+            const results = document.getElementById('competitorResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            await simulateAPICall(3000);
+            
+            loading.classList.remove('show');
+            
+            const data = mockResponses.competitors;
+            
+            results.innerHTML = `
+                <div class="results">
+                    <h3>🏆 Competitor Analysis Results</h3>
+                    <h4>Top Competitors</h4>
+                    ${data.topCompetitors.map(comp => `
+                        <div class="metric">
+                            <span class="metric-label">${comp.name}</span>
+                            <span class="metric-value">${comp.followers}</span>
+                        </div>
+                    `).join('')}
+                    <div class="recommendations">
+                        <h4>🎯 Content Gaps Identified</h4>
+                        <ul>
+                            ${data.contentGaps.slice(0, 3).map(gap => `<li>${gap}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Monetization Strategy Form
+        document.getElementById('monetizationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('monetizationLoading');
+            const results = document.getElementById('monetizationResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            await simulateAPICall(2800);
+            
+            loading.classList.remove('show');
+            
+            const data = mockResponses.monetization;
+            
+            results.innerHTML = `
+                <div class="results">
+                    <h3>💰 Monetization Strategy</h3>
+                    <div class="metric">
+                        <span class="metric-label">💵 6-Month Revenue</span>
+                        <span class="metric-value">${data.expectedRevenue.sixMonth}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">💰 1-Year Revenue</span>
+                        <span class="metric-value">${data.expectedRevenue.oneYear}</span>
+                    </div>
+                    <div class="recommendations">
+                        <h4>🚀 Top Revenue Streams</h4>
+                        <ul>
+                            ${data.revenueStreams.slice(0, 2).map(stream => `<li>${stream.type}: ${stream.potential}% potential (${stream.timeline})</li>`).join('')}
+                        </ul>
+                        <h4>📦 Product Ideas</h4>
+                        <ul>
+                            ${data.productIdeas.slice(0, 3).map(product => `<li>${product}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Content Trends Form
+        document.getElementById('trendsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('trendsLoading');
+            const results = document.getElementById('trendsResults');
+            
+            loading.classList.add('show');
+            results.innerHTML = '';
+            
+            await simulateAPICall(2200);
+            
+            loading.classList.remove('show');
+            
+            const data = mockResponses.trends;
+            
+            results.innerHTML = `
+                <div class="results">
+                    <h3>📈 Content Trends Analysis</h3>
+                    <h4>🔥 Trending Topics</h4>
+                    ${data.trendingTopics.slice(0, 3).map(topic => `
+                        <div class="metric">
+                            <span class="metric-label">${topic.topic}</span>
+                            <span class="metric-value">+${topic.growth}% growth</span>
+                        </div>
+                    `).join('')}
+                    <div class="recommendations">
+                        <h4>💡 Strategic Recommendations</h4>
+                        <ul>
+                            ${data.recommendations.slice(0, 3).map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Show success message on page load
+        setTimeout(() => {
+            const container = document.querySelector('.container');
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success';
+            successMsg.innerHTML = '✅ <strong>Predictive AI Test Page Loaded Successfully!</strong> All features are ready for testing.';
+            container.insertBefore(successMsg, container.firstChild.nextSibling);
+            
+            setTimeout(() => successMsg.remove(), 5000);
+        }, 1000);
+    </script>
+</body>
+</html>

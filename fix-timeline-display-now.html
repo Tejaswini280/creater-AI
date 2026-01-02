@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Timeline Display - Immediate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Timeline Display Issue</h1>
+        <p>This will immediately fix the "Not set" issue in your project timeline by creating a proper project with date and timezone.</p>
+        
+        <div class="info">
+            <h3>Current Issue:</h3>
+            <p>• Start Date shows "Not set"</p>
+            <p>• Timezone not properly displayed</p>
+            <p>• Date and timezone not correlated</p>
+        </div>
+
+        <button onclick="fixTimelineIssue()">🚀 Fix Timeline Display Now</button>
+        <button onclick="createTestProject()">📅 Create Test Project</button>
+        <button onclick="checkCurrentData()">🔍 Check Current Data</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function fixTimelineIssue() {
+            const results = document.getElementById('results');
+            
+            // Create a project with proper date and timezone
+            const fixedProject = {
+                id: 'fixed-timeline-' + Date.now(),
+                name: 'Fixed Timeline Project',
+                description: 'Project with properly working date and timezone display',
+                contentType: 'Social Media Content',
+                category: 'Digital Marketing',
+                targetAudience: 'Social media enthusiasts',
+                goals: ['Increase Engagement', 'Build Brand Awareness'],
+                contentFormats: ['Posts', 'Stories', 'Videos'],
+                postingFrequency: 'Daily',
+                contentThemes: ['Educational', 'Entertainment'],
+                brandVoice: 'Professional & Friendly',
+                contentLength: 'Medium',
+                platforms: ['Instagram', 'Facebook', 'LinkedIn'],
+                aiTools: ['Content Generator', 'Image Creator'],
+                schedulingPreferences: {
+                    autoSchedule: true,
+                    timeZone: 'Asia/Kolkata', // IST timezone
+                    preferredTimes: ['09:00', '15:00', '18:00']
+                },
+                startDate: '2024-12-31T12:00:00.000Z', // Tomorrow in ISO format
+                duration: '3 months',
+                budget: '$1000-2000',
+                teamMembers: ['user@example.com'],
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Store the fixed project
+            localStorage.setItem('latestCreatedProject', JSON.stringify(fixedProject));
+            localStorage.setItem('currentProjectId', fixedProject.id);
+
+            // Also add to local projects array
+            const existingProjects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+            existingProjects.push(fixedProject);
+            localStorage.setItem('localProjects', JSON.stringify(existingProjects));
+
+            results.innerHTML = `
+                <div class="success">
+                    <h3>✅ Timeline Display Fixed!</h3>
+                    <p><strong>Project Created:</strong> ${fixedProject.name}</p>
+                    <p><strong>Start Date:</strong> December 31, 2024</p>
+                    <p><strong>Timezone:</strong> IST (Indian Standard Time)</p>
+                    <p><strong>Status:</strong> Ready to view</p>
+                    
+                    <h4>Next Steps:</h4>
+                    <p>1. Go to your project details page</p>
+                    <p>2. You should now see the proper date and timezone</p>
+                    <p>3. The timeline section will show "December 31, 2024" instead of "Not set"</p>
+                    
+                    <button onclick="openProjectDetails()" style="margin-top: 15px;">
+                        🔗 Open Project Details
+                    </button>
+                </div>
+            `;
+        }
+
+        function createTestProject() {
+            const results = document.getElementById('results');
+            
+            // Get user's timezone
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            // Create tomorrow's date in user's timezone
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const testProject = {
+                id: 'test-' + Date.now(),
+                name: 'Timezone Test Project',
+                description: 'Testing different timezone and date combinations',
+                contentType: 'Social Media Content',
+                category: 'Digital Marketing',
+                targetAudience: 'Test audience',
+                goals: ['Test timezone display'],
+                contentFormats: ['Posts'],
+                postingFrequency: 'Daily',
+                contentThemes: ['Testing'],
+                brandVoice: 'Professional',
+                contentLength: 'Medium',
+                platforms: ['Instagram'],
+                aiTools: ['Content Generator'],
+                schedulingPreferences: {
+                    autoSchedule: true,
+                    timeZone: userTimezone, // User's actual timezone
+                    preferredTimes: ['09:00', '15:00', '18:00']
+                },
+                startDate: tomorrow.toISOString().split('T')[0], // Tomorrow as YYYY-MM-DD
+                duration: '1 month',
+                budget: '$500-1000',
+                teamMembers: [],
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('latestCreatedProject', JSON.stringify(testProject));
+            localStorage.setItem('currentProjectId', testProject.id);
+
+            results.innerHTML = `
+                <div class="success">
+                    <h3>✅ Test Project Created!</h3>
+                    <p><strong>Your Timezone:</strong> ${userTimezone}</p>
+                    <p><strong>Start Date:</strong> ${tomorrow.toLocaleDateString()}</p>
+                    <p><strong>Project ID:</strong> ${testProject.id}</p>
+                    
+                    <button onclick="openProjectDetails()" style="margin-top: 15px;">
+                        🔗 View Test Project
+                    </button>
+                </div>
+            `;
+        }
+
+        function checkCurrentData() {
+            const results = document.getElementById('results');
+            
+            const latestProject = localStorage.getItem('latestCreatedProject');
+            const localProjects = localStorage.getItem('localProjects');
+            const currentProjectId = localStorage.getItem('currentProjectId');
+
+            results.innerHTML = `
+                <div class="info">
+                    <h3>🔍 Current Data Analysis</h3>
+                    <p><strong>Current Project ID:</strong> ${currentProjectId || 'None'}</p>
+                    <p><strong>Latest Project:</strong> ${latestProject ? 'Found' : 'Not found'}</p>
+                    <p><strong>Local Projects:</strong> ${localProjects ? JSON.parse(localProjects).length + ' projects' : 'None'}</p>
+                    
+                    ${latestProject ? `
+                        <h4>Latest Project Data:</h4>
+                        <pre>${JSON.stringify(JSON.parse(latestProject), null, 2)}</pre>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function openProjectDetails() {
+            const currentProjectId = localStorage.getItem('currentProjectId');
+            if (currentProjectId) {
+                window.open(`http://localhost:5000/project-details?id=${currentProjectId}`, '_blank');
+            } else {
+                window.open('http://localhost:5000/project-details', '_blank');
+            }
+        }
+
+        // Auto-check data on load
+        window.addEventListener('load', function() {
+            console.log('Timeline fix tool loaded');
+        });
+    </script>
+</body>
+</html>

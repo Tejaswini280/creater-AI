@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Studio Fixes Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .endpoint-test {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Creator Studio Fixes Verification Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Server Health Check</h2>
+        <button onclick="testServerHealth()">Test Server Health</button>
+        <div id="server-health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Authentication Test</h2>
+        <button onclick="testAuthentication()">Test Authentication</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Content Generation Endpoint Test</h2>
+        <button onclick="testContentGeneration()">Test Content Generation</button>
+        <div id="content-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Content Optimization Endpoint Test</h2>
+        <button onclick="testContentOptimization()">Test Content Optimization</button>
+        <div id="optimize-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Document Analysis Endpoint Test</h2>
+        <button onclick="testDocumentAnalysis()">Test Document Analysis</button>
+        <div id="analyze-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Media Analysis Endpoint Test</h2>
+        <button onclick="testMediaAnalysis()">Test Media Analysis</button>
+        <div id="media-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>7. Frontend Integration Test</h2>
+        <button onclick="testFrontendIntegration()">Test Frontend Integration</button>
+        <div id="frontend-result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:5000';
+        let authToken = localStorage.getItem('token');
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="test-result ${type}">${message}</div>`;
+        }
+
+        async function testServerHealth() {
+            try {
+                const response = await fetch(`${BASE_URL}/health`);
+                if (response.ok) {
+                    showResult('server-health-result', '✅ Server is running and healthy', 'success');
+                } else {
+                    showResult('server-health-result', '❌ Server responded with error status', 'error');
+                }
+            } catch (error) {
+                showResult('server-health-result', `❌ Server connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthentication() {
+            if (!authToken) {
+                showResult('auth-result', '⚠️ No authentication token found. Please log in first.', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('auth-result', '✅ Authentication token is valid', 'success');
+                } else {
+                    showResult('auth-result', '❌ Authentication token is invalid', 'error');
+                }
+            } catch (error) {
+                showResult('auth-result', `❌ Authentication test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testContentGeneration() {
+            if (!authToken) {
+                showResult('content-result', '⚠️ Authentication required for this test', 'info');
+                return;
+            }
+
+            try {
+                const testData = {
+                    type: 'script',
+                    topic: 'The future of AI in content creation',
+                    context: {
+                        audience: 'Tech enthusiasts',
+                        tone: 'professional',
+                        length: 'medium',
+                        platform: 'YouTube'
+                    }
+                };
+
+                const response = await fetch(`${BASE_URL}/api/gemini/generate-advanced-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('content-result', `
+                        ✅ Content generation endpoint working
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const error = await response.json();
+                    showResult('content-result', `❌ Content generation failed: ${error.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('content-result', `❌ Content generation test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testContentOptimization() {
+            if (!authToken) {
+                showResult('optimize-result', '⚠️ Authentication required for this test', 'info');
+                return;
+            }
+
+            try {
+                const testData = {
+                    content: 'This is a sample content that needs optimization for better engagement on social media platforms.',
+                    platform: 'youtube',
+                    goals: ['engagement', 'reach']
+                };
+
+                const response = await fetch(`${BASE_URL}/api/gemini/optimize-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('optimize-result', `
+                        ✅ Content optimization endpoint working
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const error = await response.json();
+                    showResult('optimize-result', `❌ Content optimization failed: ${error.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('optimize-result', `❌ Content optimization test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDocumentAnalysis() {
+            if (!authToken) {
+                showResult('analyze-result', '⚠️ Authentication required for this test', 'info');
+                return;
+            }
+
+            try {
+                const testData = {
+                    text: 'This is a sample document for analysis. It contains various topics and should be analyzed for sentiment, keywords, and insights.',
+                    analysisType: 'all'
+                };
+
+                const response = await fetch(`${BASE_URL}/api/gemini/analyze-document`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('analyze-result', `
+                        ✅ Document analysis endpoint working
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const error = await response.json();
+                    showResult('analyze-result', `❌ Document analysis failed: ${error.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('analyze-result', `❌ Document analysis test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMediaAnalysis() {
+            if (!authToken) {
+                showResult('media-result', '⚠️ Authentication required for this test', 'info');
+                return;
+            }
+
+            try {
+                // Create a simple test image (1x1 pixel PNG)
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'red';
+                ctx.fillRect(0, 0, 1, 1);
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('file', blob, 'test.png');
+                    formData.append('prompt', 'Analyze this test image');
+
+                    const response = await fetch(`${BASE_URL}/api/gemini/analyze-file`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        showResult('media-result', `
+                            ✅ Media analysis endpoint working
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        `, 'success');
+                    } else {
+                        const error = await response.json();
+                        showResult('media-result', `❌ Media analysis failed: ${error.message}`, 'error');
+                    }
+                }, 'image/png');
+            } catch (error) {
+                showResult('media-result', `❌ Media analysis test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFrontendIntegration() {
+            try {
+                // Test if the Creator Studio page loads
+                const response = await fetch(`${BASE_URL}/gemini`);
+                if (response.ok) {
+                    showResult('frontend-result', `
+                        ✅ Frontend integration working
+                        <br>✅ Creator Studio page is accessible
+                        <br>✅ Content, Optimize, and Analyze sections should now be visible
+                        <br>✅ Media analysis should work with proper error handling
+                    `, 'success');
+                } else {
+                    showResult('frontend-result', '❌ Frontend page not accessible', 'error');
+                }
+            } catch (error) {
+                showResult('frontend-result', `❌ Frontend integration test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run server health check on page load
+        window.onload = function() {
+            testServerHealth();
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication</title>
+</head>
+<body>
+    <h1>Test Authentication Flow</h1>
+
+    <div id="status">Checking server...</div>
+
+    <div id="auth-section" style="display: none;">
+        <h2>Login Test</h2>
+        <form id="login-form">
+            <input type="email" id="email" placeholder="Email" value="test@example.com" required><br>
+            <input type="password" id="password" placeholder="Password" value="password123" required><br>
+            <button type="submit">Login</button>
+        </form>
+
+        <h2>Test Auth Endpoint</h2>
+        <button id="test-auth">Test /api/auth/user</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const authSection = document.getElementById('auth-section');
+        const loginForm = document.getElementById('login-form');
+        const testAuthBtn = document.getElementById('test-auth');
+        const authResult = document.getElementById('auth-result');
+
+        // Check if server is running
+        fetch('http://localhost:5000/api/health')
+            .then(response => {
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Server is running';
+                    authSection.style.display = 'block';
+                } else {
+                    statusDiv.textContent = '❌ Server responded with error: ' + response.status;
+                }
+            })
+            .catch(error => {
+                statusDiv.textContent = '❌ Cannot connect to server: ' + error.message;
+            });
+
+        // Handle login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Login successful! Cookies should be set.');
+                    console.log('Login response:', data);
+                } else {
+                    alert('Login failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('Login error: ' + error.message);
+            }
+        });
+
+        // Test auth endpoint
+        testAuthBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authResult.innerHTML = '<pre style="color: green;">✅ Authenticated: ' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    authResult.innerHTML = '<pre style="color: red;">❌ Not authenticated: ' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                authResult.innerHTML = '<pre style="color: red;">❌ Error: ' + error.message + '</pre>';
+            }
+        });
+    </script>
+</body>
+</html>

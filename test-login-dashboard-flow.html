@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login → Dashboard Flow Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 20px auto; 
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover { background-color: #0056b3; }
+        .credentials {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 CreatorNexus Login → Dashboard Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>📋 Test Credentials</h2>
+        <div class="credentials">
+            <strong>Email:</strong> test@example.com<br>
+            <strong>Password:</strong> password123
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 System Tests</h2>
+        <button onclick="testServerHealth()">1. Test Server Health</button>
+        <button onclick="testLogin()">2. Test Login API</button>
+        <button onclick="testDashboardAccess()">3. Test Dashboard Access</button>
+        <button onclick="runFullFlow()">4. Run Full Flow Test</button>
+        <button onclick="clearAllData()">🧹 Clear All Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Quick Actions</h2>
+        <button onclick="goToLogin()">Go to Login Page</button>
+        <button onclick="goToDashboard()">Go to Dashboard</button>
+        <button onclick="setupSampleData()">Setup Sample Data</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+            
+            // Auto-scroll to bottom
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testServerHealth() {
+            log('🔍 Testing server health...', 'info');
+            
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Server is healthy: ${JSON.stringify(data)}`, 'success');
+                    return true;
+                } else {
+                    log(`❌ Server health check failed: ${response.status}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`💥 Server health error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testLogin() {
+            log('🔐 Testing login API...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                log(`📥 Login response status: ${response.status}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Login successful: User ${data.user?.firstName || 'Unknown'}`, 'success');
+                    
+                    // Store tokens if provided
+                    if (data.accessToken) {
+                        localStorage.setItem('token', data.accessToken);
+                        log('💾 Access token stored', 'success');
+                    }
+                    if (data.user) {
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        log('👤 User data stored', 'success');
+                    }
+                    
+                    return true;
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Login failed: ${errorData.message || 'Unknown error'}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`💥 Login error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testDashboardAccess() {
+            log('🏠 Testing dashboard access...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                log(`📥 Auth check response: ${response.status}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Dashboard access granted for: ${data.firstName || 'User'}`, 'success');
+                    return true;
+                } else {
+                    log(`⚠️ Cookie auth failed, trying localStorage...`, 'warning');
+                    
+                    // Try with localStorage token
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        const tokenResponse = await fetch('/api/auth/user', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+                            log(`✅ Token auth successful: ${tokenData.firstName || 'User'}`, 'success');
+                            return true;
+                        } else {
+                            log(`❌ Both cookie and token auth failed`, 'error');
+                            return false;
+                        }
+                    } else {
+                        log(`❌ No authentication tokens available`, 'error');
+                        return false;
+                    }
+                }
+            } catch (error) {
+                log(`💥 Dashboard access error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function runFullFlow() {
+            log('🚀 Running full login → dashboard flow test...', 'info');
+            
+            // Clear existing data first
+            clearAllData();
+            
+            // Step 1: Test server
+            const serverOk = await testServerHealth();
+            if (!serverOk) {
+                log('❌ Full flow failed: Server not healthy', 'error');
+                return;
+            }
+            
+            // Step 2: Test login
+            const loginOk = await testLogin();
+            if (!loginOk) {
+                log('❌ Full flow failed: Login failed', 'error');
+                return;
+            }
+            
+            // Step 3: Test dashboard access
+            const dashboardOk = await testDashboardAccess();
+            if (!dashboardOk) {
+                log('❌ Full flow failed: Dashboard access failed', 'error');
+                return;
+            }
+            
+            // Step 4: Setup sample data
+            setupSampleData();
+            
+            log('🎉 Full flow test PASSED! Ready to use the application.', 'success');
+            log('👉 You can now go to the login page and use the application normally.', 'info');
+        }
+
+        function setupSampleData() {
+            log('📊 Setting up sample data...', 'info');
+            
+            // Add sample projects
+            const sampleProjects = [
+                {
+                    id: 1,
+                    name: "YouTube Channel Growth",
+                    description: "Content strategy for growing YouTube subscribers",
+                    type: "video",
+                    tags: ["youtube", "growth", "content"],
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    name: "Instagram Marketing Campaign",
+                    description: "Social media campaign for brand awareness",
+                    type: "campaign",
+                    tags: ["instagram", "marketing", "social"],
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            // Add sample content
+            const sampleContent = [
+                {
+                    id: 1,
+                    title: "10 Tips for Content Creation",
+                    description: "Educational video about content creation best practices",
+                    platform: "youtube",
+                    contentType: "video",
+                    status: "draft",
+                    projectId: 1,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    title: "Behind the Scenes",
+                    description: "Instagram story showing behind the scenes content",
+                    platform: "instagram",
+                    contentType: "story",
+                    status: "published",
+                    projectId: 2,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            localStorage.setItem('localProjects', JSON.stringify(sampleProjects));
+            localStorage.setItem('localContent', JSON.stringify(sampleContent));
+            
+            log('✅ Sample data added to localStorage', 'success');
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🧹 All local data cleared', 'info');
+        }
+
+        function goToLogin() {
+            log('🔄 Redirecting to login page...', 'info');
+            window.location.href = '/login';
+        }
+
+        function goToDashboard() {
+            log('🔄 Redirecting to dashboard...', 'info');
+            window.location.href = '/';
+        }
+
+        // Auto-run server health check on page load
+        window.onload = () => {
+            log('🚀 Login → Dashboard Flow Test loaded', 'info');
+            log('👆 Click the buttons above to test each step', 'info');
+            testServerHealth();
+        };
+    </script>
+</body>
+</html>

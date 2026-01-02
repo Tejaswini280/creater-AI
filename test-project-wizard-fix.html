@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Wizard Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Project Wizard Development Fix Test</h1>
+        
+        <div class="status info">
+            <strong>Testing Development Environment Fixes</strong><br>
+            This page tests the fixes for TypeScript imports and WebSocket connections.
+        </div>
+
+        <div class="test-section">
+            <h3>1. TypeScript Import Test</h3>
+            <div id="import-status" class="status warning">Testing TypeScript imports...</div>
+            <button onclick="testTypeScriptImports()">Test Imports</button>
+            <pre id="import-details"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>2. WebSocket Connection Test</h3>
+            <div id="websocket-status" class="status warning">Testing WebSocket connection...</div>
+            <button onclick="testWebSocketConnection()">Test WebSocket</button>
+            <pre id="websocket-details"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Project Wizard Navigation Test</h3>
+            <div id="navigation-status" class="status warning">Ready to test navigation...</div>
+            <button onclick="testProjectWizardNavigation()">Test Project Wizard</button>
+            <pre id="navigation-details"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Development Server Status</h3>
+            <div id="server-status" class="status warning">Checking server status...</div>
+            <button onclick="checkServerStatus()">Check Server</button>
+            <pre id="server-details"></pre>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Expected Results After Fix</h3>
+            <ul>
+                <li><strong>TypeScript Imports:</strong> No 404 errors for .ts files</li>
+                <li><strong>WebSocket:</strong> Connects to relative URL /ws?token=...</li>
+                <li><strong>Project Wizard:</strong> Loads all 4 steps properly</li>
+                <li><strong>Auto-Schedule:</strong> Integration works seamlessly</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Your Project Creation Workflow</h3>
+            <div class="info">
+                <strong>Step 1: Project Basics</strong> - Name, type, category, goals<br>
+                <strong>Step 2: Content Creation</strong> - Formats, frequency, themes, voice<br>
+                <strong>Step 3: Integrations</strong> - Platforms, AI tools, scheduling<br>
+                <strong>Step 4: Schedule & Plan</strong> - Dates, duration, budget, team
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.innerHTML = message;
+        }
+
+        async function testTypeScriptImports() {
+            updateStatus('import-status', 'Testing TypeScript imports...', 'warning');
+            log('import-details', 'Starting TypeScript import test...');
+
+            try {
+                // Test if we can access the project service without 404 errors
+                const response = await fetch('/src/lib/projectService.ts');
+                
+                if (response.status === 404) {
+                    log('import-details', '❌ TypeScript file still being served directly (404 error)', true);
+                    updateStatus('import-status', '❌ TypeScript imports still have issues - files being served directly', 'error');
+                } else if (response.ok) {
+                    log('import-details', '✅ TypeScript files are being compiled properly');
+                    updateStatus('import-status', '✅ TypeScript imports working - files compiled to JavaScript', 'success');
+                } else {
+                    log('import-details', `⚠️ Unexpected response: ${response.status}`);
+                    updateStatus('import-status', `⚠️ Unexpected response: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log('import-details', `❌ Import test failed: ${error.message}`, true);
+                updateStatus('import-status', '❌ Import test failed - check console', 'error');
+            }
+        }
+
+        async function testWebSocketConnection() {
+            updateStatus('websocket-status', 'Testing WebSocket connection...', 'warning');
+            log('websocket-details', 'Starting WebSocket connection test...');
+
+            try {
+                // Test WebSocket URL construction
+                const wsUrl = '/ws?token=test-token';
+                log('websocket-details', `Testing WebSocket URL: ${wsUrl}`);
+
+                const ws = new WebSocket(`ws://localhost:3000${wsUrl}`);
+                
+                ws.onopen = () => {
+                    log('websocket-details', '✅ WebSocket connected successfully');
+                    updateStatus('websocket-status', '✅ WebSocket connection working properly', 'success');
+                    ws.close();
+                };
+
+                ws.onerror = (error) => {
+                    log('websocket-details', `❌ WebSocket connection failed: ${error}`, true);
+                    updateStatus('websocket-status', '❌ WebSocket connection failed', 'error');
+                };
+
+                ws.onclose = (event) => {
+                    if (event.code === 1000) {
+                        log('websocket-details', '✅ WebSocket closed normally');
+                    } else {
+                        log('websocket-details', `⚠️ WebSocket closed with code: ${event.code}`);
+                    }
+                };
+
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.CONNECTING) {
+                        log('websocket-details', '⚠️ WebSocket connection timeout');
+                        updateStatus('websocket-status', '⚠️ WebSocket connection timeout', 'warning');
+                        ws.close();
+                    }
+                }, 5000);
+
+            } catch (error) {
+                log('websocket-details', `❌ WebSocket test failed: ${error.message}`, true);
+                updateStatus('websocket-status', '❌ WebSocket test failed', 'error');
+            }
+        }
+
+        async function testProjectWizardNavigation() {
+            updateStatus('navigation-status', 'Testing project wizard navigation...', 'warning');
+            log('navigation-details', 'Testing project wizard navigation...');
+
+            try {
+                // Test if project wizard page is accessible
+                const response = await fetch('/project-wizard');
+                
+                if (response.ok) {
+                    log('navigation-details', '✅ Project wizard page accessible');
+                    updateStatus('navigation-status', '✅ Project wizard navigation working', 'success');
+                    
+                    // Test if we can navigate to the wizard
+                    log('navigation-details', 'You can now navigate to: /project-wizard');
+                    log('navigation-details', 'Expected: 4-step workflow with all your original features');
+                } else {
+                    log('navigation-details', `❌ Project wizard not accessible: ${response.status}`, true);
+                    updateStatus('navigation-status', '❌ Project wizard navigation failed', 'error');
+                }
+            } catch (error) {
+                log('navigation-details', `❌ Navigation test failed: ${error.message}`, true);
+                updateStatus('navigation-status', '❌ Navigation test failed', 'error');
+            }
+        }
+
+        async function checkServerStatus() {
+            updateStatus('server-status', 'Checking development server status...', 'warning');
+            log('server-details', 'Checking development server status...');
+
+            try {
+                // Check if Vite dev server is running
+                const response = await fetch('/');
+                
+                if (response.ok) {
+                    log('server-details', '✅ Development server is running');
+                    log('server-details', `Server URL: ${window.location.origin}`);
+                    log('server-details', 'Vite dev server: ✅ Active');
+                    updateStatus('server-status', '✅ Development server running properly', 'success');
+                } else {
+                    log('server-details', `❌ Server responded with: ${response.status}`, true);
+                    updateStatus('server-status', '❌ Development server issues', 'error');
+                }
+
+                // Check API proxy
+                try {
+                    const apiResponse = await fetch('/api/health');
+                    if (apiResponse.ok) {
+                        log('server-details', '✅ API proxy working');
+                    } else {
+                        log('server-details', '⚠️ API proxy may have issues');
+                    }
+                } catch (apiError) {
+                    log('server-details', '⚠️ API proxy not responding (expected if backend not running)');
+                }
+
+            } catch (error) {
+                log('server-details', `❌ Server check failed: ${error.message}`, true);
+                updateStatus('server-status', '❌ Server check failed', 'error');
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkServerStatus();
+                setTimeout(() => testTypeScriptImports(), 1000);
+                setTimeout(() => testWebSocketConnection(), 2000);
+                setTimeout(() => testProjectWizardNavigation(), 3000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

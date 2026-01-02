@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Authentication Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+        .result.success { 
+            background: #d4edda; 
+            border-color: #28a745; 
+        }
+        .result.error { 
+            background: #f8d7da; 
+            border-color: #dc3545; 
+        }
+        .result.info { 
+            background: #d1ecf1; 
+            border-color: #17a2b8; 
+        }
+        .result.warning { 
+            background: #fff3cd; 
+            border-color: #ffc107; 
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Frontend Authentication Debug</h1>
+    
+    <div class="test-section">
+        <h2>📋 Current Status</h2>
+        <p><strong>Issue:</strong> Frontend getting 401 errors when trying to schedule content</p>
+        <p><strong>Status:</strong> <span id="overall-status" class="warning">Debugging authentication...</span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Authentication Check</h2>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <button onclick="setTestToken()">Set Test Token</button>
+        <button onclick="clearToken()">Clear Token</button>
+        <div id="auth-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Scheduling</h2>
+        <div>
+            <label>Title:</label>
+            <input type="text" id="title" value="Car models" />
+        </div>
+        <div>
+            <label>Description:</label>
+            <input type="text" id="description" value="Car models" />
+        </div>
+        <div>
+            <label>Platform:</label>
+            <select id="platform">
+                <option value="youtube">YouTube</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+            </select>
+        </div>
+        <div>
+            <label>Content Type:</label>
+            <select id="contentType">
+                <option value="video">Video</option>
+                <option value="image">Image</option>
+                <option value="reel">Reel</option>
+            </select>
+        </div>
+        <button onclick="testScheduleContent()">Test Schedule Content</button>
+        <button onclick="testFetchContent()">Test Fetch Content</button>
+        <div id="schedule-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Debug Results</h2>
+        <div id="debug-results"></div>
+    </div>
+
+    <script>
+        function addResult(containerId, testName, success, message, details = null) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${success ? 'success' : 'error'}`;
+            
+            const icon = success ? '✅' : '❌';
+            resultDiv.innerHTML = `<strong>${icon} ${testName}:</strong> ${message}`;
+            
+            if (details) {
+                resultDiv.innerHTML += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+            
+            container.appendChild(resultDiv);
+        }
+
+        function checkLocalStorage() {
+            const container = document.getElementById('auth-results');
+            container.innerHTML = '';
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            addResult('auth-results', 'Token Check', !!token, token ? 'Token found' : 'No token found', {
+                token: token ? token.substring(0, 20) + '...' : null,
+                user: user ? JSON.parse(user) : null
+            });
+            
+            if (!token) {
+                addResult('auth-results', 'Authentication Status', false, 'No authentication token found - this is why scheduling fails');
+            } else {
+                addResult('auth-results', 'Authentication Status', true, 'Token found - scheduling should work');
+            }
+        }
+
+        function setTestToken() {
+            localStorage.setItem('token', 'test-token');
+            localStorage.setItem('user', JSON.stringify({
+                id: 'test-user-id',
+                email: 'test@example.com'
+            }));
+            addResult('auth-results', 'Token Set', true, 'Test token set successfully');
+        }
+
+        function clearToken() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            addResult('auth-results', 'Token Cleared', true, 'Token cleared from localStorage');
+        }
+
+        async function testScheduleContent() {
+            const container = document.getElementById('schedule-results');
+            container.innerHTML = '';
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                addResult('schedule-results', 'Schedule Test', false, 'No token found - cannot test scheduling');
+                return;
+            }
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const platform = document.getElementById('platform').value;
+            const contentType = document.getElementById('contentType').value;
+
+            const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+            const testData = {
+                title,
+                description,
+                platform,
+                contentType,
+                status: 'scheduled',
+                scheduledAt
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const responseText = await response.text();
+                
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult('schedule-results', 'Schedule Test', true, 'Content scheduled successfully!', {
+                        id: data.content.id,
+                        title: data.content.title,
+                        status: data.content.status
+                    });
+                } else {
+                    addResult('schedule-results', 'Schedule Test', false, `Failed with status ${response.status}`, {
+                        response: responseText
+                    });
+                }
+            } catch (error) {
+                addResult('schedule-results', 'Schedule Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testFetchContent() {
+            const container = document.getElementById('schedule-results');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                addResult('schedule-results', 'Fetch Test', false, 'No token found - cannot test fetching');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/content?status=scheduled', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('schedule-results', 'Fetch Test', true, `Found ${data.content?.length || 0} scheduled items`, {
+                        total: data.total,
+                        contentCount: data.content?.length || 0
+                    });
+                } else {
+                    const errorText = await response.text();
+                    addResult('schedule-results', 'Fetch Test', false, `Failed with status ${response.status}`, {
+                        response: errorText
+                    });
+                }
+            } catch (error) {
+                addResult('schedule-results', 'Fetch Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        // Auto-run checks on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkLocalStorage();
+                if (!localStorage.getItem('token')) {
+                    addResult('debug-results', 'Auto-Diagnosis', false, 'No authentication token found. This is why scheduling fails in the main app.');
+                    addResult('debug-results', 'Solution', true, 'Click "Set Test Token" to fix the authentication issue.');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

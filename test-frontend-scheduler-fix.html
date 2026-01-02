@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Scheduler Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Scheduler Fix Test</h1>
+    
+    <div class="test-section info">
+        <h3>Test Overview</h3>
+        <p>This test verifies that the frontend scheduler is correctly:</p>
+        <ul>
+            <li>✅ Calling the correct endpoint: <code>/api/content/schedule</code></li>
+            <li>✅ Sending the correct data structure</li>
+            <li>✅ Handling the response properly</li>
+            <li>✅ Invalidating the React Query cache</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>1. Test Current Scheduled Content</h3>
+        <button onclick="testGetScheduledContent()">Get Current Scheduled Content</button>
+        <div id="current-content"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test Create New Scheduled Content</h3>
+        <button onclick="testCreateScheduledContent()">Create New Scheduled Content</button>
+        <div id="create-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Get Updated Scheduled Content</h3>
+        <button onclick="testGetUpdatedContent()">Get Updated Scheduled Content</button>
+        <div id="updated-content"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Frontend Integration Test</h3>
+        <p>Open the scheduler page in a new tab and test the UI:</p>
+        <button onclick="openSchedulerPage()">Open Scheduler Page</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const TEST_TOKEN = 'test-token';
+
+        function log(message, elementId = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage);
+            
+            if (elementId) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.innerHTML += `<div>${logMessage}</div>`;
+                }
+            }
+        }
+
+        async function testGetScheduledContent() {
+            const elementId = 'current-content';
+            log('Testing GET /api/content/scheduled...', elementId);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/content/scheduled`, {
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Found ${data.scheduledContent?.length || 0} scheduled items`, elementId);
+                
+                const contentList = data.scheduledContent?.map(item => 
+                    `- ${item.title} (${item.platform}) - ${new Date(item.scheduledAt).toLocaleString()}`
+                ).join('\n') || 'No content found';
+                
+                log(`📋 Content list:\n${contentList}`, elementId);
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        async function testCreateScheduledContent() {
+            const elementId = 'create-result';
+            log('Testing POST /api/content/schedule...', elementId);
+            
+            try {
+                const newContent = {
+                    title: 'Frontend Test Content',
+                    description: 'This content was created via frontend test',
+                    platform: 'youtube',
+                    contentType: 'video',
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+                    autoPost: true,
+                    timezone: 'UTC'
+                };
+                
+                log(`📤 Sending data: ${JSON.stringify(newContent, null, 2)}`, elementId);
+                
+                const response = await fetch(`${API_BASE}/api/content/schedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newContent)
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Response data: ${JSON.stringify(data, null, 2)}`, elementId);
+                
+                if (data.success) {
+                    log(`🎉 Content created successfully with ID: ${data.scheduledContent?.id}`, elementId);
+                } else {
+                    log(`❌ Failed to create content: ${data.message}`, elementId);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        async function testGetUpdatedContent() {
+            const elementId = 'updated-content';
+            log('Testing GET /api/content/scheduled (after creation)...', elementId);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/content/scheduled`, {
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Found ${data.scheduledContent?.length || 0} scheduled items`, elementId);
+                
+                // Check if our test content is in the list
+                const testContent = data.scheduledContent?.find(item => 
+                    item.title === 'Frontend Test Content'
+                );
+                
+                if (testContent) {
+                    log(`✅ SUCCESS: Test content found in scheduled list!`, elementId);
+                    log(`📋 Test content details: ${JSON.stringify(testContent, null, 2)}`, elementId);
+                } else {
+                    log(`❌ FAILURE: Test content NOT found in scheduled list!`, elementId);
+                    log(`📋 Available titles: ${data.scheduledContent?.map(c => c.title).join(', ')}`, elementId);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        function openSchedulerPage() {
+            window.open('http://localhost:5000/scheduler', '_blank');
+        }
+
+        // Auto-run initial test
+        window.onload = function() {
+            log('🚀 Starting frontend scheduler fix test...');
+            setTimeout(testGetScheduledContent, 1000);
+        };
+    </script>
+</body>
+</html>

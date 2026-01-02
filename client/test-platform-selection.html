@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Selection Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .platform-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .platform-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,123,255,0.1);
+        }
+        .platform-card.selected {
+            border-color: #007bff;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        }
+        .platform-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .platform-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .platform-desc {
+            color: #666;
+            font-size: 14px;
+        }
+        .selection-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        .selection-indicator.selected {
+            background: #007bff;
+            border-color: #007bff;
+        }
+        .selection-indicator.selected::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+        .selected-count {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+        .selected-platforms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .selected-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .quick-select {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 1px solid #bbdefb;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .quick-btn {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .quick-btn:hover {
+            border-color: #007bff;
+        }
+        .quick-btn.selected {
+            background: #e3f2fd;
+            border-color: #007bff;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Platform Selection Test</h1>
+        <p>This page demonstrates the enhanced multi-select platform functionality for the social media project form.</p>
+
+        <div id="selected-count" class="selected-count">
+            0 platforms selected
+        </div>
+
+        <div id="selected-platforms" class="selected-platforms">
+            <!-- Selected platforms will appear here -->
+        </div>
+
+        <div class="quick-select">
+            <h3>⚡ Quick Platform Selection</h3>
+            <p>Popular platforms for quick selection:</p>
+            <div class="quick-buttons">
+                <button class="quick-btn" data-platform="instagram">
+                    📸 Instagram
+                </button>
+                <button class="quick-btn" data-platform="youtube">
+                    🎥 YouTube
+                </button>
+                <button class="quick-btn" data-platform="tiktok">
+                    🎵 TikTok
+                </button>
+                <button class="quick-btn" data-platform="linkedin">
+                    💼 LinkedIn
+                </button>
+                <button class="quick-btn" data-platform="facebook">
+                    👥 Facebook
+                </button>
+                <button class="quick-btn" data-platform="twitter">
+                    🐦 Twitter
+                </button>
+            </div>
+        </div>
+
+        <h3>🎯 All Available Platforms</h3>
+        <div class="platform-grid" id="platform-grid">
+            <!-- Platform cards will be generated here -->
+        </div>
+
+        <div class="success" id="instructions" style="display: none;">
+            <h3>✅ Test Results</h3>
+            <p>Platform selection is working correctly! You can:</p>
+            <ul>
+                <li>• Click on platform cards to select/deselect them</li>
+                <li>• Use quick selection buttons for popular platforms</li>
+                <li>• See selected platforms in the summary above</li>
+                <li>• Selection count updates in real-time</li>
+            </ul>
+            <p><strong>To test the actual form:</strong> Go to <code>http://localhost:5173/social-media-project-create</code></p>
+        </div>
+    </div>
+
+    <script>
+        const platforms = [
+            { value: 'instagram', label: 'Instagram', icon: '📸', color: 'from-purple-500 to-pink-500', description: 'Stories, Reels, Posts' },
+            { value: 'youtube', label: 'YouTube', icon: '🎥', color: 'from-red-500 to-red-600', description: 'Videos, Shorts, Livestreams' },
+            { value: 'tiktok', label: 'TikTok', icon: '🎵', color: 'from-black to-gray-800', description: 'Short videos, Duets, Trends' },
+            { value: 'linkedin', label: 'LinkedIn', icon: '💼', color: 'from-blue-600 to-blue-700', description: 'Articles, Updates, Networking' },
+            { value: 'facebook', label: 'Facebook', icon: '👥', color: 'from-blue-500 to-blue-600', description: 'Posts, Groups, Events' },
+            { value: 'twitter', label: 'Twitter', icon: '🐦', color: 'from-blue-400 to-blue-500', description: 'Tweets, Threads, Polls' },
+            { value: 'pinterest', label: 'Pinterest', icon: '📌', color: 'from-red-600 to-red-700', description: 'Pins, Boards, Collections' },
+            { value: 'snapchat', label: 'Snapchat', icon: '👻', color: 'from-yellow-400 to-yellow-500', description: 'Snaps, Stories, Discover' },
+            { value: 'threads', label: 'Threads', icon: '🧵', color: 'from-gray-800 to-black', description: 'Text posts, Conversations' },
+            { value: 'mastodon', label: 'Mastodon', icon: '🐘', color: 'from-purple-600 to-purple-700', description: 'Toots, Federated posts' },
+        ];
+
+        let selectedPlatforms = new Set();
+
+        function createPlatformCards() {
+            const grid = document.getElementById('platform-grid');
+
+            platforms.forEach(platform => {
+                const card = document.createElement('div');
+                card.className = 'platform-card';
+                card.dataset.platform = platform.value;
+
+                card.innerHTML = `
+                    <div class="selection-indicator" id="indicator-${platform.value}"></div>
+                    <div class="platform-icon">${platform.icon}</div>
+                    <div class="platform-name">${platform.label}</div>
+                    <div class="platform-desc">${platform.description}</div>
+                `;
+
+                card.addEventListener('click', () => togglePlatform(platform.value));
+                grid.appendChild(card);
+            });
+        }
+
+        function togglePlatform(platformValue) {
+            const card = document.querySelector(`[data-platform="${platformValue}"]`);
+            const indicator = document.getElementById(`indicator-${platformValue}`);
+
+            if (selectedPlatforms.has(platformValue)) {
+                selectedPlatforms.delete(platformValue);
+                card.classList.remove('selected');
+                indicator.classList.remove('selected');
+            } else {
+                selectedPlatforms.add(platformValue);
+                card.classList.add('selected');
+                indicator.classList.add('selected');
+            }
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update count
+            const countElement = document.getElementById('selected-count');
+            countElement.textContent = `${selectedPlatforms.size} platform${selectedPlatforms.size !== 1 ? 's' : ''} selected`;
+
+            // Update selected platforms display
+            const selectedContainer = document.getElementById('selected-platforms');
+            selectedContainer.innerHTML = '';
+
+            if (selectedPlatforms.size > 0) {
+                Array.from(selectedPlatforms).forEach(platformValue => {
+                    const platform = platforms.find(p => p.value === platformValue);
+                    if (platform) {
+                        const badge = document.createElement('div');
+                        badge.className = 'selected-badge';
+                        badge.innerHTML = `
+                            <span>${platform.icon}</span>
+                            <span>${platform.label}</span>
+                        `;
+                        selectedContainer.appendChild(badge);
+                    }
+                });
+            } else {
+                selectedContainer.innerHTML = '<p style="color: #666; font-style: italic;">No platforms selected</p>';
+            }
+
+            // Update quick buttons
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                const platform = btn.dataset.platform;
+                if (selectedPlatforms.has(platform)) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            // Show instructions when first platform is selected
+            if (selectedPlatforms.size > 0) {
+                document.getElementById('instructions').style.display = 'block';
+            }
+        }
+
+        // Initialize quick buttons
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const platform = btn.dataset.platform;
+                togglePlatform(platform);
+            });
+        });
+
+        // Initialize
+        createPlatformCards();
+        updateUI();
+
+        console.log('✅ Platform selection test page loaded');
+        console.log('📊 Available platforms:', platforms.map(p => p.label));
+    </script>
+</body>
+</html>

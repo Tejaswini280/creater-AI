@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-12-24T10:27:27.314Z",
+  "summary": {
+    "passed": 1,
+    "failed": 8,
+    "total": 9,
+    "successRate": "11.1"
+  },
+  "features": {
+    "Performance Analytics": true,
+    "AI Predictions": false,
+    "Competitor Analysis": false,
+    "Monetization Strategy": false,
+    "Trend Analysis": false,
+    "Audience Analysis": false
+  },
+  "details": [
+    {
+      "name": "Analytics Performance",
+      "endpoint": "/api/analytics/performance",
+      "method": "GET",
+      "success": true,
+      "status": 200,
+      "hasExpectedFields": true
+    },
+    {
+      "name": "Predict Performance",
+      "endpoint": "/api/analytics/predict-performance",
+      "method": "POST",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Analyze Competitors",
+      "endpoint": "/api/analytics/analyze-competitors",
+      "method": "POST",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Generate Monetization",
+      "endpoint": "/api/analytics/generate-monetization",
+      "method": "POST",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Analyze Trends",
+      "endpoint": "/api/analytics/analyze-trends",
+      "method": "POST",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Analyze Audience",
+      "endpoint": "/api/analytics/analyze-audience",
+      "method": "POST",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Dashboard Metrics",
+      "endpoint": "/api/dashboard/metrics",
+      "method": "GET",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Trending Topics",
+      "endpoint": "/api/trends/topics",
+      "method": "GET",
+      "success": false,
+      "status": 403
+    },
+    {
+      "name": "Niches List",
+      "endpoint": "/api/niches",
+      "method": "GET",
+      "success": false,
+      "status": 403
+    }
+  ]
+}

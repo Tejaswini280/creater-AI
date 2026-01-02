@@ -1,0 +1,12 @@
+{
+  "name": "Test Project",
+  "description": "Test Description",
+  "type": "social-media",
+  "platform": "instagram",
+  "targetAudience": "test audience",
+  "estimatedDuration": "1week",
+  "tags": ["test"],
+  "isPublic": false,
+  "status": "active",
+  "metadata": {}
+}

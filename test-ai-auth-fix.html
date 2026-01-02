@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generation Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .auth-section { background: #e7f3ff; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Content Generation Authentication Test</h1>
+        
+        <div class="auth-section">
+            <h3>Authentication Options</h3>
+            <div class="form-group">
+                <label for="authMethod">Authentication Method:</label>
+                <select id="authMethod" onchange="updateAuthMethod()">
+                    <option value="test-token">Test Token (Development)</option>
+                    <option value="login">Login with Credentials</option>
+                    <option value="manual-token">Manual Token</option>
+                </select>
+            </div>
+            
+            <div id="loginSection" style="display: none;">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" value="test@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" value="password123">
+                </div>
+                <button onclick="login()">Login</button>
+            </div>
+            
+            <div id="manualTokenSection" style="display: none;">
+                <div class="form-group">
+                    <label for="manualToken">Access Token:</label>
+                    <input type="text" id="manualToken" placeholder="Enter your access token">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Token:</label>
+                <input type="text" id="currentToken" value="test-token" readonly>
+            </div>
+        </div>
+
+        <h3>AI Content Generation Test</h3>
+        <form id="contentForm">
+            <div class="form-group">
+                <label for="platform">Platform:</label>
+                <select id="platform" required>
+                    <option value="youtube">YouTube</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="twitter">Twitter</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="contentType">Content Type:</label>
+                <select id="contentType" required>
+                    <option value="video">Video</option>
+                    <option value="post">Post</option>
+                    <option value="story">Story</option>
+                    <option value="reel">Reel</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="tone">Tone:</label>
+                <select id="tone" required>
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual</option>
+                    <option value="humorous">Humorous</option>
+                    <option value="educational">Educational</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration">Duration:</label>
+                <select id="duration" required>
+                    <option value="15-30 seconds">15-30 seconds</option>
+                    <option value="30-60 seconds">30-60 seconds</option>
+                    <option value="1-3 minutes">1-3 minutes</option>
+                    <option value="3-5 minutes">3-5 minutes</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="targetAudience">Target Audience:</label>
+                <input type="text" id="targetAudience" value="young professionals" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="keywords">Keywords:</label>
+                <input type="text" id="keywords" value="productivity, technology, tips" required>
+            </div>
+            
+            <button type="submit">Generate Content</button>
+        </form>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        let currentToken = 'test-token';
+        
+        function updateAuthMethod() {
+            const method = document.getElementById('authMethod').value;
+            const loginSection = document.getElementById('loginSection');
+            const manualTokenSection = document.getElementById('manualTokenSection');
+            const currentTokenInput = document.getElementById('currentToken');
+            
+            loginSection.style.display = 'none';
+            manualTokenSection.style.display = 'none';
+            
+            if (method === 'login') {
+                loginSection.style.display = 'block';
+            } else if (method === 'manual-token') {
+                manualTokenSection.style.display = 'block';
+            } else if (method === 'test-token') {
+                currentToken = 'test-token';
+                currentTokenInput.value = currentToken;
+            }
+        }
+        
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.accessToken) {
+                    currentToken = data.accessToken;
+                    document.getElementById('currentToken').value = currentToken;
+                    showResult('Login successful!', 'success');
+                } else {
+                    showResult(`Login failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`Login error: ${error.message}`, 'error');
+            }
+        }
+        
+        document.getElementById('manualToken').addEventListener('input', function() {
+            currentToken = this.value;
+            document.getElementById('currentToken').value = currentToken;
+        });
+        
+        document.getElementById('contentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                platform: document.getElementById('platform').value,
+                contentType: document.getElementById('contentType').value,
+                tone: document.getElementById('tone').value,
+                duration: document.getElementById('duration').value,
+                targetAudience: document.getElementById('targetAudience').value,
+                keywords: document.getElementById('keywords').value
+            };
+            
+            console.log('Sending request with token:', currentToken);
+            console.log('Request data:', formData);
+            
+            try {
+                const response = await fetch('/api/ai/generate-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    showResult(`Content generated successfully!\n\nContent:\n${data.content || JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`Error ${response.status}: ${data.message || JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                console.error('Request error:', error);
+                showResult(`Request failed: ${error.message}`, 'error');
+            }
+        });
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+        
+        // Initialize
+        updateAuthMethod();
+    </script>
+</body>
+</html>
+</script>

@@ -1,0 +1,15 @@
+# Staging Environment
+DB_NAME=creators_staging_db
+DB_USER=creators_staging_user
+DB_PASSWORD=CreatorsDev54321
+DB_HOST=db
+DB_PORT=5432
+S3_REGION=ap-south-1
+S3_BUCKET=creators-staging
+
+# Database URL (alternative format)
+DATABASE_URL=postgresql://postgres:CreatorsDev54321@db:5432/creators_staging_db
+
+# Application Settings
+NODE_ENV=staging
+PORT=5000

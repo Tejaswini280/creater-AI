@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Loop Fix Test - Version 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .fix-summary {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Authentication Loop Fix Test - Version 2</h1>
+        
+        <div class="fix-summary">
+            <h3>🛠️ Applied Fixes:</h3>
+            <ul>
+                <li>✅ <strong>Disabled auth-changed event listener</strong> to stop infinite loop</li>
+                <li>✅ <strong>Disabled WebSocket connection</strong> to prevent re-render cascade</li>
+                <li>✅ <strong>Added circuit breaker</strong> (max 3 auth checks per minute)</li>
+                <li>✅ <strong>Increased cooldown</strong> to 5 seconds between auth checks</li>
+                <li>✅ <strong>Added comprehensive logging</strong> for debugging</li>
+            </ul>
+        </div>
+        
+        <div class="status info">
+            <strong>Test Status:</strong> <span id="testStatus">Ready to test</span>
+        </div>
+        
+        <div>
+            <button onclick="testAuthCheck()">Test Auth Check</button>
+            <button onclick="simulateAuthChanged()">Simulate Auth Changed Event</button>
+            <button onclick="checkConsoleLogs()">Check Console Logs</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+        
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open your main app at <a href="http://localhost:5000" target="_blank">http://localhost:5000</a></li>
+            <li>Open browser DevTools (F12) and go to Console tab</li>
+            <li>Look for these messages in console:
+                <ul>
+                    <li>⚠️ <strong>Auth-changed event listener temporarily disabled</strong></li>
+                    <li>⚠️ <strong>WebSocket connection temporarily disabled</strong></li>
+                    <li>🚫 <strong>Circuit breaker: Too many auth checks</strong> (if triggered)</li>
+                </ul>
+            </li>
+            <li>Verify the app loads <strong>once</strong> and stays stable</li>
+        </ol>
+        
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>✅ App should load <strong>once</strong> and stay stable</li>
+            <li>✅ <strong>No continuous</strong> "Starting auth check..." messages</li>
+            <li>✅ Router should render <strong>only a few times</strong>, not continuously</li>
+            <li>✅ <strong>No rapid reconnection</strong> attempts</li>
+            <li>✅ Console should show <strong>disabled warnings</strong></li>
+        </ul>
+        
+        <div class="status warning">
+            <strong>Note:</strong> This is a temporary fix. Once the loop is stopped, we can re-enable the WebSocket and auth-changed events with proper safeguards.
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        let authCheckCount = 0;
+        let lastAuthCheckTime = 0;
+        
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            logCount++;
+            
+            if (logCount > 100) {
+                logElement.removeChild(logElement.firstChild);
+                logCount--;
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            logCount = 0;
+        }
+        
+        async function testAuthCheck() {
+            const now = Date.now();
+            authCheckCount++;
+            lastAuthCheckTime = now;
+            
+            log(`🧪 Testing auth check #${authCheckCount}...`, 'info');
+            
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    log(`✅ Auth check #${authCheckCount} successful: ${userData.firstName} ${userData.lastName}`, 'success');
+                } else {
+                    log(`❌ Auth check #${authCheckCount} failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Auth check #${authCheckCount} error: ${error.message}`, 'error');
+            }
+        }
+        
+        function simulateAuthChanged() {
+            log('📢 Dispatching auth-changed event (should be ignored)...', 'info');
+            try {
+                window.dispatchEvent(new Event('auth-changed'));
+                log('✅ Auth-changed event dispatched (but listener is disabled)', 'warning');
+            } catch (error) {
+                log(`❌ Error dispatching auth-changed event: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkConsoleLogs() {
+            log('🔍 Checking for console messages...', 'info');
+            log('Look for these messages in the browser console:', 'info');
+            log('  ⚠️ Auth-changed event listener temporarily disabled', 'warning');
+            log('  ⚠️ WebSocket connection temporarily disabled', 'warning');
+            log('  🚫 Circuit breaker: Too many auth checks (if triggered)', 'warning');
+            log('  Starting auth check... (should only appear once or twice)', 'info');
+        }
+        
+        // Monitor for auth events
+        window.addEventListener('auth-changed', () => {
+            log('📨 Auth-changed event received (but listener is disabled)', 'warning');
+        });
+        
+        // Initial log
+        log('🚀 Auth Fix Test Page Loaded - Version 2', 'success');
+        log('💡 Open the main app and check console for stability', 'info');
+        log('🔧 Applied comprehensive fixes to stop infinite loop', 'info');
+    </script>
+</body>
+</html>

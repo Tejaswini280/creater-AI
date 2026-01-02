@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DateTime Picker Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">DateTime Picker Test</h1>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Schedule Date & Time *
+                </label>
+                <div class="relative">
+                    <button
+                        id="dateTimeButton"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-left"
+                    >
+                        <span id="dateTimeDisplay" class="text-gray-500">Select date and time for scheduling</span>
+                    </button>
+                </div>
+                <p id="errorMessage" class="text-xs text-red-600 mt-1 hidden">
+                    Please select both date and time to schedule your post
+                </p>
+            </div>
+
+            <div class="flex gap-2">
+                <button
+                    id="testButton"
+                    class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    Test Validation
+                </button>
+                <button
+                    id="clearButton"
+                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                    Clear
+                </button>
+            </div>
+
+            <div id="result" class="mt-4 p-3 bg-gray-50 rounded-md text-sm">
+                <strong>Result:</strong> <span id="resultText">No date/time selected</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedDateTime = null;
+
+        const dateTimeButton = document.getElementById('dateTimeButton');
+        const dateTimeDisplay = document.getElementById('dateTimeDisplay');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultText = document.getElementById('resultText');
+        const testButton = document.getElementById('testButton');
+        const clearButton = document.getElementById('clearButton');
+
+        // Simulate date/time picker functionality
+        dateTimeButton.addEventListener('click', () => {
+            const now = new Date();
+            const futureDate = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // Tomorrow
+
+            // Simulate user selecting a date and time
+            selectedDateTime = futureDate;
+            selectedDateTime.setHours(14, 30, 0, 0); // 2:30 PM
+
+            updateDisplay();
+        });
+
+        clearButton.addEventListener('click', () => {
+            selectedDateTime = null;
+            updateDisplay();
+        });
+
+        testButton.addEventListener('click', () => {
+            if (!selectedDateTime) {
+                errorMessage.classList.remove('hidden');
+                resultText.textContent = '❌ Validation failed: Date and time are required';
+                resultText.className = 'text-red-600';
+            } else {
+                errorMessage.classList.add('hidden');
+                resultText.textContent = `✅ Validation passed: ${formatDateTime(selectedDateTime)}`;
+                resultText.className = 'text-green-600';
+            }
+        });
+
+        function updateDisplay() {
+            if (selectedDateTime) {
+                dateTimeDisplay.textContent = formatDateTime(selectedDateTime);
+                dateTimeDisplay.className = 'text-gray-900';
+            } else {
+                dateTimeDisplay.textContent = 'Select date and time for scheduling';
+                dateTimeDisplay.className = 'text-gray-500';
+            }
+        }
+
+        function formatDateTime(date) {
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Test scenarios
+        console.log('DateTime Picker Test Scenarios:');
+        console.log('1. Click "Test Validation" without selecting date/time - should show error');
+        console.log('2. Click date/time button to select, then test validation - should pass');
+        console.log('3. Clear selection and test validation - should show error again');
+    </script>
+</body>
+</html>

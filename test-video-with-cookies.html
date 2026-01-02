@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Video Generation with Cookies</title>
+</head>
+<body>
+    <h1>Test Video Generation with Cookies</h1>
+    <div id="results"></div>
+    <button onclick="testLogin()">1. Login First</button>
+    <button onclick="testVideoGeneration()">2. Test Video Generation</button>
+    
+    <script>
+        async function testLogin() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p><strong>🔑 Testing Login...</strong></p>';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include', // Include cookies
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += '<p style="color: green;">✅ Login successful!</p>';
+                    results.innerHTML += `<p>User: ${data.user.firstName} ${data.user.lastName}</p>`;
+                    results.innerHTML += '<p>Cookies should now be set for authentication.</p>';
+                } else {
+                    const errorData = await response.text();
+                    results.innerHTML += `<p style="color: red;">❌ Login failed: ${errorData}</p>`;
+                }
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;">❌ Login error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testVideoGeneration() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p><strong>🎬 Testing Video Generation...</strong></p>';
+            
+            try {
+                const response = await fetch('/api/ai/generate-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include', // Include cookies for authentication
+                    body: JSON.stringify({
+                        prompt: 'Generate a vibrant motivational video about achieving your dreams',
+                        style: 'modern',
+                        music: 'upbeat',
+                        duration: 30
+                    })
+                });
+                
+                results.innerHTML += `<p><strong>Response Status:</strong> ${response.status}</p>`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += '<p style="color: green;"><strong>✅ Video generation successful!</strong></p>';
+                    results.innerHTML += `<p><strong>Video URL:</strong> ${data.videoUrl}</p>`;
+                    results.innerHTML += `<p><strong>Model Used:</strong> ${data.metadata?.model || 'Unknown'}</p>`;
+                    results.innerHTML += `<p><strong>Success:</strong> ${data.success}</p>`;
+                    
+                    if (data.videoUrl && !data.videoUrl.includes('placeholder')) {
+                        results.innerHTML += `<video controls width="400" src="${data.videoUrl}">Your browser does not support video.</video>`;
+                        results.innerHTML += '<p style="color: green;"><strong>🎉 Real AI video generated!</strong></p>';
+                    } else {
+                        results.innerHTML += '<p style="color: orange;"><strong>⚠️ Demo/fallback video</strong></p>';
+                    }
+                } else {
+                    const errorData = await response.text();
+                    results.innerHTML += `<p style="color: red;"><strong>❌ Video generation failed:</strong> ${errorData}</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;"><strong>❌ Request failed:</strong> ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

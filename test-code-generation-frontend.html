@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Code Generation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            font-family: monospace;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+        .info-card h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .dependency-tag {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+        .example h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .example button {
+            background: #007bff;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        .example button:hover {
+            background: #0056b3;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Advanced Code Generation Test</h1>
+        <p>Test the Gemini-powered code generation functionality with various languages and frameworks.</p>
+        
+        <div id="status" class="status offline">Server Status: Checking...</div>
+        
+        <div class="form-group">
+            <label for="description">Code Description:</label>
+            <textarea id="description" rows="4" placeholder="Describe what code you want to generate...">Create a React component for a user profile card with avatar, name, email, and edit button</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="language">Programming Language:</label>
+            <select id="language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="php">PHP</option>
+                <option value="csharp">C#</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="framework">Framework (Optional):</label>
+            <input type="text" id="framework" placeholder="React, Express, Flask, Spring, etc." value="react">
+        </div>
+        
+        <button onclick="generateCode()" id="generateBtn">🚀 Generate Code</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+        <button onclick="loadHistory()">📚 Load History</button>
+        <button onclick="loadStats()">📊 View Stats</button>
+        
+        <div id="result"></div>
+        
+        <div class="examples">
+            <div class="example">
+                <h3>📱 React Component</h3>
+                <p>Generate a modern React component with hooks and TypeScript.</p>
+                <button onclick="loadExample('react')">Load Example</button>
+            </div>
+            
+            <div class="example">
+                <h3>🐍 Python API</h3>
+                <p>Create a Flask or FastAPI endpoint with authentication.</p>
+                <button onclick="loadExample('python')">Load Example</button>
+            </div>
+            
+            <div class="example">
+                <h3>☕ Java Spring</h3>
+                <p>Build a Spring Boot REST controller with validation.</p>
+                <button onclick="loadExample('java')">Load Example</button>
+            </div>
+            
+            <div class="example">
+                <h3>🔧 Utility Function</h3>
+                <p>Generate a utility function for common tasks.</p>
+                <button onclick="loadExample('utility')">Load Example</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        
+        // Check server status and login
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    document.getElementById('status').textContent = 'Server Status: Online';
+                    document.getElementById('status').className = 'status online';
+                    await login();
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = 'Server Status: Offline';
+                document.getElementById('status').className = 'status offline';
+            }
+        }
+        
+        // Login to get auth token
+        async function login() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.accessToken;
+                    console.log('✅ Authentication successful');
+                } else {
+                    console.error('❌ Authentication failed');
+                }
+            } catch (error) {
+                console.error('❌ Login error:', error);
+            }
+        }
+        
+        // Generate code
+        async function generateCode() {
+            if (!authToken) {
+                showResult('❌ Please wait for authentication to complete', 'error');
+                return;
+            }
+            
+            const description = document.getElementById('description').value.trim();
+            const language = document.getElementById('language').value;
+            const framework = document.getElementById('framework').value.trim();
+            
+            if (!description) {
+                showResult('❌ Please enter a code description', 'error');
+                return;
+            }
+            
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating...';
+            
+            showResult('🤖 Generating code with Gemini AI...', 'loading');
+            
+            try {
+                const response = await fetch('/api/gemini/generate-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        description,
+                        language,
+                        framework: framework || undefined
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    displayCodeResult(data);
+                } else {
+                    showResult(`❌ Error: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Network Error: ${error.message}`, 'error');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🚀 Generate Code';
+            }
+        }
+        
+        // Display code generation result
+        function displayCodeResult(data) {
+            const resultDiv = document.getElementById('result');
+            
+            let html = `
+                <div class="success">
+                    <h3>✅ Code Generated Successfully!</h3>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>Language</h4>
+                            <p>${data.data.language}</p>
+                        </div>
+                        ${data.data.framework ? `
+                        <div class="info-card">
+                            <h4>Framework</h4>
+                            <p>${data.data.framework}</p>
+                        </div>
+                        ` : ''}
+                        <div class="info-card">
+                            <h4>Model</h4>
+                            <p>${data.metadata.model}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Generated</h4>
+                            <p>${new Date(data.metadata.timestamp).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    
+                    <h4>Generated Code:</h4>
+                    <div class="code-block">${escapeHtml(data.data.code)}</div>
+                    <button onclick="copyToClipboard(\`${data.data.code.replace(/`/g, '\\`')}\`)">📋 Copy Code</button>
+                    
+                    ${data.data.explanation ? `
+                    <h4>Explanation:</h4>
+                    <p>${escapeHtml(data.data.explanation)}</p>
+                    ` : ''}
+                    
+                    ${data.data.dependencies && data.data.dependencies.length > 0 ? `
+                    <h4>Dependencies:</h4>
+                    <div>
+                        ${data.data.dependencies.map(dep => `<span class="dependency-tag">${escapeHtml(dep)}</span>`).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${data.data.usage ? `
+                    <h4>Usage Instructions:</h4>
+                    <div class="code-block">${escapeHtml(data.data.usage)}</div>
+                    ` : ''}
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Load code history
+        async function loadHistory() {
+            if (!authToken) {
+                showResult('❌ Please wait for authentication to complete', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/gemini/code-history?limit=10', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    displayHistory(data.data);
+                } else {
+                    showResult(`❌ Error loading history: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Display code history
+        function displayHistory(history) {
+            const resultDiv = document.getElementById('result');
+            
+            if (history.length === 0) {
+                resultDiv.innerHTML = '<div class="success"><h3>📚 Code History</h3><p>No code generated yet.</p></div>';
+                return;
+            }
+            
+            let html = `
+                <div class="success">
+                    <h3>📚 Code Generation History (${history.length} records)</h3>
+                    ${history.map(record => `
+                        <div class="info-card" style="margin: 10px 0;">
+                            <h4>${escapeHtml(record.description.substring(0, 60))}${record.description.length > 60 ? '...' : ''}</h4>
+                            <p><strong>Language:</strong> ${record.language} ${record.framework ? `(${record.framework})` : ''}</p>
+                            <p><strong>Generated:</strong> ${new Date(record.createdAt).toLocaleString()}</p>
+                            <p><strong>Code Length:</strong> ${record.code.length} characters</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Load statistics
+        async function loadStats() {
+            if (!authToken) {
+                showResult('❌ Please wait for authentication to complete', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/gemini/code-stats', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    displayStats(data.data);
+                } else {
+                    showResult(`❌ Error loading stats: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Display statistics
+        function displayStats(stats) {
+            const resultDiv = document.getElementById('result');
+            
+            let html = `
+                <div class="success">
+                    <h3>📊 Code Generation Statistics</h3>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>Total Generated</h4>
+                            <p style="font-size: 24px; font-weight: bold; color: #28a745;">${stats.totalGenerated}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Recent Activity</h4>
+                            <p style="font-size: 24px; font-weight: bold; color: #007bff;">${stats.recentActivity}</p>
+                            <small>Last 7 days</small>
+                        </div>
+                    </div>
+                    
+                    <h4>Language Breakdown:</h4>
+                    <div class="info-grid">
+                        ${stats.languageBreakdown.map(lang => `
+                            <div class="info-card">
+                                <h4>${lang.language}</h4>
+                                <p style="font-size: 18px; font-weight: bold;">${lang.count} times</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Show result
+        function showResult(text, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${text}</div>`;
+        }
+        
+        // Clear results
+        function clearResults() {
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load example configurations
+        function loadExample(type) {
+            const examples = {
+                react: {
+                    description: "Create a React component for a user profile card with avatar, name, email, and edit button. Include hover effects and responsive design.",
+                    language: "javascript",
+                    framework: "react"
+                },
+                python: {
+                    description: "Create a Flask API endpoint for user authentication with JWT tokens, password hashing, and rate limiting.",
+                    language: "python",
+                    framework: "flask"
+                },
+                java: {
+                    description: "Create a Spring Boot REST controller for managing blog posts with CRUD operations, validation, and pagination.",
+                    language: "java",
+                    framework: "spring"
+                },
+                utility: {
+                    description: "Create utility functions for email validation, phone number formatting, and URL sanitization with comprehensive error handling.",
+                    language: "javascript",
+                    framework: ""
+                }
+            };
+            
+            const example = examples[type];
+            if (example) {
+                document.getElementById('description').value = example.description;
+                document.getElementById('language').value = example.language;
+                document.getElementById('framework').value = example.framework;
+                clearResults();
+            }
+        }
+        
+        // Initialize
+        checkServerStatus();
+    </script>
+</body>
+</html>

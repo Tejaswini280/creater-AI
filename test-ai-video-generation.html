@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Generation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .video-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .video-container video {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+        .metadata {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .metadata h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .metadata p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 AI Video Generation Test</h1>
+        <p>Test the AI video generation functionality with real API integration.</p>
+        
+        <form id="videoForm">
+            <div class="form-group">
+                <label for="prompt">Video Prompt:</label>
+                <input type="text" id="prompt" placeholder="Enter your video prompt (e.g., 'Automatic Cars')" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" value="15" min="5" max="60" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="style">Style:</label>
+                <select id="style" required>
+                    <option value="modern">Modern</option>
+                    <option value="vintage">Vintage</option>
+                    <option value="minimalist">Minimalist</option>
+                    <option value="dramatic">Dramatic</option>
+                    <option value="playful">Playful</option>
+                    <option value="professional">Professional</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="music">Music:</label>
+                <select id="music" required>
+                    <option value="upbeat">Upbeat</option>
+                    <option value="calm">Calm</option>
+                    <option value="dramatic">Dramatic</option>
+                    <option value="funky">Funky</option>
+                    <option value="epic">Epic</option>
+                    <option value="none">No Music</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="generateBtn">🎬 Generate AI Video</button>
+        </form>
+        
+        <div id="progressContainer" style="display: none;">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p id="progressText">Initializing...</p>
+        </div>
+        
+        <div id="resultContainer"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('videoForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        let progressInterval;
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const prompt = document.getElementById('prompt').value;
+            const duration = document.getElementById('duration').value;
+            const style = document.getElementById('style').value;
+            const music = document.getElementById('music').value;
+            
+            // Reset UI
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎬 Generating...';
+            resultContainer.innerHTML = '';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            // Simulate progress
+            let progress = 0;
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 15 + 5;
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = getProgressText(progress);
+                }
+            }, 800);
+            
+            try {
+                // Make API call to generate video
+                const response = await fetch('/api/ai/generate-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}`
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        duration: parseInt(duration),
+                        style,
+                        music
+                    })
+                });
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Video generation complete!';
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to generate video');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    // Show success result
+                    setTimeout(() => {
+                        showSuccessResult(data.result);
+                        progressContainer.style.display = 'none';
+                    }, 500);
+                } else {
+                    throw new Error(data.message || 'Video generation failed');
+                }
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('AI video generation error:', error);
+                showErrorResult(error.message);
+                progressContainer.style.display = 'none';
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎬 Generate AI Video';
+            }
+        });
+        
+        function getProgressText(progress) {
+            if (progress < 30) return 'Analyzing prompt and preparing generation...';
+            if (progress < 70) return 'Generating video content...';
+            if (progress < 100) return 'Finalizing video and adding effects...';
+            return 'Video generation complete!';
+        }
+        
+        function showSuccessResult(result) {
+            resultContainer.innerHTML = `
+                <div class="result success">
+                    <h3>✅ AI Video Generated Successfully!</h3>
+                    
+                    <div class="metadata">
+                        <h4>${result.title}</h4>
+                        <p><strong>Description:</strong> ${result.description}</p>
+                        <p><strong>Style:</strong> ${result.metadata?.style}</p>
+                        <p><strong>Music:</strong> ${result.metadata?.music}</p>
+                        <p><strong>Duration:</strong> ${result.duration} seconds</p>
+                        <p><strong>Model:</strong> ${result.metadata?.model || 'AI Generated'}</p>
+                    </div>
+                    
+                    <div class="video-container">
+                        <h4>Generated Video Preview:</h4>
+                        <video controls poster="${result.thumbnailUrl}">
+                            <source src="${result.videoUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p><em>Note: This is a placeholder video. In production, this would be the actual AI-generated video.</em></p>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="downloadVideo('${result.videoUrl}', '${result.title}')" style="margin-right: 10px;">
+                            📥 Download Video
+                        </button>
+                        <button onclick="saveToLibrary('${result.title}')">
+                            💾 Save to Library
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showErrorResult(message) {
+            resultContainer.innerHTML = `
+                <div class="result error">
+                    <h3>❌ Video Generation Failed</h3>
+                    <p><strong>Error:</strong> ${message}</p>
+                    <p>Please check your input and try again. If the problem persists, contact support.</p>
+                </div>
+            `;
+        }
+        
+        function downloadVideo(videoUrl, title) {
+            alert(`Download started for: ${title}\n\nNote: This is a placeholder video. In production, this would download the actual AI-generated video file.`);
+        }
+        
+        function saveToLibrary(title) {
+            alert(`Video "${title}" has been saved to your media library!\n\nNote: In production, this would save the video to your project's media library.`);
+        }
+        
+        // Check if user is authenticated
+        if (!localStorage.getItem('token')) {
+            document.body.innerHTML = `
+                <div class="container">
+                    <h1>🔐 Authentication Required</h1>
+                    <p>Please log in to test the AI video generation functionality.</p>
+                    <p>You can either:</p>
+                    <ul>
+                        <li>Log in through the main application</li>
+                        <li>Set a test token in localStorage: <code>localStorage.setItem('token', 'test-token')</code></li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

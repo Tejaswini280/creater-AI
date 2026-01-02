@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .disconnected { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .connecting { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #messages { border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: auto; background: #f9f9f9; }
+        .log { margin: 5px 0; padding: 5px; background: #fff; border-left: 3px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+
+    <div id="status" class="status disconnected">Status: Disconnected</div>
+
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+        <button onclick="clearMessages()">Clear Messages</button>
+        <button onclick="testHeartbeat()">Send Heartbeat</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <script>
+        let ws = null;
+        const messagesDiv = document.getElementById('messages');
+        const statusDiv = document.getElementById('status');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log';
+            logEntry.innerHTML = `<strong>${timestamp}:</strong> ${message}`;
+            messagesDiv.appendChild(logEntry);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(status, message) {
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = message;
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('Already connected');
+                return;
+            }
+
+            // Use relative URL for Vite proxy
+            const wsUrl = '/ws?token=test-token';
+            log(`Attempting to connect to: ${wsUrl}`);
+            log(`Current location: ${window.location.href}`);
+            log(`Environment info:`, {
+                port: window.location.port,
+                hostname: window.location.hostname,
+                protocol: window.location.protocol
+            });
+
+            try {
+                updateStatus('connecting', 'Status: Connecting...');
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function(event) {
+                    log('✅ WebSocket connected successfully!');
+                    updateStatus('connected', 'Status: Connected');
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`📨 Received: ${JSON.stringify(data, null, 2)}`);
+                    } catch (e) {
+                        log(`📨 Received (raw): ${event.data}`);
+                    }
+                };
+
+                ws.onclose = function(event) {
+                    log(`❌ WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
+                    updateStatus('disconnected', `Status: Disconnected (Code: ${event.code})`);
+                };
+
+                ws.onerror = function(error) {
+                    log(`🚨 WebSocket error: ${error}`);
+                    updateStatus('error', 'Status: Error');
+                };
+
+            } catch (error) {
+                log(`🚨 Failed to create WebSocket: ${error.message}`);
+                updateStatus('error', `Status: Failed to create WebSocket - ${error.message}`);
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                log('Disconnecting WebSocket...');
+                ws.close();
+                ws = null;
+            } else {
+                log('No WebSocket connection to disconnect');
+            }
+        }
+
+        function testHeartbeat() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const heartbeat = { type: 'heartbeat', timestamp: Date.now() };
+                ws.send(JSON.stringify(heartbeat));
+                log(`💓 Sent heartbeat: ${JSON.stringify(heartbeat)}`);
+            } else {
+                log('❌ Cannot send heartbeat - WebSocket not connected');
+            }
+        }
+
+        function clearMessages() {
+            messagesDiv.innerHTML = '';
+        }
+
+        // Auto-connect on page load for testing
+        window.addEventListener('load', function() {
+            log('Page loaded, ready for WebSocket testing');
+            log('Make sure the server is running on port 5000');
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function() {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+</html>

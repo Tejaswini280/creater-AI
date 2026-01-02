@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Button Test - Notifications Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .test-step p {
+            margin: 5px 0;
+        }
+        .expected-result {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .actual-result {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Settings Button Test - Notifications Page</h1>
+        <p>This test verifies that the Settings button in the Notifications page opens the Settings modal correctly.</p>
+
+        <div class="test-step">
+            <h3>Test Setup</h3>
+            <p>✅ Navigate to the Notifications page at <code>localhost:5000/notifications</code></p>
+            <p>✅ Verify the page loads without errors</p>
+            <p>✅ Confirm the Settings button (gear icon) is visible in the top-right corner</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 1: Click Settings Button</h3>
+            <p><strong>Action:</strong> Click the Settings button (gear icon) in the top-right corner</p>
+            <p><strong>Expected Result:</strong> Settings modal should open with tabs for Profile, Notifications, Privacy, and Account</p>
+            <div class="code">
+                // Button should have onClick handler
+                &lt;Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setIsSettingsOpen(true)}
+                &gt;
+                  &lt;Settings className="h-5 w-5" /&gt;
+                &lt;/Button&gt;
+            </div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Verify Modal Content</h3>
+            <p><strong>Expected Result:</strong> Modal should display:</p>
+            <ul>
+                <li>✅ Modal title "Settings" with gear icon</li>
+                <li>✅ Four tabs: Profile, Notifications, Privacy, Account</li>
+                <li>✅ Profile tab should show user information fields</li>
+                <li>✅ Notifications tab should show notification preferences</li>
+                <li>✅ Privacy tab should show privacy settings</li>
+                <li>✅ Account tab should show account management options</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Test Modal Functionality</h3>
+            <p><strong>Actions to Test:</strong></p>
+            <ul>
+                <li>✅ Switch between tabs - each should load appropriate content</li>
+                <li>✅ Modify settings in each tab</li>
+                <li>✅ Click "Save" buttons - should show success/error messages</li>
+                <li>✅ Click outside modal or close button - modal should close</li>
+                <li>✅ Modal should close when clicking the X button</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Verify State Management</h3>
+            <p><strong>Expected Behavior:</strong></p>
+            <ul>
+                <li>✅ Modal state should be managed with useState</li>
+                <li>✅ isSettingsOpen state should control modal visibility</li>
+                <li>✅ onClose should set isSettingsOpen to false</li>
+                <li>✅ onClick should set isSettingsOpen to true</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 5: Error Handling</h3>
+            <p><strong>Test Cases:</strong></p>
+            <ul>
+                <li>✅ Modal should handle API errors gracefully</li>
+                <li>✅ Should show appropriate error messages</li>
+                <li>✅ Should handle unauthorized errors by redirecting to login</li>
+                <li>✅ Form validation should work correctly</li>
+            </ul>
+        </div>
+
+        <div class="test-step expected-result">
+            <h3>✅ Expected Final Result</h3>
+            <p><strong>Settings button should:</strong></p>
+            <ul>
+                <li>✅ Be clickable and responsive</li>
+                <li>✅ Open a fully functional settings modal</li>
+                <li>✅ Allow users to modify their settings</li>
+                <li>✅ Save changes successfully</li>
+                <li>✅ Close properly when requested</li>
+                <li>✅ Handle all error states gracefully</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>🔍 Code Verification Checklist</h3>
+            <p><strong>Verify these code changes were implemented:</strong></p>
+            <ul>
+                <li>✅ SettingsModal import added to notifications.tsx</li>
+                <li>✅ useState import added for modal state management</li>
+                <li>✅ isSettingsOpen state variable created</li>
+                <li>✅ onClick handler added to Settings button</li>
+                <li>✅ SettingsModal component added to JSX</li>
+                <li>✅ Proper props passed to SettingsModal (isOpen, onClose)</li>
+                <li>✅ Error handling with proper TypeScript types</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>🐛 Common Issues to Check</h3>
+            <p><strong>If the button doesn't work, check:</strong></p>
+            <ul>
+                <li>❌ Missing import for SettingsModal</li>
+                <li>❌ Missing useState import</li>
+                <li>❌ No onClick handler on Settings button</li>
+                <li>❌ SettingsModal not added to JSX</li>
+                <li>❌ Incorrect prop names (should be isOpen, onClose)</li>
+                <li>❌ TypeScript errors preventing compilation</li>
+                <li>❌ Console errors in browser developer tools</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>📝 Test Results</h3>
+            <p>Use the buttons below to record your test results:</p>
+            <button class="button" onclick="markTestResult('success')">✅ Test Passed</button>
+            <button class="button" onclick="markTestResult('error')">❌ Test Failed</button>
+            <button class="button" onclick="resetTest()">🔄 Reset Test</button>
+        </div>
+
+        <div id="test-result" class="test-step" style="display: none;">
+            <h3 id="result-title">Test Result</h3>
+            <p id="result-message">Test result will appear here</p>
+        </div>
+    </div>
+
+    <script>
+        function markTestResult(result) {
+            const resultDiv = document.getElementById('test-result');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            
+            resultDiv.style.display = 'block';
+            
+            if (result === 'success') {
+                resultDiv.className = 'test-step success';
+                resultTitle.textContent = '✅ Test Passed Successfully!';
+                resultMessage.textContent = 'The Settings button is working correctly. The modal opens, displays all tabs, and functions as expected.';
+            } else {
+                resultDiv.className = 'test-step error';
+                resultTitle.textContent = '❌ Test Failed';
+                resultMessage.textContent = 'The Settings button is not working as expected. Please check the console for errors and verify the implementation.';
+            }
+        }
+
+        function resetTest() {
+            document.getElementById('test-result').style.display = 'none';
+        }
+
+        // Auto-run test when page loads
+        window.addEventListener('load', function() {
+            console.log('Settings Button Test loaded. Please follow the test steps above.');
+        });
+    </script>
+</body>
+</html> 

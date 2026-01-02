@@ -1,0 +1,12 @@
+1. YOu are a technical and functional expert, your task is to create a project mangement tool app from scratch, whichi has all the AI based features.go through the below document and create a final document which has all the features, unique features, with AI compatibilities, should have any cons which other apps in the document has, and renuxes should have all the features from all the apps.
+create a detailed technical document, business document, functional document. along with sprints, epic, user stories, description, time and effort estimation, cost estimation.
+
+the sprint based planning should be detailed.
+
+2. You are a fucntional and technical researcher, your task is to go through the web and find out top 10 apps related to project management tools.
+1. detail out each and every feature the respective app has
+2. provide detail about the flow of the the app.
+3. analyse the UIUX, animations, effects, styles, layout used.
+provide me a detailed output 
+
+3. now i want you to create a document for Renexus app which has all the top features the above 10 apps have. Consolidate all the features as tasks and breakdown the tasks into smaller managable tasks. Group similar task into one phase or section, create a roadmap plan to implement all the tasks in phases.

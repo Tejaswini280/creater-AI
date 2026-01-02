@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Scheduler Routing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Enhanced Scheduler Routing Test</h1>
+        <p>Testing the routing and accessibility of the Enhanced Scheduler</p>
+
+        <div class="test-section">
+            <h2>🚀 Direct Access Test</h2>
+            <p>Click the button below to test direct access to the Enhanced Scheduler:</p>
+            <a href="/enhanced-scheduler" class="button" target="_blank">
+                🎯 Open Enhanced Scheduler (New Tab)
+            </a>
+            <a href="/enhanced-scheduler" class="button">
+                📊 Open Enhanced Scheduler (Same Tab)
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 Comparison Test</h2>
+            <p>Compare the regular scheduler vs enhanced scheduler:</p>
+            <a href="/scheduler" class="button" target="_blank">
+                📅 Regular Scheduler
+            </a>
+            <a href="/enhanced-scheduler" class="button" target="_blank">
+                ⚡ Enhanced Scheduler
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🛠️ Troubleshooting Steps</h2>
+            <div id="troubleshooting-results">
+                <p>Running automated checks...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Expected vs Actual</h2>
+            <p><strong>Expected:</strong> Enhanced Scheduler should show "Smart Content Scheduler Pro" with professional interface</p>
+            <p><strong>Issue:</strong> Regular scheduler is showing instead with calendar override</p>
+            <p><strong>Solution:</strong> Check routing, build, and component loading</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 Enhanced Scheduler Routing Test Started');
+        
+        const troubleshootingDiv = document.getElementById('troubleshooting-results');
+        
+        async function runTests() {
+            const results = [];
+            
+            // Test 1: Check if enhanced-scheduler route exists
+            try {
+                const response = await fetch('/enhanced-scheduler', { method: 'HEAD' });
+                if (response.ok) {
+                    results.push('✅ Enhanced Scheduler route is accessible');
+                } else {
+                    results.push(`❌ Enhanced Scheduler route returned: ${response.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Error accessing Enhanced Scheduler: ${error.message}`);
+            }
+            
+            // Test 2: Check if regular scheduler route exists
+            try {
+                const response = await fetch('/scheduler', { method: 'HEAD' });
+                if (response.ok) {
+                    results.push('✅ Regular Scheduler route is accessible');
+                } else {
+                    results.push(`❌ Regular Scheduler route returned: ${response.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Error accessing Regular Scheduler: ${error.message}`);
+            }
+            
+            // Test 3: Check current URL
+            results.push(`📍 Current URL: ${window.location.href}`);
+            
+            // Test 4: Check if we can detect the issue
+            if (window.location.pathname === '/enhanced-scheduler') {
+                results.push('🎯 Currently on Enhanced Scheduler route');
+                
+                // Check if the correct content is loaded
+                setTimeout(() => {
+                    const title = document.title;
+                    const h1 = document.querySelector('h1');
+                    
+                    if (h1 && h1.textContent.includes('Smart Content Scheduler Pro')) {
+                        results.push('✅ Enhanced Scheduler content loaded correctly');
+                    } else if (h1 && h1.textContent.includes('Content Scheduler')) {
+                        results.push('❌ Regular Scheduler content loaded instead');
+                        results.push('🔧 ISSUE IDENTIFIED: Route conflict or component loading issue');
+                    } else {
+                        results.push('⚠️ Unknown content loaded');
+                    }
+                    
+                    updateResults(results);
+                }, 1000);
+            } else {
+                results.push('📍 Not currently on Enhanced Scheduler route');
+            }
+            
+            updateResults(results);
+        }
+        
+        function updateResults(results) {
+            troubleshootingDiv.innerHTML = results.map(result => `<p>${result}</p>`).join('');
+        }
+        
+        // Run tests
+        runTests();
+        
+        // Add click handlers for testing
+        document.querySelectorAll('a[href="/enhanced-scheduler"]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                console.log('🎯 Navigating to Enhanced Scheduler...');
+                
+                // Add a small delay to check what loads
+                setTimeout(() => {
+                    console.log('📍 Current location:', window.location.href);
+                    console.log('📄 Page title:', document.title);
+                    
+                    const h1 = document.querySelector('h1');
+                    if (h1) {
+                        console.log('📝 Main heading:', h1.textContent);
+                    }
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

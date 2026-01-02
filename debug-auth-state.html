@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Auth State</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Authentication State Debugger</h1>
+    <p>This page helps debug the "Loading dashboard..." issue by testing auth state in real-time.</p>
+
+    <div class="grid">
+        <div class="debug-card">
+            <h2>🔧 Quick Actions</h2>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testAuthCheck()">Test Auth Check</button>
+            <button onclick="clearAuth()">Clear Auth</button>
+            <button onclick="openApp()">Open App</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="debug-card">
+            <h2>📊 Current State</h2>
+            <div id="currentState">
+                <div class="info">Click "Test Auth Check" to see current state</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-card">
+        <h2>🔍 Step-by-Step Debug Process</h2>
+        <ol>
+            <li><strong>Clear Auth:</strong> <button onclick="clearAuth()">Clear</button> - Start fresh</li>
+            <li><strong>Test Login:</strong> <button onclick="testLogin()">Login</button> - Should succeed</li>
+            <li><strong>Test Auth Check:</strong> <button onclick="testAuthCheck()">Check</button> - Should show authenticated</li>
+            <li><strong>Open App:</strong> <button onclick="openApp()">Open</button> - Should show dashboard (not loading)</li>
+        </ol>
+    </div>
+
+    <div class="debug-card">
+        <h2>📝 Debug Logs</h2>
+        <div id="logs" class="log-area">
+            Logs will appear here...
+        </div>
+    </div>
+
+    <div class="debug-card">
+        <h2>🎯 Expected Behavior</h2>
+        <div class="success">
+            <strong>✅ Correct Flow:</strong><br>
+            1. Login → Success (cookies set)<br>
+            2. Auth Check → Returns user data<br>
+            3. Open App → Shows dashboard immediately<br>
+            4. No "Loading dashboard..." stuck state
+        </div>
+        <div class="error">
+            <strong>❌ Problem Flow:</strong><br>
+            1. Login → Success<br>
+            2. Auth Check → May fail or timeout<br>
+            3. Open App → Stuck on "Loading dashboard..."<br>
+            4. useAuth hook isLoading stays true
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function updateState(state) {
+            const stateDiv = document.getElementById('currentState');
+            stateDiv.innerHTML = `
+                <div class="${state.authenticated ? 'success' : 'error'}">
+                    <strong>Authenticated:</strong> ${state.authenticated ? 'Yes' : 'No'}<br>
+                    <strong>User:</strong> ${state.user || 'None'}<br>
+                    <strong>Cookies:</strong> ${state.cookies ? 'Present' : 'None'}<br>
+                    <strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+            `;
+        }
+
+        async function testLogin() {
+            log('🔄 Testing login...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Login successful: ${data.user?.email}`, 'success');
+                    
+                    // Check if cookies were set
+                    const cookies = document.cookie;
+                    log(`🍪 Cookies after login: ${cookies ? 'Set' : 'None'}`, cookies ? 'success' : 'error');
+                    
+                    updateState({
+                        authenticated: true,
+                        user: data.user?.email,
+                        cookies: !!cookies
+                    });
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Login failed: ${errorData.error || response.status}`, 'error');
+                    updateState({ authenticated: false, user: null, cookies: false });
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`, 'error');
+                updateState({ authenticated: false, user: null, cookies: false });
+            }
+        }
+
+        async function testAuthCheck() {
+            log('🔄 Testing auth check...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    log(`✅ Auth check successful: ${userData.email}`, 'success');
+                    updateState({
+                        authenticated: true,
+                        user: userData.email,
+                        cookies: !!document.cookie
+                    });
+                } else {
+                    log(`❌ Auth check failed: ${response.status}`, 'error');
+                    updateState({ authenticated: false, user: null, cookies: !!document.cookie });
+                }
+            } catch (error) {
+                log(`❌ Auth check error: ${error.message}`, 'error');
+                updateState({ authenticated: false, user: null, cookies: false });
+            }
+        }
+
+        async function clearAuth() {
+            log('🧹 Clearing authentication...', 'info');
+            
+            try {
+                // Clear localStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Call logout endpoint
+                await fetch('http://localhost:5000/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                log('✅ Auth cleared', 'success');
+                updateState({ authenticated: false, user: null, cookies: false });
+            } catch (error) {
+                log(`⚠️ Clear auth error: ${error.message}`, 'error');
+            }
+        }
+
+        function openApp() {
+            log('🚀 Opening app in new tab...', 'info');
+            window.open('http://localhost:5000', '_blank');
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = 'Logs cleared...';
+        }
+
+        // Auto-run initial state check
+        window.onload = function() {
+            log('🚀 Debug page loaded', 'success');
+            testAuthCheck();
+        };
+    </script>
+</body>
+</html>

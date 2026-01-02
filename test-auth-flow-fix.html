@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Flow Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Authentication Flow Fix Test</h1>
+    <p>Testing the fix for "Loading dashboard..." getting stuck after login.</p>
+
+    <div class="test-card">
+        <h2>🔍 Issue Diagnosis</h2>
+        <div class="info">
+            <strong>Problem:</strong> After successful login, page shows "Loading dashboard..." indefinitely<br>
+            <strong>Root Cause:</strong> Authentication state not updating properly after login<br>
+            <strong>Fix Applied:</strong> Improved useAuth hook and login redirect timing
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h2>🧪 Test Authentication Flow</h2>
+        <button onclick="testAuthEndpoints()">Test Auth Endpoints</button>
+        <button onclick="testLoginFlow()">Test Login Flow</button>
+        <button onclick="clearAuthAndTest()">Clear Auth & Test Fresh</button>
+    </div>
+
+    <div class="test-card">
+        <h2>🚀 Manual Test Steps</h2>
+        <ol>
+            <li><strong>Clear browser data:</strong> <button onclick="clearBrowserData()">Clear Data</button></li>
+            <li><strong>Open app:</strong> <button onclick="window.open('http://localhost:5000', '_blank')">Open App</button></li>
+            <li><strong>Should see:</strong> Landing page (not loading screen)</li>
+            <li><strong>Click "Get Started"</strong> → Should go to login page</li>
+            <li><strong>Login with:</strong> test@example.com / password123</li>
+            <li><strong>Should see:</strong> Dashboard loads immediately (not stuck on "Loading dashboard...")</li>
+        </ol>
+    </div>
+
+    <div class="test-card">
+        <h2>📋 Test Results</h2>
+        <div id="results">
+            <div class="info">Click test buttons above to run diagnostics.</div>
+        </div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+
+        async function testAuthEndpoints() {
+            addResult('🔄 Testing authentication endpoints...', 'info');
+            
+            try {
+                // Test login endpoint
+                const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    addResult('✅ Login endpoint working', 'success');
+                    addResult(`ℹ️ User: ${loginData.user?.email}`, 'info');
+                    
+                    // Test user endpoint with cookies
+                    const userResponse = await fetch('http://localhost:5000/api/auth/user', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        addResult('✅ User endpoint working with cookies', 'success');
+                        addResult(`ℹ️ Authenticated user: ${userData.email}`, 'info');
+                    } else {
+                        addResult(`❌ User endpoint failed: ${userResponse.status}`, 'error');
+                    }
+                } else {
+                    addResult(`❌ Login failed: ${loginResponse.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Auth test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLoginFlow() {
+            addResult('🔄 Testing complete login flow...', 'info');
+            
+            // Clear any existing auth
+            try {
+                await fetch('http://localhost:5000/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (e) {}
+            
+            addResult('ℹ️ Opening login page - complete the login manually', 'info');
+            addResult('ℹ️ Use: test@example.com / password123', 'info');
+            addResult('ℹ️ Check if dashboard loads immediately after login', 'info');
+            
+            window.open('http://localhost:5000/login', '_blank');
+        }
+
+        function clearAuthAndTest() {
+            addResult('🧹 Clearing authentication state...', 'info');
+            
+            // Clear localStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Clear cookies by calling logout
+            fetch('http://localhost:5000/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                addResult('✅ Auth state cleared', 'success');
+                addResult('ℹ️ Now test fresh login flow', 'info');
+                
+                setTimeout(() => {
+                    window.open('http://localhost:5000', '_blank');
+                }, 500);
+            }).catch(error => {
+                addResult(`⚠️ Logout error (continuing): ${error.message}`, 'warning');
+                window.open('http://localhost:5000', '_blank');
+            });
+        }
+
+        function clearBrowserData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            addResult('✅ Browser data cleared', 'success');
+        }
+
+        // Auto-run basic checks
+        window.onload = function() {
+            addResult('🚀 Auth flow test loaded', 'success');
+            addResult('ℹ️ Make sure server is running on localhost:5000', 'info');
+            addResult('✅ Applied fixes to useAuth hook and login redirect', 'success');
+        };
+    </script>
+</body>
+</html>

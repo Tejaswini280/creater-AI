@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message.system { background-color: #e3f2fd; }
+        .message.error { background-color: #ffebee; }
+        .message.data { background-color: #f1f8e9; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .url-display {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Frontend WebSocket Test</h1>
+        <p>Testing the fixed WebSocket URL construction for the frontend</p>
+        
+        <div id="status" class="status disconnected">
+            Status: Disconnected
+        </div>
+        
+        <div class="url-display" id="urlDisplay">
+            WebSocket URL: Not constructed yet
+        </div>
+        
+        <div class="controls">
+            <h3>Connection Controls</h3>
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button id="testStreamBtn" onclick="testStream()" disabled>Test Stream</button>
+            <button id="clearBtn" onclick="clearMessages()">Clear Messages</button>
+        </div>
+        
+        <h3>Messages</h3>
+        <div id="messages" class="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentStreamId = null;
+        
+        function updateStatus(status, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `Status: ${status}`;
+            statusEl.className = `status ${className}`;
+        }
+        
+        function updateUrlDisplay(url) {
+            const urlEl = document.getElementById('urlDisplay');
+            urlEl.textContent = `WebSocket URL: ${url}`;
+        }
+        
+        function addMessage(message, type = 'system') {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        function updateButtons(connected) {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('testStreamBtn').disabled = !connected;
+        }
+        
+        function constructWebSocketUrl() {
+            // Simulate the same logic as the React hook
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            
+            // Handle development environment where host might be undefined
+            let host = window.location.host;
+            if (!host || host === 'undefined') {
+                host = 'localhost:5000';
+            }
+            
+            const token = 'test-token'; // Simulate the token from useAuth
+            const wsUrl = `${protocol}//${host}/ws?token=${token}`;
+            
+            return wsUrl;
+        }
+        
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                addMessage('Already connected', 'error');
+                return;
+            }
+            
+            updateStatus('Connecting...', 'connecting');
+            addMessage('Attempting to connect to WebSocket...');
+            
+            // Use the fixed URL construction
+            const wsUrl = constructWebSocketUrl();
+            updateUrlDisplay(wsUrl);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                updateStatus('Connected', 'connected');
+                addMessage('WebSocket connected successfully!', 'data');
+                updateButtons(true);
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    addMessage(`Received: ${JSON.stringify(message, null, 2)}`, 'data');
+                    
+                    if (message.type === 'stream_started') {
+                        currentStreamId = message.streamId;
+                    } else if (message.type === 'stream_stopped' || message.type === 'error') {
+                        currentStreamId = null;
+                    }
+                } catch (error) {
+                    addMessage(`Raw message: ${event.data}`, 'data');
+                }
+            };
+            
+            ws.onclose = function(event) {
+                updateStatus('Disconnected', 'disconnected');
+                addMessage(`WebSocket closed: ${event.code} - ${event.reason}`, 'error');
+                currentStreamId = null;
+                updateButtons(false);
+            };
+            
+            ws.onerror = function(error) {
+                updateStatus('Error', 'disconnected');
+                addMessage(`WebSocket error: ${error}`, 'error');
+                updateButtons(false);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function testStream() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = {
+                    type: 'start_stream',
+                    streamType: 'script_generation',
+                    config: {
+                        topic: 'Frontend WebSocket Test',
+                        platform: 'youtube',
+                        duration: '2 minutes'
+                    }
+                };
+                ws.send(JSON.stringify(message));
+                addMessage(`Started stream: ${JSON.stringify(message)}`);
+            }
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        // Auto-connect on page load
+        window.onload = function() {
+            addMessage('Page loaded. Testing WebSocket URL construction...');
+            const wsUrl = constructWebSocketUrl();
+            updateUrlDisplay(wsUrl);
+            addMessage(`Constructed URL: ${wsUrl}`);
+        };
+    </script>
+</body>
+</html> 

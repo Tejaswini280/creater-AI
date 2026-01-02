@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #e9ecef;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔐 Scheduler Authentication & Database Test</h1>
+        <p>This test helps diagnose why the scheduler form submission is failing.</p>
+
+        <div class="test-step">
+            <h3>Step 1: Check Authentication Status</h3>
+            <p>First, let's check if you're properly authenticated:</p>
+            <button class="button" onclick="checkAuth()">Check Authentication</button>
+            <div id="auth-result" class="result"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Test Server Health</h3>
+            <p>Check if the server is running and healthy:</p>
+            <button class="button" onclick="checkServerHealth()">Check Server Health</button>
+            <div id="health-result" class="result"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Test Content API (Unauthenticated)</h3>
+            <p>Test the content API without authentication to see the error:</p>
+            <button class="button" onclick="testContentAPIUnauth()">Test API (No Auth)</button>
+            <div id="content-unauth-result" class="result"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Test Content API (Authenticated)</h3>
+            <p>Test the content API with authentication:</p>
+            <button class="button" onclick="testContentAPIAuth()">Test API (With Auth)</button>
+            <div id="content-auth-result" class="result"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 5: Manual Login Test</h3>
+            <p>If you're not authenticated, try logging in:</p>
+            <button class="button" onclick="goToLogin()">Go to Login Page</button>
+            <p><strong>Note:</strong> You need to be logged in to use the scheduler.</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 6: Browser Console Check</h3>
+            <p>Open your browser's developer tools (F12) and check the Console tab for any errors when you try to schedule content.</p>
+            <div class="code">
+                Common errors to look for:
+                - 401 Unauthorized (not logged in)
+                - 500 Internal Server Error (server issue)
+                - CORS errors (cross-origin issues)
+                - Network errors (server not running)
+            </div>
+        </div>
+
+        <div id="diagnosis" class="test-step" style="display: none;">
+            <h3>🔍 Diagnosis Results</h3>
+            <div id="diagnosis-content"></div>
+        </div>
+    </div>
+
+    <script>
+        function showResult(elementId, content, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.textContent = content;
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+        }
+
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            let result = 'Authentication Status:\n';
+            result += `Token: ${token ? 'Present' : 'Missing'}\n`;
+            result += `User: ${user ? 'Present' : 'Missing'}\n`;
+            
+            if (token && user) {
+                try {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const tokenData = JSON.parse(atob(tokenParts[1]));
+                        const currentTime = Date.now() / 1000;
+                        const isExpired = tokenData.exp && tokenData.exp < currentTime;
+                        
+                        result += `Token Expired: ${isExpired ? 'Yes' : 'No'}\n`;
+                        result += `Expires: ${new Date(tokenData.exp * 1000).toLocaleString()}\n`;
+                        
+                        if (!isExpired) {
+                            result += '\n✅ You are properly authenticated!';
+                            showResult('auth-result', result, true);
+                        } else {
+                            result += '\n❌ Your token has expired. Please log in again.';
+                            showResult('auth-result', result, false);
+                        }
+                    } else {
+                        result += '\n❌ Invalid token format.';
+                        showResult('auth-result', result, false);
+                    }
+                } catch (error) {
+                    result += `\n❌ Error parsing token: ${error.message}`;
+                    showResult('auth-result', result, false);
+                }
+            } else {
+                result += '\n❌ You are not authenticated. Please log in.';
+                showResult('auth-result', result, false);
+            }
+        }
+
+        async function checkServerHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                
+                let result = 'Server Health Check:\n';
+                result += `Status: ${response.status}\n`;
+                result += `Response: ${JSON.stringify(data, null, 2)}\n`;
+                
+                if (response.ok) {
+                    result += '\n✅ Server is healthy and running!';
+                    showResult('health-result', result, true);
+                } else {
+                    result += '\n❌ Server is not responding properly.';
+                    showResult('health-result', result, false);
+                }
+            } catch (error) {
+                let result = 'Server Health Check:\n';
+                result += `Error: ${error.message}\n`;
+                result += '\n❌ Cannot connect to server. Make sure it\'s running with "npm run dev"';
+                showResult('health-result', result, false);
+            }
+        }
+
+        async function testContentAPIUnauth() {
+            try {
+                const testData = {
+                    title: "Test Content",
+                    description: "Test description",
+                    platform: "youtube",
+                    contentType: "video",
+                    status: "scheduled",
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                };
+
+                const response = await fetch('http://localhost:5000/api/content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const responseText = await response.text();
+                
+                let result = 'Content API Test (No Auth):\n';
+                result += `Status: ${response.status}\n`;
+                result += `Response: ${responseText}\n`;
+                
+                if (response.status === 401) {
+                    result += '\n✅ Expected: 401 Unauthorized (authentication required)';
+                    showResult('content-unauth-result', result, true);
+                } else {
+                    result += '\n⚠️ Unexpected response status';
+                    showResult('content-unauth-result', result, false);
+                }
+            } catch (error) {
+                let result = 'Content API Test (No Auth):\n';
+                result += `Error: ${error.message}\n`;
+                result += '\n❌ Network error or server not running';
+                showResult('content-unauth-result', result, false);
+            }
+        }
+
+        async function testContentAPIAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showResult('content-auth-result', '❌ No authentication token found. Please log in first.', false);
+                return;
+            }
+
+            try {
+                const testData = {
+                    title: "Test Content",
+                    description: "Test description",
+                    platform: "youtube",
+                    contentType: "video",
+                    status: "scheduled",
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                };
+
+                const response = await fetch('http://localhost:5000/api/content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const responseText = await response.text();
+                
+                let result = 'Content API Test (With Auth):\n';
+                result += `Status: ${response.status}\n`;
+                result += `Response: ${responseText}\n`;
+                
+                if (response.ok) {
+                    result += '\n✅ API call successful! Content should be created.';
+                    showResult('content-auth-result', result, true);
+                } else {
+                    result += '\n❌ API call failed. Check the response for details.';
+                    showResult('content-auth-result', result, false);
+                }
+            } catch (error) {
+                let result = 'Content API Test (With Auth):\n';
+                result += `Error: ${error.message}\n`;
+                result += '\n❌ Network error or server issue';
+                showResult('content-auth-result', result, false);
+            }
+        }
+
+        function goToLogin() {
+            window.open('http://localhost:5000/login', '_blank');
+        }
+
+        // Auto-run basic checks when page loads
+        window.addEventListener('load', function() {
+            console.log('Scheduler Authentication Test loaded. Running basic checks...');
+            setTimeout(() => {
+                checkAuth();
+                checkServerHealth();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

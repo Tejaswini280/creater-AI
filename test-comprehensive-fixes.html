@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Fixes Test - AI Generator, Analytics, Creator Studio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            color: #007bff;
+            font-style: italic;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Comprehensive Fixes Test</h1>
+    <p>Testing AI Generator, Analytics, and Creator Studio pages with real data integration</p>
+
+    <div class="test-section">
+        <h2>🔧 Test Setup</h2>
+        <button onclick="testServerHealth()">Test Server Health</button>
+        <button onclick="testAuthentication()">Test Authentication</button>
+        <div id="setup-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🤖 AI Generator Page Tests</h2>
+        <button onclick="testAIScriptGeneration()">Test AI Script Generation</button>
+        <button onclick="testAIContentIdeas()">Test AI Content Ideas</button>
+        <button onclick="testAIThumbnailGeneration()">Test AI Thumbnail Generation</button>
+        <button onclick="testAIVoiceoverGeneration()">Test AI Voiceover Generation</button>
+        <div id="ai-generator-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Analytics Page Tests</h2>
+        <button onclick="testAnalyticsPerformance()">Test Performance Prediction</button>
+        <button onclick="testAnalyticsCompetitors()">Test Competitor Analysis</button>
+        <button onclick="testAnalyticsMonetization()">Test Monetization Strategy</button>
+        <button onclick="testAnalyticsTrends()">Test Content Trends</button>
+        <div id="analytics-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔮 Creator Studio Page Tests</h2>
+        <button onclick="testGeminiTextGeneration()">Test Text Generation</button>
+        <button onclick="testGeminiStructuredOutput()">Test Structured Output</button>
+        <button onclick="testGeminiCodeGeneration()">Test Code Generation</button>
+        <button onclick="testGeminiContentOptimization()">Test Content Optimization</button>
+        <div id="gemini-studio-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Frontend Integration Tests</h2>
+        <button onclick="testFrontendPages()">Test Frontend Pages</button>
+        <button onclick="testFormSubmissions()">Test Form Submissions</button>
+        <button onclick="testRealDataDisplay()">Test Real Data Display</button>
+        <div id="frontend-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Summary</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="generateReport()">Generate Report</button>
+        <div id="summary-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const AUTH_TOKEN = 'test-token';
+        let testResults = [];
+
+        function addResult(section, testName, success, message, data = null) {
+            const result = {
+                section,
+                testName,
+                success,
+                message,
+                data,
+                timestamp: new Date().toISOString()
+            };
+            testResults.push(result);
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${success ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `
+                <strong>${testName}:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}<br>
+                <small>${message}</small>
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            
+            document.getElementById(`${section}-results`).appendChild(resultDiv);
+        }
+
+        async function makeRequest(method, endpoint, data = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AUTH_TOKEN}`
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+                
+                return {
+                    success: response.ok,
+                    data: result,
+                    status: response.status
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    status: 0
+                };
+            }
+        }
+
+        async function testServerHealth() {
+            const result = await makeRequest('GET', '/api/health');
+            addResult('setup', 'Server Health', result.success, 
+                result.success ? 'Server is healthy and API keys are configured' : 'Server health check failed',
+                result.data);
+        }
+
+        async function testAuthentication() {
+            const result = await makeRequest('GET', '/api/dashboard/metrics');
+            addResult('setup', 'Authentication', result.success, 
+                result.success ? 'Authentication working correctly' : 'Authentication failed',
+                result.data);
+        }
+
+        async function testAIScriptGeneration() {
+            const data = {
+                topic: "AI Technology",
+                platform: "youtube",
+                duration: "60 seconds"
+            };
+            
+            const result = await makeRequest('POST', '/api/ai/generate-script', data);
+            addResult('ai-generator', 'AI Script Generation', result.success, 
+                result.success ? 'Script generated successfully with real data' : 'Script generation failed',
+                result.data);
+        }
+
+        async function testAIContentIdeas() {
+            const data = {
+                niche: "AI Technology",
+                platform: "youtube",
+                count: 5
+            };
+            
+            const result = await makeRequest('POST', '/api/ai/content-ideas', data);
+            addResult('ai-generator', 'AI Content Ideas', result.success, 
+                result.success ? 'Content ideas generated successfully' : 'Content ideas generation failed',
+                result.data);
+        }
+
+        async function testAIThumbnailGeneration() {
+            const data = {
+                prompt: "Create a vibrant thumbnail for AI Technology video",
+                count: 1
+            };
+            
+            const result = await makeRequest('POST', '/api/ai/generate-thumbnail-variations', data);
+            addResult('ai-generator', 'AI Thumbnail Generation', result.success, 
+                result.success ? 'Thumbnail generated successfully' : 'Thumbnail generation failed',
+                result.data);
+        }
+
+        async function testAIVoiceoverGeneration() {
+            const data = {
+                script: "AI Technology is transforming our world in incredible ways.",
+                voice: "alloy"
+            };
+            
+            const result = await makeRequest('POST', '/api/ai/generate-voiceover', data);
+            addResult('ai-generator', 'AI Voiceover Generation', result.success, 
+                result.success ? 'Voiceover generated successfully' : 'Voiceover generation failed',
+                result.data);
+        }
+
+        async function testAnalyticsPerformance() {
+            const data = {
+                content: "AI Technology",
+                platform: "youtube",
+                audience: "general",
+                tags: ["ai", "technology", "innovation"]
+            };
+            
+            const result = await makeRequest('POST', '/api/analytics/predict-performance', data);
+            addResult('analytics', 'Performance Prediction', result.success, 
+                result.success ? 'Performance prediction generated successfully' : 'Performance prediction failed',
+                result.data);
+        }
+
+        async function testAnalyticsCompetitors() {
+            const data = {
+                niche: "AI Technology",
+                platform: "youtube"
+            };
+            
+            const result = await makeRequest('POST', '/api/analytics/analyze-competitors', data);
+            addResult('analytics', 'Competitor Analysis', result.success, 
+                result.success ? 'Competitor analysis generated successfully' : 'Competitor analysis failed',
+                result.data);
+        }
+
+        async function testAnalyticsMonetization() {
+            const data = {
+                content: "AI Technology",
+                audience: "general",
+                platform: "youtube"
+            };
+            
+            const result = await makeRequest('POST', '/api/analytics/generate-monetization', data);
+            addResult('analytics', 'Monetization Strategy', result.success, 
+                result.success ? 'Monetization strategy generated successfully' : 'Monetization strategy failed',
+                result.data);
+        }
+
+        async function testAnalyticsTrends() {
+            const data = {
+                niche: "AI Technology",
+                timeframe: "30 days"
+            };
+            
+            const result = await makeRequest('POST', '/api/analytics/analyze-trends', data);
+            addResult('analytics', 'Content Trends', result.success, 
+                result.success ? 'Content trends analysis generated successfully' : 'Content trends analysis failed',
+                result.data);
+        }
+
+        async function testGeminiTextGeneration() {
+            const data = {
+                prompt: "Write script for mercedes car",
+                options: {
+                    maxTokens: 8192,
+                    temperature: 0.7
+                }
+            };
+            
+            const result = await makeRequest('POST', '/api/gemini/generate-text', data);
+            addResult('gemini-studio', 'Text Generation', result.success, 
+                result.success ? 'Gemini text generation working with fallback' : 'Gemini text generation failed',
+                result.data);
+        }
+
+        async function testGeminiStructuredOutput() {
+            const data = {
+                prompt: "Write script for AI Technology",
+                schema: {
+                    type: "object",
+                    properties: {
+                        title: { type: "string" },
+                        content: { type: "string" },
+                        tags: { type: "array", items: { type: "string" } }
+                    }
+                }
+            };
+            
+            const result = await makeRequest('POST', '/api/gemini/generate-structured', data);
+            addResult('gemini-studio', 'Structured Output', result.success, 
+                result.success ? 'Gemini structured output working with fallback' : 'Gemini structured output failed',
+                result.data);
+        }
+
+        async function testGeminiCodeGeneration() {
+            const data = {
+                description: "Create a simple React component for a button",
+                language: "javascript",
+                framework: "react"
+            };
+            
+            const result = await makeRequest('POST', '/api/gemini/generate-code', data);
+            addResult('gemini-studio', 'Code Generation', result.success, 
+                result.success ? 'Gemini code generation working with fallback' : 'Gemini code generation failed',
+                result.data);
+        }
+
+        async function testGeminiContentOptimization() {
+            const data = {
+                content: "This is a sample content about AI technology that needs optimization.",
+                platform: "youtube",
+                goals: ["engagement", "reach", "conversion"]
+            };
+            
+            const result = await makeRequest('POST', '/api/gemini/optimize-content', data);
+            addResult('gemini-studio', 'Content Optimization', result.success, 
+                result.success ? 'Gemini content optimization working with fallback' : 'Gemini content optimization failed',
+                result.data);
+        }
+
+        async function testFrontendPages() {
+            // Test if frontend pages are accessible
+            const pages = [
+                { name: 'AI Generator', url: 'http://localhost:5000/ai-generator' },
+                { name: 'Analytics', url: 'http://localhost:5000/analytics' },
+                { name: 'Creator Studio', url: 'http://localhost:5000/gemini' }
+            ];
+            
+            let allSuccess = true;
+            for (const page of pages) {
+                try {
+                    const response = await fetch(page.url);
+                    if (!response.ok) {
+                        allSuccess = false;
+                    }
+                } catch (error) {
+                    allSuccess = false;
+                }
+            }
+            
+            addResult('frontend', 'Frontend Pages', allSuccess, 
+                allSuccess ? 'All frontend pages are accessible' : 'Some frontend pages are not accessible');
+        }
+
+        async function testFormSubmissions() {
+            // Test form submissions by checking if endpoints respond correctly
+            const forms = [
+                { name: 'AI Script Form', endpoint: '/api/ai/generate-script' },
+                { name: 'Analytics Form', endpoint: '/api/analytics/predict-performance' },
+                { name: 'Gemini Form', endpoint: '/api/gemini/generate-text' }
+            ];
+            
+            let allSuccess = true;
+            for (const form of forms) {
+                const result = await makeRequest('POST', form.endpoint, { test: true });
+                if (!result.success) {
+                    allSuccess = false;
+                }
+            }
+            
+            addResult('frontend', 'Form Submissions', allSuccess, 
+                allSuccess ? 'All form submissions working correctly' : 'Some form submissions failed');
+        }
+
+        async function testRealDataDisplay() {
+            // Test if real data is being displayed instead of mock data
+            const dataEndpoints = [
+                { name: 'AI Tasks', endpoint: '/api/ai/tasks' },
+                { name: 'Analytics Data', endpoint: '/api/analytics/performance' },
+                { name: 'Content Data', endpoint: '/api/content' }
+            ];
+            
+            let allSuccess = true;
+            for (const endpoint of dataEndpoints) {
+                const result = await makeRequest('GET', endpoint.endpoint);
+                if (!result.success) {
+                    allSuccess = false;
+                }
+            }
+            
+            addResult('frontend', 'Real Data Display', allSuccess, 
+                allSuccess ? 'Real data is being fetched and displayed' : 'Some data endpoints failed');
+        }
+
+        async function runAllTests() {
+            // Clear previous results
+            testResults = [];
+            document.querySelectorAll('[id$="-results"]').forEach(el => el.innerHTML = '');
+            
+            // Run all tests
+            await testServerHealth();
+            await testAuthentication();
+            await testAIScriptGeneration();
+            await testAIContentIdeas();
+            await testAIThumbnailGeneration();
+            await testAIVoiceoverGeneration();
+            await testAnalyticsPerformance();
+            await testAnalyticsCompetitors();
+            await testAnalyticsMonetization();
+            await testAnalyticsTrends();
+            await testGeminiTextGeneration();
+            await testGeminiStructuredOutput();
+            await testGeminiCodeGeneration();
+            await testGeminiContentOptimization();
+            await testFrontendPages();
+            await testFormSubmissions();
+            await testRealDataDisplay();
+            
+            generateReport();
+        }
+
+        function generateReport() {
+            const totalTests = testResults.length;
+            const passedTests = testResults.filter(r => r.success).length;
+            const failedTests = totalTests - passedTests;
+            const successRate = ((passedTests / totalTests) * 100).toFixed(1);
+            
+            const report = {
+                summary: {
+                    totalTests,
+                    passedTests,
+                    failedTests,
+                    successRate: `${successRate}%`
+                },
+                results: testResults
+            };
+            
+            addResult('summary', 'Test Report', true, 
+                `Tests completed: ${passedTests}/${totalTests} passed (${successRate}% success rate)`,
+                report);
+        }
+    </script>
+</body>
+</html>

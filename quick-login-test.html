@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Quick Login Test</h1>
+    
+    <div>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testDashboard()">Test Dashboard Access</button>
+        <button onclick="clearStorage()">Clear Storage</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        async function testLogin() {
+            log('🔍 Testing login...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                log(`📥 Login response status: ${response.status}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Login successful: ${JSON.stringify(data)}`, 'success');
+                    
+                    // Store token if provided
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                        log('💾 Token stored in localStorage', 'success');
+                    }
+                    
+                    if (data.user) {
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        log('👤 User data stored in localStorage', 'success');
+                    }
+                    
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Login failed: ${JSON.stringify(errorData)}`, 'error');
+                }
+            } catch (error) {
+                log(`💥 Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDashboard() {
+            log('🏠 Testing dashboard access...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                log(`📥 Dashboard auth check status: ${response.status}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Dashboard access successful: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Dashboard access failed: ${JSON.stringify(errorData)}`, 'error');
+                    
+                    // Try with localStorage token
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        log('🔄 Trying with localStorage token...', 'info');
+                        const tokenResponse = await fetch('/api/auth/user', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+                            log(`✅ Token auth successful: ${JSON.stringify(tokenData)}`, 'success');
+                        } else {
+                            log(`❌ Token auth also failed: ${tokenResponse.status}`, 'error');
+                        }
+                    }
+                }
+            } catch (error) {
+                log(`💥 Dashboard test error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🧹 Storage cleared', 'info');
+        }
+
+        // Auto-run login test on page load
+        window.onload = () => {
+            log('🚀 Page loaded, ready for testing', 'info');
+        };
+    </script>
+</body>
+</html>

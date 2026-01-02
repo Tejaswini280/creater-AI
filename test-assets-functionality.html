@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assets Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .file-input { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Assets Functionality Test</h1>
+    
+    <div class="test-section info">
+        <h3>Test Overview</h3>
+        <p>This test verifies that the assets functionality is working correctly:</p>
+        <ul>
+            <li>✅ Assets page is accessible</li>
+            <li>✅ Assets are displayed correctly</li>
+            <li>✅ File upload functionality works</li>
+            <li>✅ Assets can be deleted</li>
+            <li>✅ Sidebar has Assets link</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>1. Test Get Assets</h3>
+        <button onclick="testGetAssets()">Get Assets</button>
+        <div id="get-assets-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test File Upload</h3>
+        <div class="file-input">
+            <input type="file" id="testFile" accept="image/*,video/*,application/pdf,text/*">
+            <button onclick="testFileUpload()">Upload File</button>
+        </div>
+        <div id="upload-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Delete Asset</h3>
+        <input type="text" id="assetIdToDelete" placeholder="Enter asset ID to delete">
+        <button onclick="testDeleteAsset()">Delete Asset</button>
+        <div id="delete-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Frontend Integration Test</h3>
+        <p>Open the assets page in a new tab and test the UI:</p>
+        <button onclick="openAssetsPage()">Open Assets Page</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const TEST_TOKEN = 'test-token';
+
+        function log(message, elementId = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage);
+            
+            if (elementId) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.innerHTML += `<div>${logMessage}</div>`;
+                }
+            }
+        }
+
+        async function testGetAssets() {
+            const elementId = 'get-assets-result';
+            log('Testing GET /api/assets...', elementId);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/assets`, {
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Found ${data.assets?.length || 0} assets`, elementId);
+                
+                if (data.assets && data.assets.length > 0) {
+                    const assetList = data.assets.map(asset => 
+                        `- ${asset.originalName} (${asset.mimeType}) - ${asset.size} bytes`
+                    ).join('\n');
+                    log(`📋 Asset list:\n${assetList}`, elementId);
+                } else {
+                    log('📋 No assets found', elementId);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        async function testFileUpload() {
+            const elementId = 'upload-result';
+            const fileInput = document.getElementById('testFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('❌ Please select a file first', elementId);
+                return;
+            }
+            
+            log(`Testing file upload: ${file.name} (${file.size} bytes)`, elementId);
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('category', 'test');
+                
+                const response = await fetch(`${API_BASE}/api/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Response data: ${JSON.stringify(data, null, 2)}`, elementId);
+                
+                if (data.success) {
+                    log(`🎉 File uploaded successfully!`, elementId);
+                    log(`📋 File ID: ${data.file?.id}`, elementId);
+                    log(`📋 File URL: ${data.file?.url}`, elementId);
+                } else {
+                    log(`❌ Upload failed: ${data.message}`, elementId);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        async function testDeleteAsset() {
+            const elementId = 'delete-result';
+            const assetId = document.getElementById('assetIdToDelete').value;
+            
+            if (!assetId) {
+                log('❌ Please enter an asset ID', elementId);
+                return;
+            }
+            
+            log(`Testing DELETE /api/assets/${assetId}...`, elementId);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/${assetId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${TEST_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log(`✅ Response received: ${response.status}`, elementId);
+                log(`📊 Response data: ${JSON.stringify(data, null, 2)}`, elementId);
+                
+                if (data.success) {
+                    log(`🎉 Asset deleted successfully!`, elementId);
+                } else {
+                    log(`❌ Delete failed: ${data.message}`, elementId);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, elementId);
+            }
+        }
+
+        function openAssetsPage() {
+            window.open('http://localhost:5000/assets', '_blank');
+        }
+
+        // Auto-run initial test
+        window.onload = function() {
+            log('🚀 Starting assets functionality test...');
+            setTimeout(testGetAssets, 1000);
+        };
+    </script>
+</body>
+</html>

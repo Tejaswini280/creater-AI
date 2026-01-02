@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Video AI Authentication</title>
+</head>
+<body>
+    <h1>Debug Video AI Authentication</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function debugAuth() {
+            const results = document.getElementById('results');
+            
+            // Check localStorage for token
+            const token = localStorage.getItem('token');
+            results.innerHTML += `<p><strong>Token in localStorage:</strong> ${token ? token.substring(0, 20) + '...' : 'Not found'}</p>`;
+            
+            if (!token) {
+                results.innerHTML += `<p style="color: red;"><strong>❌ No authentication token found!</strong></p>`;
+                results.innerHTML += `<p>This is why the video generation is failing. You need to log in first.</p>`;
+                results.innerHTML += `<p><a href="/login">Go to Login Page</a></p>`;
+                return;
+            }
+            
+            // Test the token with a simple API call
+            try {
+                const response = await fetch('/api/ai/generate-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Test video generation',
+                        style: 'modern',
+                        music: 'upbeat',
+                        duration: 15
+                    })
+                });
+                
+                results.innerHTML += `<p><strong>API Response Status:</strong> ${response.status}</p>`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += `<p style="color: green;"><strong>✅ Video generation successful!</strong></p>`;
+                    results.innerHTML += `<p><strong>Video URL:</strong> ${data.videoUrl}</p>`;
+                    results.innerHTML += `<p><strong>Model Used:</strong> ${data.metadata?.model || 'Unknown'}</p>`;
+                    
+                    if (data.videoUrl) {
+                        results.innerHTML += `<video controls width="400" src="${data.videoUrl}">Your browser does not support video.</video>`;
+                    }
+                } else {
+                    const errorData = await response.text();
+                    results.innerHTML += `<p style="color: red;"><strong>❌ API Error:</strong> ${errorData}</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;"><strong>❌ Request failed:</strong> ${error.message}</p>`;
+            }
+        }
+        
+        // Run the debug when page loads
+        debugAuth();
+    </script>
+</body>
+</html>

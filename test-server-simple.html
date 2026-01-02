@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Test</title>
+</head>
+<body>
+    <h1>Testing New Project Enhanced Page</h1>
+    <p>Testing if the server is running and can serve the new-project-enhanced page.</p>
+    
+    <script>
+        console.log('Testing server connection...');
+        
+        // Test if we can access the new-project-enhanced route
+        fetch('/new-project-enhanced')
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.text();
+            })
+            .then(html => {
+                console.log('Response received, length:', html.length);
+                if (html.includes('new-project-enhanced')) {
+                    console.log('✅ Page contains expected content');
+                } else {
+                    console.log('❌ Page does not contain expected content');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error accessing page:', error);
+            });
+            
+        // Test if we can access the tsx file directly (this should fail in production but work in dev)
+        fetch('/src/pages/new-project-enhanced.tsx')
+            .then(response => {
+                console.log('Direct TSX file access status:', response.status);
+                if (response.status === 404) {
+                    console.log('✅ TSX file correctly not accessible directly');
+                } else {
+                    console.log('⚠️ TSX file is accessible directly (dev mode)');
+                }
+            })
+            .catch(error => {
+                console.error('Error accessing TSX file:', error);
+            });
+    </script>
+</body>
+</html>

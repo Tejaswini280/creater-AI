@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Fix Test</h1>
+        <p>This page tests the authentication fixes to ensure the infinite loop is resolved.</p>
+        
+        <div class="test-section info">
+            <h3>Test 1: Check Auth Endpoint</h3>
+            <p>Test the /api/auth/user endpoint to see if it responds correctly.</p>
+            <button onclick="testAuthEndpoint()">Test Auth Endpoint</button>
+            <div id="auth-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>Test 2: Simulate Auth Check Loop</h3>
+            <p>Simulate multiple rapid auth checks to test the circuit breaker.</p>
+            <button onclick="testAuthLoop()">Test Auth Loop</button>
+            <div id="loop-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>Test 3: Check Console Logs</h3>
+            <p>Check browser console for any infinite loop warnings.</p>
+            <button onclick="checkConsoleLogs()">Check Console</button>
+            <div id="console-result" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            element.textContent += logEntry;
+            element.scrollTop = element.scrollHeight;
+            
+            // Add visual indicator
+            const section = element.closest('.test-section');
+            section.className = `test-section ${type}`;
+        }
+
+        async function testAuthEndpoint() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.textContent = '';
+            
+            log('auth-result', 'Testing /api/auth/user endpoint...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const status = response.status;
+                const data = await response.text();
+                
+                if (status === 401) {
+                    log('auth-result', `✅ Expected 401 response (no auth token)`, 'success');
+                    log('auth-result', `Response: ${data}`, 'info');
+                } else if (status === 200) {
+                    log('auth-result', `✅ Got 200 response (user authenticated)`, 'success');
+                    log('auth-result', `Response: ${data}`, 'info');
+                } else {
+                    log('auth-result', `⚠️ Unexpected status: ${status}`, 'error');
+                    log('auth-result', `Response: ${data}`, 'error');
+                }
+            } catch (error) {
+                log('auth-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthLoop() {
+            const resultDiv = document.getElementById('loop-result');
+            resultDiv.textContent = '';
+            
+            log('loop-result', 'Testing rapid auth checks (should be throttled)...', 'info');
+            
+            const promises = [];
+            for (let i = 0; i < 10; i++) {
+                promises.push(
+                    fetch('/api/auth/user', {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    }).then(response => ({
+                        index: i,
+                        status: response.status,
+                        timestamp: Date.now()
+                    }))
+                );
+            }
+            
+            try {
+                const results = await Promise.all(promises);
+                const successCount = results.filter(r => r.status === 401).length;
+                const errorCount = results.filter(r => r.status !== 401).length;
+                
+                log('loop-result', `✅ Completed ${results.length} requests`, 'success');
+                log('loop-result', `✅ ${successCount} successful (401), ${errorCount} errors`, 'success');
+                
+                // Check if requests were throttled (should complete quickly)
+                const timeDiff = Math.max(...results.map(r => r.timestamp)) - Math.min(...results.map(r => r.timestamp));
+                if (timeDiff < 1000) {
+                    log('loop-result', `✅ Requests completed quickly (${timeDiff}ms) - no throttling detected`, 'success');
+                } else {
+                    log('loop-result', `⚠️ Requests took ${timeDiff}ms - may indicate throttling`, 'info');
+                }
+            } catch (error) {
+                log('loop-result', `❌ Error during loop test: ${error.message}`, 'error');
+            }
+        }
+
+        function checkConsoleLogs() {
+            const resultDiv = document.getElementById('console-result');
+            resultDiv.textContent = '';
+            
+            log('console-result', 'Checking for infinite loop indicators...', 'info');
+            
+            // Check for common infinite loop patterns
+            const warnings = [];
+            const errors = [];
+            
+            // Override console methods to capture logs
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            
+            console.warn = function(...args) {
+                warnings.push(args.join(' '));
+                originalWarn.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                errors.push(args.join(' '));
+                originalError.apply(console, args);
+            };
+            
+            // Check for specific patterns
+            setTimeout(() => {
+                const allLogs = [...warnings, ...errors];
+                const loopPatterns = [
+                    'infinite loop',
+                    'too many',
+                    'circuit breaker',
+                    'auth check too recent',
+                    'auth check already in progress'
+                ];
+                
+                const foundPatterns = loopPatterns.filter(pattern => 
+                    allLogs.some(log => log.toLowerCase().includes(pattern))
+                );
+                
+                if (foundPatterns.length > 0) {
+                    log('console-result', `⚠️ Found potential loop patterns: ${foundPatterns.join(', ')}`, 'error');
+                } else {
+                    log('console-result', `✅ No infinite loop patterns detected`, 'success');
+                }
+                
+                if (warnings.length > 0) {
+                    log('console-result', `Warnings: ${warnings.length}`, 'info');
+                }
+                if (errors.length > 0) {
+                    log('console-result', `Errors: ${errors.length}`, 'info');
+                }
+                
+                // Restore original console methods
+                console.warn = originalWarn;
+                console.error = originalError;
+            }, 2000);
+        }
+
+        // Auto-run basic test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAuthEndpoint();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Content Studio Page</title>
+</head>
+<body>
+    <h1>Testing Content Studio Page Load</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        async function testContentStudioPage() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            try {
+                console.log('🔍 Testing Content Studio page...');
+                
+                // Test if the page loads
+                const response = await fetch('http://localhost:5000/content-studio');
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    if (html.includes('Error loading Content Studio page')) {
+                        resultsDiv.innerHTML = `
+                            <div style="color: red; padding: 20px; border: 2px solid red; margin: 20px 0;">
+                                ❌ <strong>ISSUE FOUND:</strong> Content Studio page is showing error message<br>
+                                The page is loading but showing "Error loading Content Studio page"<br>
+                                This indicates a React component compilation error.
+                            </div>
+                        `;
+                    } else if (html.includes('Content Studio')) {
+                        resultsDiv.innerHTML = `
+                            <div style="color: green; padding: 20px; border: 2px solid green; margin: 20px 0;">
+                                ✅ <strong>SUCCESS:</strong> Content Studio page is loading correctly!<br>
+                                The page HTML contains Content Studio content.
+                            </div>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `
+                            <div style="color: orange; padding: 20px; border: 2px solid orange; margin: 20px 0;">
+                                ⚠️ <strong>PARTIAL:</strong> Page loads but content unclear<br>
+                                Response status: ${response.status}<br>
+                                Content length: ${html.length} characters
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div style="color: red; padding: 20px; border: 2px solid red; margin: 20px 0;">
+                            ❌ <strong>ERROR:</strong> Failed to load Content Studio page<br>
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div style="color: red; padding: 20px; border: 2px solid red; margin: 20px 0;">
+                        💥 <strong>NETWORK ERROR:</strong> ${error.message}<br>
+                        Make sure the server is running on localhost:5000
+                    </div>
+                `;
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testContentStudioPage;
+    </script>
+</body>
+</html>

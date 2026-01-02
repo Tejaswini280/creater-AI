@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Fix Date & Timezone Persistence</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        .step {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .danger {
+            background: #f44336;
+        }
+        .danger:hover {
+            background: #d32f2f;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        input, select {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 14px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Date & Timezone Persistence Issue</h1>
+        <p>This tool will fix the issue where your selected date and timezone are not being saved or displayed correctly in the project details.</p>
+        
+        <div class="error">
+            <h3>❌ Current Problem:</h3>
+            <p>• You enter a different date in project wizard → Shows today's date</p>
+            <p>• You select a different timezone → Shows wrong timezone</p>
+            <p>• Date and timezone selections are not being persisted</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Test Your Date & Timezone Selection</h2>
+        
+        <div class="form-group">
+            <label for="testDate">Select Your Desired Date:</label>
+            <input type="date" id="testDate" value="2025-01-15">
+        </div>
+        
+        <div class="form-group">
+            <label for="testTimezone">Select Your Desired Timezone:</label>
+            <select id="testTimezone">
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                <option value="America/New_York">EST (Eastern Time)</option>
+                <option value="America/Los_Angeles">PST (Pacific Time)</option>
+                <option value="Europe/London">GMT (Greenwich Mean Time)</option>
+                <option value="Asia/Kolkata" selected>IST (Indian Standard Time)</option>
+                <option value="Europe/Paris">CET (Central European Time)</option>
+                <option value="Asia/Tokyo">JST (Japan Standard Time)</option>
+                <option value="Australia/Sydney">AEST (Australian Eastern Time)</option>
+                <option value="Asia/Dubai">GST (Gulf Standard Time)</option>
+                <option value="Asia/Singapore">SGT (Singapore Time)</option>
+            </select>
+        </div>
+
+        <button onclick="createProjectWithCorrectData()">🚀 Create Project with Correct Date & Timezone</button>
+        <button onclick="debugCurrentProject()">🔍 Debug Current Project Data</button>
+        <button onclick="clearAllProjectData()" class="danger">🗑️ Clear All Project Data</button>
+
+        <div id="results"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Step-by-Step Fix Process</h2>
+        
+        <div class="step">
+            <h3>Step 1: Clear Corrupted Data</h3>
+            <p>Remove any existing project data that might be causing conflicts</p>
+            <button onclick="clearCorruptedData()">Clear Corrupted Data</button>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Create Properly Formatted Project</h3>
+            <p>Create a new project with correct date and timezone structure</p>
+            <button onclick="createProperProject()">Create Proper Project</button>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Verify Data Persistence</h3>
+            <p>Check that the data is stored correctly and will display properly</p>
+            <button onclick="verifyDataPersistence()">Verify Data</button>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Test Project Details Display</h3>
+            <p>Open the project details page to confirm the fix worked</p>
+            <button onclick="openProjectDetails()">Open Project Details</button>
+        </div>
+    </div>
+
+    <script>
+        function createProjectWithCorrectData() {
+            const selectedDate = document.getElementById('testDate').value;
+            const selectedTimezone = document.getElementById('testTimezone').value;
+            const results = document.getElementById('results');
+            
+            if (!selectedDate) {
+                results.innerHTML = '<div class="error">Please select a date first!</div>';
+                return;
+            }
+
+            // Create project with the EXACT structure expected by the application
+            const correctProject = {
+                // Basic project info
+                id: 'correct-project-' + Date.now(),
+                name: 'Date & Timezone Test Project',
+                description: 'Testing correct date and timezone persistence',
+                contentType: 'Social Media Content',
+                category: 'Digital Marketing',
+                targetAudience: 'Social media users',
+                goals: ['Test date persistence', 'Test timezone persistence'],
+                contentFormats: ['Posts', 'Stories'],
+                postingFrequency: 'Daily',
+                contentThemes: ['Testing', 'Verification'],
+                brandVoice: 'Professional',
+                contentLength: 'Medium',
+                platforms: ['Instagram', 'Facebook'],
+                aiTools: ['Content Generator'],
+                
+                // CRITICAL: Proper scheduling preferences structure
+                schedulingPreferences: {
+                    autoSchedule: true,
+                    timeZone: selectedTimezone,
+                    preferredTimes: ['09:00', '15:00', '18:00']
+                },
+                
+                // CRITICAL: Start date in the correct format
+                startDate: selectedDate, // Store as YYYY-MM-DD format
+                
+                // Other fields
+                duration: '3 months',
+                budget: '$1000-2000',
+                teamMembers: [],
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Store in multiple locations to ensure persistence
+            localStorage.setItem('latestCreatedProject', JSON.stringify(correctProject));
+            localStorage.setItem('currentProjectId', correctProject.id);
+            
+            // Add to projects array
+            const existingProjects = JSON.parse(localStorage.getItem('localProjects') || '[]');
+            // Remove any existing test projects
+            const filteredProjects = existingProjects.filter(p => !p.name.includes('Test Project'));
+            filteredProjects.push(correctProject);
+            localStorage.setItem('localProjects', JSON.stringify(filteredProjects));
+
+            // Also store in wizard format for compatibility
+            const wizardFormat = {
+                basics: {
+                    name: correctProject.name,
+                    description: correctProject.description,
+                    contentType: correctProject.contentType,
+                    category: correctProject.category,
+                    targetAudience: correctProject.targetAudience,
+                    goals: correctProject.goals
+                },
+                content: {
+                    contentFormats: correctProject.contentFormats,
+                    postingFrequency: correctProject.postingFrequency,
+                    contentThemes: correctProject.contentThemes,
+                    brandVoice: correctProject.brandVoice,
+                    contentLength: correctProject.contentLength
+                },
+                integrations: {
+                    platforms: correctProject.platforms,
+                    aiTools: correctProject.aiTools,
+                    schedulingPreferences: correctProject.schedulingPreferences
+                },
+                schedule: {
+                    startDate: selectedDate,
+                    duration: correctProject.duration,
+                    budget: correctProject.budget,
+                    teamMembers: correctProject.teamMembers
+                }
+            };
+            
+            localStorage.setItem('projectWizardData', JSON.stringify(wizardFormat));
+
+            results.innerHTML = `
+                <div class="success">
+                    <h3>✅ Project Created Successfully!</h3>
+                    <p><strong>Selected Date:</strong> ${selectedDate}</p>
+                    <p><strong>Selected Timezone:</strong> ${getTimezoneDisplayName(selectedTimezone)}</p>
+                    <p><strong>Project ID:</strong> ${correctProject.id}</p>
+                    
+                    <h4>Data Structure Verification:</h4>
+                    <pre>${JSON.stringify({
+                        startDate: correctProject.startDate,
+                        timezone: correctProject.schedulingPreferences.timeZone,
+                        timezoneDisplay: getTimezoneDisplayName(selectedTimezone)
+                    }, null, 2)}</pre>
+                    
+                    <p><strong>Next:</strong> Go to project details page to verify the date and timezone display correctly!</p>
+                    
+                    <button onclick="openProjectDetails()" style="margin-top: 15px;">
+                        🔗 Open Project Details Page
+                    </button>
+                </div>
+            `;
+        }
+
+        function debugCurrentProject() {
+            const results = document.getElementById('results');
+            
+            const latestProject = localStorage.getItem('latestCreatedProject');
+            const currentProjectId = localStorage.getItem('currentProjectId');
+            const localProjects = localStorage.getItem('localProjects');
+            const wizardData = localStorage.getItem('projectWizardData');
+
+            let debugInfo = '<div class="info"><h3>🔍 Current Project Data Debug</h3>';
+            
+            debugInfo += `<p><strong>Current Project ID:</strong> ${currentProjectId || 'None'}</p>`;
+            
+            if (latestProject) {
+                const project = JSON.parse(latestProject);
+                debugInfo += `
+                    <h4>Latest Project Analysis:</h4>
+                    <p><strong>Name:</strong> ${project.name}</p>
+                    <p><strong>Start Date:</strong> ${project.startDate || 'NOT SET'}</p>
+                    <p><strong>Timezone:</strong> ${project.schedulingPreferences?.timeZone || 'NOT SET'}</p>
+                    <p><strong>Created At:</strong> ${project.createdAt}</p>
+                    
+                    <h4>Issue Analysis:</h4>
+                `;
+                
+                if (!project.startDate) {
+                    debugInfo += '<p class="error">❌ START DATE IS MISSING!</p>';
+                }
+                if (!project.schedulingPreferences?.timeZone) {
+                    debugInfo += '<p class="error">❌ TIMEZONE IS MISSING!</p>';
+                }
+                if (project.startDate === new Date().toISOString().split('T')[0]) {
+                    debugInfo += '<p class="error">❌ START DATE IS TODAY (not your selected date)!</p>';
+                }
+                
+                debugInfo += `<h4>Full Project Data:</h4><pre>${JSON.stringify(project, null, 2)}</pre>`;
+            } else {
+                debugInfo += '<p class="error">❌ No latest project found!</p>';
+            }
+            
+            if (localProjects) {
+                const projects = JSON.parse(localProjects);
+                debugInfo += `<p><strong>Total Projects:</strong> ${projects.length}</p>`;
+            }
+            
+            debugInfo += '</div>';
+            results.innerHTML = debugInfo;
+        }
+
+        function clearAllProjectData() {
+            localStorage.removeItem('latestCreatedProject');
+            localStorage.removeItem('currentProjectId');
+            localStorage.removeItem('localProjects');
+            localStorage.removeItem('projectWizardData');
+            
+            document.getElementById('results').innerHTML = `
+                <div class="success">
+                    <h3>✅ All Project Data Cleared!</h3>
+                    <p>All existing project data has been removed. You can now create a fresh project with correct date and timezone.</p>
+                </div>
+            `;
+        }
+
+        function clearCorruptedData() {
+            clearAllProjectData();
+        }
+
+        function createProperProject() {
+            createProjectWithCorrectData();
+        }
+
+        function verifyDataPersistence() {
+            const results = document.getElementById('results');
+            const latestProject = localStorage.getItem('latestCreatedProject');
+            
+            if (!latestProject) {
+                results.innerHTML = '<div class="error">❌ No project data found. Create a project first!</div>';
+                return;
+            }
+            
+            const project = JSON.parse(latestProject);
+            const selectedDate = document.getElementById('testDate').value;
+            const selectedTimezone = document.getElementById('testTimezone').value;
+            
+            let verification = '<div class="info"><h3>🔍 Data Persistence Verification</h3>';
+            
+            // Check if data matches what was selected
+            const dateMatches = project.startDate === selectedDate;
+            const timezoneMatches = project.schedulingPreferences?.timeZone === selectedTimezone;
+            
+            verification += `
+                <p><strong>Selected Date:</strong> ${selectedDate}</p>
+                <p><strong>Stored Date:</strong> ${project.startDate}</p>
+                <p><strong>Date Match:</strong> ${dateMatches ? '✅ YES' : '❌ NO'}</p>
+                
+                <p><strong>Selected Timezone:</strong> ${selectedTimezone}</p>
+                <p><strong>Stored Timezone:</strong> ${project.schedulingPreferences?.timeZone}</p>
+                <p><strong>Timezone Match:</strong> ${timezoneMatches ? '✅ YES' : '❌ NO'}</p>
+            `;
+            
+            if (dateMatches && timezoneMatches) {
+                verification += '<div class="success">✅ Data persistence is working correctly!</div>';
+            } else {
+                verification += '<div class="error">❌ Data persistence has issues. Try creating the project again.</div>';
+            }
+            
+            verification += '</div>';
+            results.innerHTML = verification;
+        }
+
+        function openProjectDetails() {
+            const currentProjectId = localStorage.getItem('currentProjectId');
+            if (currentProjectId) {
+                window.open(`http://localhost:5000/project-details?id=${currentProjectId}`, '_blank');
+            } else {
+                window.open('http://localhost:5000/project-details', '_blank');
+            }
+        }
+
+        function getTimezoneDisplayName(timezoneId) {
+            const timezoneNames = {
+                'UTC': 'UTC (Coordinated Universal Time)',
+                'America/New_York': 'EST (Eastern Time)',
+                'America/Los_Angeles': 'PST (Pacific Time)',
+                'Europe/London': 'GMT (Greenwich Mean Time)',
+                'Asia/Kolkata': 'IST (Indian Standard Time)',
+                'Europe/Paris': 'CET (Central European Time)',
+                'Asia/Tokyo': 'JST (Japan Standard Time)',
+                'Australia/Sydney': 'AEST (Australian Eastern Time)',
+                'Asia/Dubai': 'GST (Gulf Standard Time)',
+                'Asia/Singapore': 'SGT (Singapore Time)'
+            };
+            return timezoneNames[timezoneId] || timezoneId;
+        }
+
+        // Auto-set tomorrow's date as default
+        window.addEventListener('load', function() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('testDate').value = tomorrow.toISOString().split('T')[0];
+        });
+    </script>
+</body>
+</html>

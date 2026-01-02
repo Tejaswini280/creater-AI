@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Notification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .notification-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-button:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Delete Notification Test</h1>
+        
+        <div class="test-section">
+            <h2>Current Notifications</h2>
+            <button class="test-button" onclick="loadNotifications()">Load Notifications</button>
+            <div id="notifications-list"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Logs</h2>
+            <div id="logs" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.textContent += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function loadNotifications() {
+            const resultDiv = document.getElementById('notifications-list');
+            resultDiv.innerHTML = '<p>Loading notifications...</p>';
+            
+            try {
+                log('Loading current notifications...');
+                
+                const response = await fetch('/api/notifications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to get notifications: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const notifications = data.notifications || [];
+                
+                log(`Loaded ${notifications.length} notifications`);
+                
+                if (notifications.length === 0) {
+                    resultDiv.innerHTML = '<p class="error">No notifications found</p>';
+                    return;
+                }
+                
+                let html = '<h3>Current Notifications:</h3>';
+                notifications.forEach(notification => {
+                    html += `
+                        <div class="notification-item">
+                            <div>
+                                <strong>${notification.title}</strong><br>
+                                <small>${notification.message}</small><br>
+                                <small>ID: ${notification.id} | Type: ${notification.type} | Read: ${notification.isRead}</small>
+                            </div>
+                            <button class="delete-button" onclick="deleteNotification('${notification.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Error loading notifications: ${error.message}</p>`;
+                log(`Error loading notifications: ${error.message}`);
+            }
+        }
+
+        async function deleteNotification(id) {
+            try {
+                log(`Attempting to delete notification ${id}...`);
+                
+                const response = await fetch(`/api/notifications/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Successfully deleted notification ${id}`);
+                    alert(`Notification ${id} deleted successfully!`);
+                    loadNotifications(); // Reload the list
+                } else {
+                    log(`❌ Failed to delete notification ${id}: ${result.message}`);
+                    alert(`Failed to delete notification: ${result.message}`);
+                }
+            } catch (error) {
+                log(`❌ Error deleting notification ${id}: ${error.message}`);
+                alert(`Error deleting notification: ${error.message}`);
+            }
+        }
+
+        // Initialize logs
+        log('Delete notification test page loaded');
+        log('Ready to test delete functionality');
+        
+        // Auto-load notifications on page load
+        loadNotifications();
+    </script>
+</body>
+</html> 

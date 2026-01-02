@@ -1,0 +1,190 @@
+Unified Audit Mega Prompt (All-in-One)
+
+ROLE & MODES
+Operate as a cross-functional Technical Expert • Senior QA • UI/UX Expert • Senior Developer • AI Specialist • Lead DB Architect • Security & AWS/DevOps Specialist • Code Reviewer.
+Use MODE switchers as needed: QA | DEV | DB | UI | ARCH | SEC | DEVOPS | RESEARCH | DOCS.
+
+SOURCE OF TRUTH & SCOPE
+
+Scope: entire monorepo/repo—frontend, backend, APIs, services/workers, infra (Docker/AWS/IaC), tests, scripts, migrations, seeds, and all markdown docs.
+
+Order of truth: Code → Runtime config/env → DB schema & migrations → Docs (docs may be stale; validate everything against code).
+
+Prioritize and cross-reference any known doc hubs (e.g., /docs/**, /data_md/**, v1_final_plan_backup.md, README.md).
+
+PRIMARY OBJECTIVES
+
+Codebase Inventory & Status Map
+
+Enumerate every feature/component/route/module and classify as: Working / Non-Working / Broken / Partial / Duplicate / Redundant / Obsolete / Unimplemented.
+
+For each, record purpose, inputs/outputs, dependencies, side-effects, and precise issue locations (file/line).
+
+Page-by-Page UX & Component QA
+
+Audit each page, subpage, tab, sub-tab, modal, drawer, dialog, wizard, dropdown, link, button, table, chart/graph, file upload, pagination, search, filters.
+
+Capture expected vs actual behaviors, handlers and data flow, loading/empty/error states, responsiveness, accessibility (keyboard/ARIA/focus), SSR/CSR hydration integrity (if applicable).
+
+Forms & Inputs → Database Mapping (Critical)
+
+Extract all inputs (text/textarea/select/multiselect/checkbox/toggle/radio/date/number/upload/editor).
+
+Build a Mapping Matrix: Page > Subpage > Form > Input Field > Expected Table.Column > DB Type > Constraints > FE/BE/DB Validation > Status (OK/Missing/Broken/Redundant/Orphaned) > Notes.
+
+Trace submit flows end-to-end (FE → API → service/repo → DB).
+
+Database & Schema Validation
+
+Confirm tables, columns, types, constraints (PK/FK/unique/check), indexes, relations (1-1/1-M/M-M), views/materialized views.
+
+Reconcile ORM models ↔ migrations ↔ actual DB usage; flag cardinality or nullability drift, enum drift, shadow columns.
+
+Migrations & Seeding Integrity
+
+Verify completeness, ordering, idempotency, and down scripts (if supported).
+
+Check seed coverage for master/reference data and remove stale/broken seeds.
+
+Validation & Integrity Consistency
+
+Align validations across Frontend ↔ Backend ↔ Database.
+
+Detect silent failures, swallowed errors, ambiguous HTTP codes, inconsistent error payloads.
+
+Architecture & Workflows
+
+Document system architecture: request lifecycles, data flows, async orchestration (queues, events), webhooks/streaming, caching layers, parallel processes.
+
+Provide clear textual sequence/system diagrams (plantuml-like text acceptable).
+
+Security & Compliance
+
+Assess auth (JWT/OAuth/SSO/SAML), RBAC/ABAC, session/cookie security, CSRF/XSS/SQLi protections, secrets handling, PII flows, log redaction, rate limiting, CORS, headers.
+
+Validate environment separation and secrets management (e.g., AWS Secrets Manager/KMS/SSM).
+
+UI/UX Issue Register
+
+Catalog broken layouts, z-index/portal bugs, overflow/scroll issues, non-dismissable popovers, streaming glitches, missing skeletons, inconsistent toasts/messages, performance bottlenecks.
+
+Provide immediate fixes and long-term UX improvements with expected vs observed behavior.
+
+Business Feature Compendium
+
+Group features by business modules (e.g., Employee, Expenses, Billing, Company, Departments, Analytics, Settings, Projects, Timesheet, Agents, etc.).
+
+Describe core functionality, value, entry points, edge cases, and expansion opportunities.
+
+Competitor Benchmark (Top 5) & Gap Analysis
+
+Identify top 5 competitors; assemble a feature matrix (theirs vs ours), note differentiators, must-have parity items, and leap-frog opportunities.
+
+Produce a prioritized Gap → Recommendation list.
+
+AI/Agent Scenarios & Enhancements
+
+Propose multi-agent flows (e.g., Decisioning, Budget, Compliance, Rate-Finder, RFP, Location, Classification, Interview Planner).
+
+For each: inputs, outputs, tools/functions, guardrails/policies, memory strategy, eval signals, failure modes, UX entry points.
+
+Documentation Suite (Create/Update)
+Generate/update the following, each validated against code and cross-linked where relevant:
+
+APPLICATION_SUMMARY.md
+
+FEATURES_MATRIX.md
+
+INPUT_TO_DB_MAPPING.md and input_to_db_mapping.csv
+
+MIGRATIONS_AUDIT.md and SEED_DATA_AUDIT.md
+
+ARCHITECTURE_AND_WORKFLOWS.md
+
+SECURITY_COMPLIANCE.md
+
+UI_UX_ISSUES.md
+
+BUSINESS_FEATURES.md
+
+COMPETITOR_BENCHMARK.md
+
+AI_SCENARIOS_AND_ORCHESTRATION.md
+
+SECRETS_AND_ENVIRONMENTS.md (dev/prod templates and secret-store guidance)
+
+DEPLOYMENT_RUNBOOK.md (Docker/Compose, AWS/ECR/App Runner/CloudFront/CodePipeline, rollback strategy)
+
+README.md (onboarding-friendly) & RUNNING_THE_APP.md
+
+TASK_MANAGER.md (epics → stories → tasks → sub-tasks, acceptance criteria, estimates)
+
+VERSION1_FIXES_AND_ENHANCEMENTS.md (critical MVP fixes/enhancements)
+
+VERSION2_IMPLEMENTATION.md (remaining MVP + advanced/AI items)
+
+DOCS_RELOCATION_LOG.md (log of archived/moved docs)
+Move unused/stale docs to /old_md and record in the relocation log.
+
+Task Breakdown & Release Scoping
+
+Triage into V1 (Critical/MVP) vs V2 (Next) with priorities (P0/P1/P2) and dependencies.
+
+Build a task table with: ID, Epic, Story, Task, Sub-task, Type (Bug/Fix/Feature/Chore), Effort (h), Priority, Owner, Dependencies, Acceptance Criteria, Status, Links.
+
+Definition of Done (DoD)
+
+Code: type-safe, linted, formatted, unit/integration/E2E tests passing, ≥80% coverage on touched modules, migrations/rollbacks validated, docs updated, CI green.
+
+Docs: accurate, reproducible steps, examples/screens, cross-links.
+
+CRUD Test Coverage (Required for every page/form/entity)
+
+Produce CRUD coverage at API, DB, and E2E (UI) layers for every entity and form; include search/sort/filter/pagination under Read.
+
+Create /docs/CRUD_COVERAGE.md and /docs/crud_coverage.csv listing: entity, page/subpage, create/read/update/delete endpoints and UI paths, required fields, soft vs hard delete semantics, RBAC allowed roles, pre/post-conditions, and status.
+
+Required scenarios per operation: happy, negative (validation/constraint), RBAC-denied, and edge/boundary.
+
+Verify files/uploads (type/size/security), audit/events on C/U/D where supported.
+
+Add /docs/RBAC_MATRIX.md aligning UI visibility/disabled states, API 403s, and DB protection against direct calls.
+
+METHODS & HEURISTICS
+
+Repository sweep across FE templates (JSX/TSX/Angular/Vue), handlers, DTOs, services, repos; extract all forms and inputs.
+
+Trace FE → API → service/repo → DB writes; confirm actual persistence and constraints.
+
+Diff ORM models vs migrations vs actual DB (introspection/describe); flag mismatches.
+
+Validate FE/BE/DB validation parity; identify error handling quality.
+
+Identify perf issues (N+1, re-renders, lack of code-split, cache misses) and recommend fixes.
+
+Security checks for secrets, PII masking, token/cookie flags, rate limits, CORS, headers.
+
+REPORTING FORMAT
+
+Each document starts with a TL;DR summary table.
+
+Every issue logs Context → Evidence (file/line/endpoint) → Impact → Fix Plan → Test Plan in commit-ready language.
+
+GUARDRAILS
+
+Code is authoritative when docs conflict—record divergence clearly.
+
+Do not claim features exist unless present in code; proposals belong in Version 2 with a “proposal” tag.
+
+Prefer precise file paths and concrete evidence.
+
+DELIVERABLES (NOW)
+
+All documents listed under Documentation Suite, plus input_to_db_mapping.csv, crud_coverage.csv, and the relocation log.
+
+Completed matrices: Feature Status, Input→DB Mapping, CRUD Coverage, RBAC, Competitor Feature.
+
+Fully triaged V1 and V2 task plans.
+
+EXECUTE
+Perform the full audit end-to-end and generate all artifacts, matrices, and triage outputs as specified.

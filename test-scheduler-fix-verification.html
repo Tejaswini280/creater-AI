@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler Fix Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .test-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Scheduler Fix Verification Test</h1>
+    <p>This test verifies that the delete and edit functionality in the Content Scheduler is working properly.</p>
+
+    <div class="test-section">
+        <h2>📋 Test Overview</h2>
+        <p><strong>Issue:</strong> Delete and edit buttons in Content Scheduler were showing success messages but not actually updating the UI.</p>
+        <p><strong>Root Cause:</strong> Server-side implementation was using mock data that didn't persist changes.</p>
+        <p><strong>Fix Applied:</strong> Implemented proper in-memory storage with CRUD operations that persist during the session.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 API Endpoint Tests</h2>
+        <button class="test-button" onclick="testGetScheduledContent()">Test GET /api/content?status=scheduled</button>
+        <button class="test-button" onclick="testUpdateScheduledContent()">Test PUT /api/content/schedule/:id</button>
+        <button class="test-button" onclick="testDeleteScheduledContent()">Test DELETE /api/content/schedule/:id</button>
+        <div id="api-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Manual Testing Instructions</h2>
+        <p>Follow these steps to manually verify the fix:</p>
+        <ol>
+            <li><strong>Navigate to Scheduler:</strong> Go to <code>http://localhost:5000/scheduler</code></li>
+            <li><strong>Verify Initial Content:</strong> You should see 4 scheduled content items</li>
+            <li><strong>Test Edit Functionality:</strong>
+                <ul>
+                    <li>Click the edit (pencil) icon on any content item</li>
+                    <li>Verify the form opens with pre-filled data</li>
+                    <li>Change the title or description</li>
+                    <li>Click "Update" button</li>
+                    <li>Verify the content is updated in the list</li>
+                </ul>
+            </li>
+            <li><strong>Test Delete Functionality:</strong>
+                <ul>
+                    <li>Click the delete (trash) icon on any content item</li>
+                    <li>Confirm the deletion in the dialog</li>
+                    <li>Verify the content is removed from the list</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Live Application Test</h2>
+        <p>Open the scheduler page in the iframe below to test the functionality:</p>
+        <div class="iframe-container">
+            <iframe src="http://localhost:5000/scheduler" title="Scheduler Test"></iframe>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('api-test-results');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsDiv.appendChild(logDiv);
+        }
+
+        function addTestResult(testName, success, details = '') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${success ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `
+                <strong>${testName}:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            resultsDiv.appendChild(resultDiv);
+            testResults.push({ name: testName, success, details });
+        }
+
+        async function testGetScheduledContent() {
+            try {
+                log('Testing GET /api/content?status=scheduled...');
+                const response = await fetch(`${API_BASE}/api/content?status=scheduled`, {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ GET request successful. Found ${data.content?.length || 0} scheduled content items.`);
+                log(`Content: ${JSON.stringify(data.content, null, 2)}`);
+                addTestResult('GET Scheduled Content', true, `Found ${data.content?.length || 0} items`);
+            } catch (error) {
+                log(`❌ GET request failed: ${error.message}`, 'error');
+                addTestResult('GET Scheduled Content', false, error.message);
+            }
+        }
+
+        async function testUpdateScheduledContent() {
+            try {
+                log('Testing PUT /api/content/schedule/1...');
+                const updateData = {
+                    title: 'Updated Test Content',
+                    description: 'This content has been updated via API test',
+                    platform: 'youtube',
+                    contentType: 'video',
+                    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                };
+                
+                const response = await fetch(`${API_BASE}/api/content/schedule/1`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ PUT request successful. Response: ${JSON.stringify(data, null, 2)}`);
+                addTestResult('UPDATE Scheduled Content', true, 'Content updated successfully');
+            } catch (error) {
+                log(`❌ PUT request failed: ${error.message}`, 'error');
+                addTestResult('UPDATE Scheduled Content', false, error.message);
+            }
+        }
+
+        async function testDeleteScheduledContent() {
+            try {
+                log('Testing DELETE /api/content/schedule/4...');
+                const response = await fetch(`${API_BASE}/api/content/schedule/4`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ DELETE request successful. Response: ${JSON.stringify(data, null, 2)}`);
+                addTestResult('DELETE Scheduled Content', true, 'Content deleted successfully');
+            } catch (error) {
+                log(`❌ DELETE request failed: ${error.message}`, 'error');
+                addTestResult('DELETE Scheduled Content', false, error.message);
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Starting automated tests...');
+                testGetScheduledContent();
+                setTimeout(() => testUpdateScheduledContent(), 1000);
+                setTimeout(() => testDeleteScheduledContent(), 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

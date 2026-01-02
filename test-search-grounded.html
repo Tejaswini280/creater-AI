@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Grounded Responses Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: #ea580c;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background: #c2410c;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #ea580c;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #e5e5e5;
+        }
+        .section h3 {
+            margin: 0 0 10px 0;
+            color: #ea580c;
+            font-size: 16px;
+        }
+        .section ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .section li {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .error {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .disclaimer {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .disclaimer-icon {
+            color: #f59e0b;
+            margin-right: 8px;
+        }
+        .example-queries {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .example-queries h4 {
+            margin: 0 0 10px 0;
+            color: #0ea5e9;
+        }
+        .example-query {
+            background: white;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px solid #e0e7ff;
+            font-size: 14px;
+        }
+        .example-query:hover {
+            background: #e0f2fe;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Search Grounded Responses Test</h1>
+        <p>Test the search grounded functionality with real-world queries and get structured, factual responses.</p>
+        
+        <div class="example-queries">
+            <h4>💡 Example Queries (Click to use)</h4>
+            <div class="example-query" onclick="setQuery('What are the latest trends in AI video generation?', 'I\'m a content creator looking to understand emerging technologies.')">
+                What are the latest trends in AI video generation?
+            </div>
+            <div class="example-query" onclick="setQuery('How is social media marketing changing in 2024?', 'I need to update my marketing strategy for my brand.')">
+                How is social media marketing changing in 2024?
+            </div>
+            <div class="example-query" onclick="setQuery('What are the best practices for YouTube Shorts?', 'I want to grow my YouTube channel with short-form content.')">
+                What are the best practices for YouTube Shorts?
+            </div>
+            <div class="example-query" onclick="setQuery('Current trends in podcast monetization', 'I\'m a podcaster looking for new revenue streams.')">
+                Current trends in podcast monetization
+            </div>
+        </div>
+        
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="searchQuery">Search Query (Required):</label>
+                <input type="text" id="searchQuery" name="query" placeholder="What are the latest trends in AI video generation?" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="context">Context (Optional):</label>
+                <textarea id="context" name="context" placeholder="I'm a content creator looking to understand emerging technologies..."></textarea>
+            </div>
+            
+            <button type="submit" id="searchBtn">🌐 Search & Generate</button>
+        </form>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function setQuery(query, context = '') {
+            document.getElementById('searchQuery').value = query;
+            document.getElementById('context').value = context;
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const queryInput = document.getElementById('searchQuery');
+            const contextInput = document.getElementById('context');
+            const resultsDiv = document.getElementById('results');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            const query = queryInput.value.trim();
+            if (!query) {
+                alert('Search query is required');
+                return;
+            }
+            
+            // Show loading state
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔄 Searching...';
+            resultsDiv.innerHTML = '<div class="loading">Searching for grounded information...</div>';
+            
+            try {
+                const response = await fetch('/api/gemini/search-grounded', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        context: contextInput.value.trim()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="results">
+                            <h2>📊 Search Results</h2>
+                            
+                            <div class="section">
+                                <h3>📝 Summary</h3>
+                                <p>${data.summary}</p>
+                            </div>
+                            
+                            <div class="section">
+                                <h3>🔍 Key Findings</h3>
+                                <ul>
+                                    ${data.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                                </ul>
+                            </div>
+                            
+                            <div class="section">
+                                <h3>💡 Creator Insights</h3>
+                                <ul>
+                                    ${data.creatorInsights.map(insight => `<li>${insight}</li>`).join('')}
+                                </ul>
+                            </div>
+                            
+                            ${data.disclaimer ? `
+                                <div class="disclaimer">
+                                    <span class="disclaimer-icon">⚠️</span>
+                                    <strong>Disclaimer:</strong> ${data.disclaimer}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Search failed: ${data.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🌐 Search & Generate';
+            }
+        });
+    </script>
+</body>
+</html>

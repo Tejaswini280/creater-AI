@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Wizard Navigation Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 3px;
+        }
+        .button-demo {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        .button-demo.outline {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+        .button-demo.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Project Wizard Navigation Fix Test</h1>
+    
+    <div class="test-section success">
+        <h2>✅ Fix Applied</h2>
+        <p><strong>Issue:</strong> Both "Previous" and "Back to Dashboard" buttons were redirecting to dashboard</p>
+        <p><strong>Solution:</strong> Implemented conditional navigation buttons based on current step</p>
+    </div>
+
+    <div class="test-section info">
+        <h2>📋 Navigation Logic</h2>
+        
+        <div class="step">
+            <h3>Step 1 (Project Basics)</h3>
+            <p><strong>Left Button:</strong> "Back to Dashboard" → navigates to /dashboard</p>
+            <p><strong>Right Button:</strong> "Next" → goes to Step 2</p>
+            <div>
+                <button class="button-demo outline">← Back to Dashboard</button>
+                <button class="button-demo">Next →</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2 (Content Creation)</h3>
+            <p><strong>Left Button:</strong> "Previous" → goes to Step 1</p>
+            <p><strong>Right Button:</strong> "Next" → goes to Step 3</p>
+            <div>
+                <button class="button-demo outline">← Previous</button>
+                <button class="button-demo">Next →</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3 (Integrations)</h3>
+            <p><strong>Left Button:</strong> "Previous" → goes to Step 2</p>
+            <p><strong>Right Button:</strong> "Next" → goes to Step 4</p>
+            <div>
+                <button class="button-demo outline">← Previous</button>
+                <button class="button-demo">Next →</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4 (Schedule & Plan)</h3>
+            <p><strong>Left Button:</strong> "Previous" → goes to Step 3</p>
+            <p><strong>Right Button:</strong> "Create Project" → creates project and redirects to project details</p>
+            <div>
+                <button class="button-demo outline">← Previous</button>
+                <button class="button-demo">💾 Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔄 Changes Made</h2>
+        <ol>
+            <li><strong>Conditional Left Button:</strong>
+                <ul>
+                    <li>Step 1: Shows "Back to Dashboard" button</li>
+                    <li>Steps 2-4: Shows "Previous" button</li>
+                </ul>
+            </li>
+            <li><strong>Removed Header Navigation:</strong>
+                <ul>
+                    <li>Removed "Back to Dashboard" button from header</li>
+                    <li>Cleaner header with just title and progress</li>
+                </ul>
+            </li>
+            <li><strong>Proper Step Navigation:</strong>
+                <ul>
+                    <li>"Previous" button now correctly calls handlePrevious()</li>
+                    <li>"Back to Dashboard" only appears on Step 1</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🧪 Testing Instructions</h2>
+        <ol>
+            <li>Navigate to the Project Wizard: <code>/project-wizard</code></li>
+            <li><strong>Step 1:</strong> Verify left button shows "Back to Dashboard"</li>
+            <li>Fill out Step 1 and click "Next"</li>
+            <li><strong>Step 2:</strong> Verify left button shows "Previous"</li>
+            <li>Click "Previous" - should go back to Step 1</li>
+            <li>Navigate through all steps testing Previous/Next navigation</li>
+            <li><strong>Step 4:</strong> Verify "Create Project" works correctly</li>
+        </ol>
+    </div>
+
+    <div class="test-section success">
+        <h2>✨ Expected Behavior</h2>
+        <ul>
+            <li>✅ Step 1: "Back to Dashboard" → Dashboard page</li>
+            <li>✅ Steps 2-4: "Previous" → Previous step in wizard</li>
+            <li>✅ All steps: "Next" → Next step (or create project on Step 4)</li>
+            <li>✅ Clean header without duplicate navigation</li>
+            <li>✅ Proper step progression and form validation</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h2>📁 Files Modified</h2>
+        <ul>
+            <li><code>client/src/pages/project-wizard.tsx</code> - Fixed navigation button logic</li>
+        </ul>
+    </div>
+
+    <script>
+        // Add some interactivity to demonstrate the fix
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Project Wizard Navigation Fix Applied');
+            console.log('✅ Conditional navigation buttons implemented');
+            console.log('✅ Header navigation cleaned up');
+            console.log('✅ Proper step-by-step navigation restored');
+        });
+    </script>
+</body>
+</html>

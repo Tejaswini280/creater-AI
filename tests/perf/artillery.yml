@@ -1,0 +1,40 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 20
+    - duration: 30
+      arrivalRate: 50
+  processor: "./artillery-processor.cjs"
+  plugins:
+    ensure: {}
+scenarios:
+  - name: API baseline (unauth)
+    flow:
+      - get:
+          url: "/api/health"
+      - get:
+          url: "/api/metrics"
+  - name: Authenticated DB/API
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "perf@test.com"
+            password: "Perf!23456"
+          afterResponse: "captureToken"
+      - function: "setAuthToken"
+      - get:
+          url: "/api/content"
+      - get:
+          url: "/api/content/analytics"
+      - post:
+          url: "/api/analytics/predict-performance"
+          json:
+            content: "AI tools"
+            platform: "youtube"
+            audience: "creators"
+  
+ 
+
+

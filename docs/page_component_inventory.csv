@@ -1,0 +1,60 @@
+Page,Subpage,Tab,Path,Form,Component,Selector,Intended_Behavior,Event_Handlers,Backend_Touchpoints,DB_Mapping,CRUD_Coverage,Status,Evidence
+Dashboard,Main,,/dashboard,,Sidebar Navigation,sidebar-nav,Collapsible navigation menu,onClick → route navigation,N/A,N/A,N/A,Working,client/src/components/dashboard/Sidebar.tsx
+Dashboard,Main,,/dashboard,,Mobile Menu Toggle,mobile-menu-btn,Opens mobile sidebar drawer,onClick → setIsMobileSidebarOpen(true),N/A,N/A,N/A,Working,client/src/pages/dashboard.tsx:169
+Dashboard,Main,,/dashboard,,Header Title,dashboard-header,Displays page title and description,N/A,N/A,N/A,N/A,Working,client/src/pages/dashboard.tsx:165
+Dashboard,Main,,/dashboard,,Notification Bell,notification-bell,Dropdown notification menu,onClick → toggle dropdown,GET /api/notifications,notifications table,Read,Working,client/src/components/modals/NotificationDropdown.tsx
+Dashboard,Metrics,,/dashboard,,Total Views Card,metrics-views,Display view count with trend,Auto-refresh every 5min,GET /api/analytics/performance,content_metrics.views,Read,Working,client/src/components/dashboard/MetricsCards.tsx:23
+Dashboard,Metrics,,/dashboard,,Subscribers Card,metrics-subscribers,Display subscriber count,Auto-refresh every 5min,GET /api/analytics/performance,Calculated from views,Read,Working,client/src/components/dashboard/MetricsCards.tsx:32
+Dashboard,Metrics,,/dashboard,,Revenue Card,metrics-revenue,Display revenue metrics,Auto-refresh every 5min,GET /api/analytics/performance,content_metrics.revenue,Read,Working,client/src/components/dashboard/MetricsCards.tsx:40
+Dashboard,Metrics,,/dashboard,,Engagement Card,metrics-engagement,Display engagement rate,Auto-refresh every 5min,GET /api/analytics/performance,content_metrics.engagement_rate,Read,Working,client/src/components/dashboard/MetricsCards.tsx:48
+Dashboard,Quick Actions,,/dashboard,,Recorder Button,quick-action-recorder,Navigate to recorder page,onClick → /recorder,N/A,N/A,N/A,Working,client/src/pages/dashboard.tsx:189
+Dashboard,Quick Actions,,/dashboard,,New Project Button,quick-action-new-project,Navigate to enhanced project creator,onClick → /new-project-enhanced,N/A,N/A,N/A,Working,client/src/pages/dashboard.tsx:199
+Dashboard,Recent Content,,/dashboard,,Content List,recent-content-list,Display recent content items,Auto-load on mount,GET /api/content/recent,content table,Read,Working,client/src/components/dashboard/RecentContent.tsx
+Dashboard,Recent Content,,/dashboard,,Content Item,content-item-{id},Clickable content preview,onClick → content detail,GET /api/content/{id},content table,Read,Working,client/src/components/dashboard/RecentContent.tsx
+Dashboard,Recent Content,,/dashboard,,Content Actions,content-actions-{id},Edit/delete content,onClick → action modal,PUT/DELETE /api/content/{id},content table,Update/Delete,Working,client/src/components/dashboard/RecentContent.tsx
+Dashboard,AI Assistant,,/dashboard,,AI Chat Input,ai-assistant-input,Text input for AI queries,onChange, onSubmit,POST /api/ai/chat,ai_generation_tasks,Create,Working,client/src/components/dashboard/AIAssistant.tsx
+Dashboard,AI Assistant,,/dashboard,,AI Response Display,ai-assistant-response,Display AI responses,Auto-update on response,WebSocket streaming,N/A,N/A,Working,client/src/components/dashboard/AIAssistant.tsx
+Dashboard,AI Assistant,,/dashboard,,Suggestion Chips,ai-suggestion-{index},Quick AI prompts,onClick → populate input,N/A,N/A,N/A,Working,client/src/components/dashboard/AIAssistant.tsx
+Dashboard,Projects,,/dashboard,,Projects Grid,projects-grid,Display user projects,Auto-load on mount,GET /api/projects,projects table,Read,Working,client/src/pages/dashboard.tsx:232
+Dashboard,Projects,,/dashboard,,Project Card,project-card-{id},Clickable project preview,onClick → /project/{id},GET /api/projects/{id},projects table,Read,Working,client/src/pages/dashboard.tsx:258
+Dashboard,Projects,,/dashboard,,Project Tags,project-tags-{id},Display project tags,N/A,N/A,projects.tags,Read,Working,client/src/pages/dashboard.tsx:280
+Dashboard,Projects,,/dashboard,,Refresh Button,projects-refresh,Reload projects list,onClick → loadProjects(),GET /api/projects,projects table,Read,Working,client/src/pages/dashboard.tsx:245
+Content Studio,Main,,/content-studio,,Title Input,content-title,Text input for content title,onChange → update state,N/A,content.title VARCHAR(255),Create,Working,client/src/pages/content-studio.tsx:24
+Content Studio,Main,,/content-studio,,Description Textarea,content-description,Rich text description,onChange → update state,N/A,content.description TEXT,Create,Working,client/src/pages/content-studio.tsx:24
+Content Studio,Main,,/content-studio,,Platform Select,content-platform,Dropdown for target platform,onChange → update state,N/A,content.platform VARCHAR(50),Create,Working,client/src/pages/content-studio.tsx:21
+Content Studio,Main,,/content-studio,,Content Type Select,content-type,Video/image/text selection,onChange → update state,N/A,content.content_type VARCHAR(50),Create,Working,client/src/pages/content-studio.tsx:22
+Content Studio,Main,,/content-studio,,Tags Input,content-tags,Multi-select tag input,onChange → update state,N/A,content.tags TEXT[],Create,Working,client/src/pages/content-studio.tsx:24
+Content Studio,Main,,/content-studio,,Script Editor,content-script,Rich text script editor,onChange → update state,N/A,content.script TEXT,Create,Working,client/src/pages/content-studio.tsx:24
+Content Studio,Main,,/content-studio,,Submit Button,content-submit,Create new content,onClick → submit form,POST /api/content/create,content table,Create,Working,client/src/pages/content-studio.tsx:24
+Content Studio,AI Generation,,/content-studio,,Script Generator,ai-script-gen,Generate video scripts,onClick → generate script,POST /api/ai/generate-script,ai_generation_tasks,Create,Working,client/src/components/modals/AIGenerationModal.tsx
+Content Studio,AI Generation,,/content-studio,,Thumbnail Generator,ai-thumbnail-gen,Generate video thumbnails,onClick → generate image,POST /api/ai/generate-thumbnail,ai_generation_tasks,Create,Working,client/src/components/modals/AIGenerationModal.tsx
+Content Studio,AI Generation,,/content-studio,,Voiceover Generator,ai-voiceover-gen,Generate voiceovers,onClick → generate audio,POST /api/ai/generate-voiceover,ai_generation_tasks,Create,Working,client/src/components/modals/AIGenerationModal.tsx
+AI Generator,Pipeline,,/ai,,Launch Pipeline Button,pipeline-launch,Start content pipeline,onClick → launch agent,POST /api/ai/agents/content-pipeline,ai_generation_tasks,Create,Working,client/src/pages/ai-generator.tsx
+AI Generator,Pipeline,,/ai,,Agent Status Display,pipeline-status,Show agent progress,WebSocket updates,GET /api/ai/agents/{id}/status,ai_generation_tasks.status,Read,Working,client/src/pages/ai-generator.tsx
+AI Generator,Pipeline,,/ai,,Agent Results Display,pipeline-results,Show generated content,Auto-update on completion,WebSocket streaming,ai_generation_tasks.result,Read,Working,client/src/pages/ai-generator.tsx
+Analytics,Main,,/analytics,,Performance Chart,analytics-performance,Display performance metrics,Auto-refresh,GET /api/analytics/performance,content_metrics,Read,Working,client/src/pages/analytics.tsx
+Analytics,Main,,/analytics,,Competitor Analysis,analytics-competitors,Show competitor data,onClick → load analysis,POST /api/analytics/analyze-competitors,ai_content_suggestions,Create/Read,Working,client/src/components/analytics/CompetitorAnalysisDashboard.tsx
+Analytics,Main,,/analytics,,Monetization Strategy,analytics-monetization,Revenue optimization,onClick → generate strategy,POST /api/analytics/generate-monetization,ai_content_suggestions,Create/Read,Working,client/src/components/analytics/MonetizationStrategy.tsx
+Scheduler,Main,,/scheduler,,Content Select,schedule-content-select,Select content to schedule,onChange → update state,GET /api/content,content table,Read,Broken,client/src/pages/scheduler.tsx:125
+Scheduler,Main,,/scheduler,,Platform Select,schedule-platform-select,Choose target platform,onChange → update state,N/A,platform_posts.platform,Create,Broken,client/src/pages/scheduler.tsx:125
+Scheduler,Main,,/scheduler,,Date Picker,schedule-date-picker,Select publish date/time,onChange → update state,N/A,post_schedules.scheduled_at,Create,Broken,client/src/pages/scheduler.tsx:125
+Scheduler,Main,,/scheduler,,Schedule Button,schedule-submit,Create new schedule,onClick → submit form,POST /api/content/schedule,post_schedules,Create,Broken,client/src/pages/scheduler.tsx:125
+Templates,Main,,/templates,,Template Grid,templates-grid,Display available templates,Auto-load on mount,GET /api/templates,templates table,Read,Working,client/src/pages/templates.tsx
+Templates,Main,,/templates,,Template Card,template-card-{id},Clickable template preview,onClick → show preview,GET /api/templates/{id}/preview,templates table,Read,Working,client/src/pages/templates.tsx
+Templates,Main,,/templates,,Use Template Button,template-use-{id},Download and use template,onClick → use template,POST /api/templates/{id}/use,templates.downloads,Update,Working,client/src/pages/templates.tsx
+Assets,Main,,/assets,,File Upload Dropzone,asset-upload-dropzone,Drag & drop file upload,onDrop, onChange,POST /api/upload,File storage + metadata,Create,Working,client/src/pages/assets.tsx
+Assets,Main,,/assets,,Asset Grid,assets-grid,Display uploaded assets,Auto-load on mount,GET /api/assets,Asset metadata tables,Read,Working,client/src/pages/assets.tsx
+LinkedIn,Main,,/linkedin,,Connect Button,linkedin-connect,Initiate OAuth flow,onClick → redirect to LinkedIn,POST /api/linkedin/connect,social_accounts,Create,Broken,client/src/pages/linkedin.tsx:89
+Project,Main,,/project/{id},,Project Header,project-header,Display project info,Auto-load on mount,GET /api/projects/{id},projects table,Read,Working,client/src/pages/project.tsx
+Project,Main,,/project/{id},,Content List,project-content-list,Show project content,Auto-load on mount,GET /api/projects/{id}/content,content table,Read,Working,client/src/pages/project.tsx
+Project,Main,,/project/{id},,Add Content Button,project-add-content,Create new content,onClick → content modal,POST /api/content,content table,Create,Working,client/src/pages/project.tsx
+Notifications,Main,,/notifications,,Notification List,notifications-list,Display user notifications,Auto-load on mount,GET /api/notifications,notifications table,Read,Working,client/src/pages/notifications.tsx
+Notifications,Main,,/notifications,,Mark Read Button,notification-read-{id},Mark notification as read,onClick → update status,PUT /api/notifications/{id},notifications.is_read,Update,Working,client/src/pages/notifications.tsx
+Login,Authentication,,/login,,Email Input,login-email,Email validation,onChange, onBlur,-,users.email (varchar, unique),-,Working,client/src/pages/login.tsx:19
+Login,Authentication,,/login,,Password Input,login-password,Password masking,onChange,-,users.password (text, hashed),-,Working,client/src/pages/login.tsx:19
+Login,Authentication,,/login,,Login Submit,login-submit,Form submission,onClick,POST /api/auth/login,users (read),Read,Working,client/src/pages/login.tsx:33
+Register,Authentication,,/login,,Email Input,register-email,Email validation,onChange,-,users.email (varchar, unique),-,Working,client/src/pages/login.tsx:25
+Register,Authentication,,/login,,First Name Input,register-firstName,Text validation,onChange,-,users.first_name (varchar),-,Working,client/src/pages/login.tsx:25
+Register,Authentication,,/login,,Last Name Input,register-lastName,Text validation,onChange,-,users.last_name (varchar),-,Working,client/src/pages/login.tsx:25
+Register,Authentication,,/login,,Password Input,register-password,Password strength,onChange,-,users.password (text, hashed),-,Working,client/src/pages/login.tsx:25
+Register,Authentication,,/login,,Register Submit,register-submit,Form validation & submit,onClick,POST /api/auth/register,users (create),Create,Working,client/src/pages/login.tsx:77
