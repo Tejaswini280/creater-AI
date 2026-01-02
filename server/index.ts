@@ -238,8 +238,15 @@ if (!perfMode) {
   console.log(`Server environment: ${app.get("env")}, NODE_ENV: ${process.env.NODE_ENV}`);
   if (app.get("env") === "development" && process.env.NODE_ENV !== "test") {
     console.log("Setting up Vite development server");
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
+    try {
+      const { setupVite } = await import("./vite");
+      await setupVite(app, server);
+    } catch (error) {
+      console.error("Failed to setup Vite development server:", error);
+      // Fallback to static serving in case Vite setup fails
+      const { serveStatic } = await import("./vite");
+      serveStatic(app);
+    }
   } else {
     console.log("Setting up static file server");
     const { serveStatic } = await import("./vite");

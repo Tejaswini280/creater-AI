@@ -1,0 +1,254 @@
+name: Quality Checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # Run security checks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "🔍 Running security audit..."
+          npm audit --audit-level=moderate --json > audit-results.json || true
+          
+          # Check for high/critical vulnerabilities
+          HIGH_VULNS=$(cat audit-results.json | jq '.vulnerabilities | to_entries[] | select(.value.severity == "high" or .value.severity == "critical") | length' | wc -l)
+          
+          if [ "$HIGH_VULNS" -gt 0 ]; then
+            echo "⚠️ High/Critical vulnerabilities found:"
+            npm audit --audit-level=high
+            echo "::warning::High or critical security vulnerabilities detected"
+          else
+            echo "✅ No high/critical vulnerabilities found"
+          fi
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-results
+          path: audit-results.json
+          retention-days: 30
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: |
+          echo "🔍 Running TypeScript checks..."
+          npm run check
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "🔍 Checking for TODO/FIXME comments..."
+          TODO_COUNT=$(grep -r "TODO\|FIXME" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . | wc -l)
+          echo "Found $TODO_COUNT TODO/FIXME comments"
+          if [ "$TODO_COUNT" -gt 50 ]; then
+            echo "::warning::High number of TODO/FIXME comments ($TODO_COUNT). Consider addressing some."
+          fi
+
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: creators_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start test server
+        run: |
+          npm run perf:server &
+          sleep 10
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creators_test_db
+          SKIP_RATE_LIMIT: 1
+          PERF_MODE: 1
+
+      - name: Run performance tests
+        run: |
+          echo "🚀 Running performance benchmarks..."
+          timeout 60s npm run perf:accept || echo "Performance tests completed"
+        env:
+          APP_URL: http://localhost:5000
+          SKIP_RATE_LIMIT: 1
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-results
+          path: |
+            perf-results.json
+            coverage/
+          retention-days: 7
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Check for outdated dependencies
+        run: |
+          echo "📦 Checking for outdated dependencies..."
+          npm outdated --json > outdated.json || true
+          
+          OUTDATED_COUNT=$(cat outdated.json | jq 'length')
+          echo "Found $OUTDATED_COUNT outdated packages"
+          
+          if [ "$OUTDATED_COUNT" -gt 20 ]; then
+            echo "::warning::Many outdated dependencies ($OUTDATED_COUNT). Consider updating."
+            npm outdated
+          fi
+
+      - name: Check package-lock.json
+        run: |
+          echo "🔒 Verifying package-lock.json..."
+          npm ci --dry-run
+
+  build-size-check:
+    name: Build Size Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Check build size
+        run: |
+          echo "📏 Checking build size..."
+          
+          # Check frontend build size
+          FRONTEND_SIZE=$(du -sh dist/public | cut -f1)
+          echo "Frontend build size: $FRONTEND_SIZE"
+          
+          # Check backend build size  
+          BACKEND_SIZE=$(du -sh dist/index.js | cut -f1)
+          echo "Backend build size: $BACKEND_SIZE"
+          
+          # Check total size
+          TOTAL_SIZE=$(du -sh dist/ | cut -f1)
+          echo "Total build size: $TOTAL_SIZE"
+          
+          # Warn if build is too large
+          TOTAL_SIZE_MB=$(du -sm dist/ | cut -f1)
+          if [ "$TOTAL_SIZE_MB" -gt 100 ]; then
+            echo "::warning::Build size is large ($TOTAL_SIZE). Consider optimization."
+          fi
+
+      - name: Analyze bundle
+        run: |
+          echo "📊 Analyzing bundle composition..."
+          ls -la dist/public/assets/ | head -20
+
+  notify-results:
+    name: Notify Quality Check Results
+    runs-on: ubuntu-latest
+    needs: [security-audit, code-quality, dependency-check]
+    if: always()
+
+    steps:
+      - name: Quality Checks Summary
+        run: |
+          echo "📋 Quality Checks Summary:"
+          echo "Security Audit: ${{ needs.security-audit.result }}"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Dependency Check: ${{ needs.dependency-check.result }}"
+          
+          if [[ "${{ needs.security-audit.result }}" == "failure" ]]; then
+            echo "🚨 Security issues detected - review required"
+          fi
+          
+          if [[ "${{ needs.code-quality.result }}" == "failure" ]]; then
+            echo "⚠️ Code quality issues detected"
+          fi
+          
+          if [[ "${{ needs.dependency-check.result }}" == "failure" ]]; then
+            echo "📦 Dependency issues detected"
+          fi

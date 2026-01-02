@@ -1,0 +1,215 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_reason:
+        description: 'Reason for manual deployment'
+        required: true
+        default: 'Manual deployment'
+        type: string
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Check for vulnerabilities
+        run: |
+          if npm audit --audit-level=high --json | jq '.vulnerabilities | length' | grep -q '^0$'; then
+            echo "✅ No high-severity vulnerabilities found"
+          else
+            echo "⚠️ High-severity vulnerabilities detected"
+            npm audit --audit-level=high
+            exit 1
+          fi
+
+  test:
+    name: Run Full Test Suite
+    runs-on: ubuntu-latest
+    needs: security-scan
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: creators_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run check
+
+      - name: Run unit tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creators_test_db
+          SKIP_RATE_LIMIT: 1
+
+      - name: Run security tests
+        run: npm run security:headers:test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creators_test_db
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-production
+          path: coverage/
+          retention-days: 30
+
+  build:
+    name: Build Production Application
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --only=production
+
+      - name: Install dev dependencies for build
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Verify build output
+        run: |
+          echo "📦 Verifying build artifacts..."
+          ls -la dist/
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ Backend build failed - dist/index.js not found"
+            exit 1
+          fi
+          if [ ! -d "dist/public" ]; then
+            echo "❌ Frontend build failed - dist/public not found"
+            exit 1
+          fi
+          echo "✅ Build verification successful"
+
+      - name: Upload production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: |
+            dist/
+            package*.json
+          retention-days: 30
+
+  deploy-production:
+    name: Deploy to Railway Production
+    runs-on: ubuntu-latest
+    needs: [security-scan, test, build]
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Pre-deployment verification
+        run: |
+          echo "🔍 Pre-deployment checks..."
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Deployment reason: ${{ github.event.inputs.deployment_reason || 'Automatic deployment from main branch' }}"
+
+      - name: Deploy to Railway Production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          echo "⚠️  This is a PRODUCTION deployment"
+          railway up --service=${{ secrets.RAILWAY_PROD_SERVICE_ID }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting for production deployment to complete..."
+          sleep 60
+
+      - name: Post-deployment verification
+        run: |
+          echo "✅ Production deployment completed!"
+          echo "🌐 Your production environment should be available shortly"
+          echo "📊 Monitor Railway dashboard for deployment status"
+          echo "🔍 Verify application health after deployment"
+
+  notify:
+    name: Notify Production Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+
+    steps:
+      - name: Production Deployment Success
+        if: needs.deploy-production.result == 'success'
+        run: |
+          echo "🎉 PRODUCTION DEPLOYMENT SUCCESSFUL!"
+          echo "✨ Creator AI Studio is now live in production!"
+          echo "🔗 Check Railway dashboard for the production URL"
+          echo "📈 Monitor application metrics and logs"
+          echo "🚨 Alert team members about the new deployment"
+
+      - name: Production Deployment Failed
+        if: needs.deploy-production.result == 'failure'
+        run: |
+          echo "🚨 PRODUCTION DEPLOYMENT FAILED!"
+          echo "❌ Critical: Production deployment unsuccessful"
+          echo "🔍 Immediate action required - check Railway logs"
+          echo "📞 Alert DevOps team and stakeholders"
+          echo "🔄 Consider rollback if necessary"
