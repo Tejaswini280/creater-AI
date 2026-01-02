@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import { WebSocketManager } from "./websocket";
 import { ContentSchedulerService } from "./services/scheduler";
 import {
@@ -178,7 +177,7 @@ if (!perfMode) {
         if (logLine.length > 80) {
           logLine = logLine.slice(0, 79) + "…";
         }
-        log(logLine);
+        console.log(logLine);
       }
     });
     next();
@@ -191,13 +190,13 @@ if (!perfMode) {
   
   // Initialize WebSocket server
   const wsManager = new WebSocketManager(server);
-  log("WebSocket server initialized");
+  console.log("WebSocket server initialized");
 
   // Initialize Content Scheduler Service (non-blocking)
   try {
     const schedulerService = ContentSchedulerService.getInstance();
     await schedulerService.initialize();
-    log("Content Scheduler Service initialized");
+    console.log("Content Scheduler Service initialized");
   } catch (error) {
     console.warn("Content Scheduler Service initialization failed (non-fatal):", error instanceof Error ? error.message : String(error));
   }
@@ -239,9 +238,11 @@ if (!perfMode) {
   console.log(`Server environment: ${app.get("env")}, NODE_ENV: ${process.env.NODE_ENV}`);
   if (app.get("env") === "development" && process.env.NODE_ENV !== "test") {
     console.log("Setting up Vite development server");
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
     console.log("Setting up static file server");
+    const { serveStatic } = await import("./vite");
     serveStatic(app);
   }
 
@@ -260,8 +261,8 @@ if (!perfMode) {
     port,
     host: "0.0.0.0",
   }, () => {
-    log(`serving on port ${port}`);
-    log(`WebSocket server available at ws://localhost:${port}/ws`);
+    console.log(`serving on port ${port}`);
+    console.log(`WebSocket server available at ws://localhost:${port}/ws`);
   });
 
   // Kick off DB performance optimizations (indexes, analyze) without blocking startup
@@ -276,19 +277,19 @@ if (!perfMode) {
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
-    log('SIGTERM received, shutting down gracefully');
+    console.log('SIGTERM received, shutting down gracefully');
     wsManager.close();
     server.close(() => {
-      log('Server closed');
+      console.log('Server closed');
       process.exit(0);
     });
   });
 
   process.on('SIGINT', () => {
-    log('SIGINT received, shutting down gracefully');
+    console.log('SIGINT received, shutting down gracefully');
     wsManager.close();
     server.close(() => {
-      log('Server closed');
+      console.log('Server closed');
       process.exit(0);
     });
   });
