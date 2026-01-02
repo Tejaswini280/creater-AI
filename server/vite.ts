@@ -2,13 +2,6 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { type Server } from "http";
-import { nanoid } from "nanoid";
-
-import express, { type Express } from "express";
-import fs from "fs";
-import path from "path";
-import { type Server } from "http";
-import { nanoid } from "nanoid";
 import { log } from "./utils/logger";
 
 export { log };
@@ -19,12 +12,17 @@ export async function setupVite(app: Express, server: Server) {
     const { createServer: createViteServer, createLogger } = await import("vite");
     
     // Import vite config dynamically to avoid bundling it
-    let viteConfig;
+    let viteConfig = {};
     try {
-      viteConfig = (await import("../vite.config")).default;
+      // Only try to import vite config in development
+      if (process.env.NODE_ENV === 'development') {
+        const configModule = await import("../vite.config.js").catch(() => null);
+        if (configModule?.default) {
+          viteConfig = configModule.default;
+        }
+      }
     } catch (error) {
       console.warn("Could not load vite.config, using default config");
-      viteConfig = {};
     }
     
     const viteLogger = createLogger();
