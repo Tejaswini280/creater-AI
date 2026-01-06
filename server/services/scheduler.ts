@@ -83,6 +83,22 @@ export class ContentSchedulerService {
    */
   private async loadExistingSchedules(): Promise<void> {
     try {
+      // Check if the content table has the expected columns before querying
+      const tableInfo = await db.execute(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'content' 
+        AND table_schema = 'public'
+      `);
+      
+      const columns = tableInfo.map(row => row.column_name);
+      const hasProjectId = columns.includes('project_id');
+      
+      if (!hasProjectId) {
+        console.log('⚠️ Content table missing project_id column - skipping schedule loading');
+        return;
+      }
+
       const scheduledContent = await db
         .select()
         .from(content)
@@ -111,6 +127,7 @@ export class ContentSchedulerService {
       }
     } catch (error) {
       console.error('❌ Error loading existing schedules:', error);
+      console.log('⚠️ Continuing without loading existing schedules - service will still work for new schedules');
     }
   }
 
