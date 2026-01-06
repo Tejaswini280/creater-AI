@@ -240,7 +240,7 @@ if (!perfMode) {
     console.log("Setting up Vite development server");
     try {
       // Use a conditional import that won't be processed by esbuild in production
-      const viteModulePath = "./vite";
+      const viteModulePath = "./vite.js";
       const viteModule = await import(viteModulePath).catch(() => null);
       if (viteModule?.setupVite) {
         await viteModule.setupVite(app, server);
@@ -250,12 +250,12 @@ if (!perfMode) {
     } catch (error) {
       console.error("Failed to setup Vite development server:", error);
       // Fallback to static serving in case Vite setup fails
-      const { serveStatic } = await import("./static-server");
+      const { serveStatic } = await import("./static-server.js");
       serveStatic(app);
     }
   } else {
     console.log("Setting up static file server");
-    const { serveStatic } = await import("./static-server");
+    const { serveStatic } = await import("./static-server.js");
     serveStatic(app);
   }
 
