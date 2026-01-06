@@ -103,8 +103,8 @@ export class ContentSchedulerService {
             platform: item.platform as any,
             status: 'scheduled',
             scheduledAt: new Date(item.scheduledAt),
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt),
+            createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
             metadata: item.metadata as any
           });
         }
@@ -158,8 +158,8 @@ export class ContentSchedulerService {
             platform: item.platform as any,
             status: 'scheduled',
             scheduledAt: new Date(item.scheduledAt),
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt),
+            createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
             metadata: item.metadata as any
           });
         }

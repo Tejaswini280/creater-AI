@@ -29,6 +29,13 @@ import { instrumentHttpMetrics } from './metrics';
 import { dbOptimizer, dbMonitor } from './db/optimization';
 
 const app = express();
+
+// Configure Express to trust proxy headers (required for Railway/production)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Trust first proxy (Railway, Heroku, etc.)
+} else {
+  app.set('trust proxy', false); // Don't trust proxy in development
+}
 const perfMode = process.env.PERF_MODE === '1';
 
 // Set the environment explicitly
