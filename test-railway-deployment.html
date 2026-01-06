@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Deployment Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Railway Deployment Test</h1>
+    
+    <div class="test-section info">
+        <h2>Testing Railway Deployment</h2>
+        <p>This page tests if your Railway deployment is working correctly.</p>
+        <p><strong>Current URL:</strong> <span id="current-url"></span></p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+    </div>
+
+    <div class="test-section" id="health-check">
+        <h3>1. Health Check Test</h3>
+        <p>Testing the health endpoint...</p>
+        <div id="health-result">Loading...</div>
+    </div>
+
+    <div class="test-section" id="api-test">
+        <h3>2. API Test</h3>
+        <p>Testing basic API connectivity...</p>
+        <div id="api-result">Loading...</div>
+    </div>
+
+    <div class="test-section" id="static-test">
+        <h3>3. Static Files Test</h3>
+        <p>Testing if static assets are loading...</p>
+        <div id="static-result">Loading...</div>
+    </div>
+
+    <script>
+        // Set current info
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('timestamp').textContent = new Date().toISOString();
+
+        // Test health endpoint
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                document.getElementById('health-result').innerHTML = `
+                    <div class="success">
+                        <strong>✅ Health Check Passed</strong>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                document.getElementById('health-check').className = 'test-section success';
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = `
+                    <div class="error">
+                        <strong>❌ Health Check Failed</strong>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('health-check').className = 'test-section error';
+            }
+        }
+
+        // Test API connectivity
+        async function testAPI() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('api-result').innerHTML = `
+                    <div class="success">
+                        <strong>✅ API Connectivity Working</strong>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                document.getElementById('api-test').className = 'test-section success';
+            } catch (error) {
+                document.getElementById('api-result').innerHTML = `
+                    <div class="error">
+                        <strong>❌ API Connectivity Failed</strong>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('api-test').className = 'test-section error';
+            }
+        }
+
+        // Test static files
+        function testStatic() {
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('static-result').innerHTML = `
+                    <div class="success">
+                        <strong>✅ Static Files Working</strong>
+                        <p>Favicon loaded successfully</p>
+                    </div>
+                `;
+                document.getElementById('static-test').className = 'test-section success';
+            };
+            img.onerror = function() {
+                document.getElementById('static-result').innerHTML = `
+                    <div class="error">
+                        <strong>❌ Static Files Failed</strong>
+                        <p>Could not load favicon.ico</p>
+                    </div>
+                `;
+                document.getElementById('static-test').className = 'test-section error';
+            };
+            img.src = '/favicon.ico?' + Date.now(); // Cache bust
+        }
+
+        // Run tests
+        testHealth();
+        testAPI();
+        testStatic();
+    </script>
+</body>
+</html>

@@ -264,6 +264,10 @@ if (!perfMode) {
     }
   } else {
     console.log("Setting up static file server");
+    console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`Current working directory: ${process.cwd()}`);
+    console.log(`__dirname equivalent: ${import.meta.dirname}`);
+    
     const { serveStatic } = await import("./static-server.js");
     serveStatic(app);
   }
