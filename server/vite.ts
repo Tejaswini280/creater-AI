@@ -7,8 +7,13 @@ import { log } from "./utils/logger";
 export { log };
 
 export async function setupVite(app: Express, server: Server) {
+  // Only run in development - this should never be called in production
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error("setupVite should not be called in production");
+  }
+
   try {
-    // Dynamically import Vite only when needed
+    // Dynamically import Vite only when needed and only in development
     const { createServer: createViteServer, createLogger } = await import("vite");
     
     // Import vite config dynamically to avoid bundling it

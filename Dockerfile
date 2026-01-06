@@ -46,8 +46,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy necessary files
+# Copy necessary files (exclude vite.ts from production)
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
+RUN rm -f ./server/vite.ts ./server/vite.js
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 COPY --from=builder --chown=nextjs:nodejs /app/uploads ./uploads
 

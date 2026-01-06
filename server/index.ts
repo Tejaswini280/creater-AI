@@ -239,8 +239,14 @@ if (!perfMode) {
   if (app.get("env") === "development" && process.env.NODE_ENV !== "test") {
     console.log("Setting up Vite development server");
     try {
-      const { setupVite } = await import("./vite");
-      await setupVite(app, server);
+      // Use a conditional import that won't be processed by esbuild in production
+      const viteModulePath = "./vite";
+      const viteModule = await import(viteModulePath).catch(() => null);
+      if (viteModule?.setupVite) {
+        await viteModule.setupVite(app, server);
+      } else {
+        throw new Error("Vite module not available");
+      }
     } catch (error) {
       console.error("Failed to setup Vite development server:", error);
       // Fallback to static serving in case Vite setup fails
