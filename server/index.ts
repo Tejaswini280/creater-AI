@@ -204,6 +204,15 @@ if (!perfMode) {
   // Make WebSocket manager globally available for routes
   (global as any).wsManager = wsManager;
 
+  // Health check endpoint for Railway
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   // Add WebSocket stats endpoint
   app.get('/api/websocket/stats', (req, res) => {
     res.json(wsManager.getStats());
