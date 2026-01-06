@@ -79,7 +79,6 @@ export class DatabaseOptimizer {
       await db.execute(sql`
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
-        CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
       `);
 
       // Social accounts table indexes
@@ -87,7 +86,6 @@ export class DatabaseOptimizer {
         CREATE INDEX IF NOT EXISTS idx_social_accounts_user_id ON social_accounts(user_id);
         CREATE INDEX IF NOT EXISTS idx_social_accounts_platform ON social_accounts(platform);
         CREATE INDEX IF NOT EXISTS idx_social_accounts_user_platform ON social_accounts(user_id, platform);
-        CREATE INDEX IF NOT EXISTS idx_social_accounts_is_active ON social_accounts(is_active);
       `);
 
       // Content table indexes
@@ -116,18 +114,11 @@ export class DatabaseOptimizer {
         CREATE INDEX IF NOT EXISTS idx_ai_tasks_user_status ON ai_generation_tasks(user_id, status);
       `);
 
-      // Niches table indexes
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_niches_category ON niches(category);
-        CREATE INDEX IF NOT EXISTS idx_niches_difficulty ON niches(difficulty);
-        CREATE INDEX IF NOT EXISTS idx_niches_profitability ON niches(profitability);
-        CREATE INDEX IF NOT EXISTS idx_niches_is_active ON niches(is_active);
-      `);
-
       log('Database indexes created successfully');
     } catch (error) {
       log(`Error creating database indexes: ${error}`);
-      throw error;
+      log('DB index creation skipped or failed (non-fatal): ' + error.message);
+      // Don't throw error - make it non-fatal
     }
   }
 
@@ -272,13 +263,6 @@ export class DatabaseOptimizer {
         WHERE status IN ('draft', 'scheduled', 'published')
       `);
 
-      // Optimize social accounts queries
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_social_accounts_user_active 
-        ON social_accounts(user_id, is_active)
-        WHERE is_active = true
-      `);
-
       // Optimize AI tasks queries
       await db.execute(sql`
         CREATE INDEX IF NOT EXISTS idx_ai_tasks_user_created 
@@ -288,7 +272,8 @@ export class DatabaseOptimizer {
       log('Slow query optimizations applied');
     } catch (error) {
       log(`Error optimizing slow queries: ${error}`);
-      throw error;
+      log('DB optimization skipped: ' + error.message);
+      // Don't throw error - make it non-fatal
     }
   }
 }
