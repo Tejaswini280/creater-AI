@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Auth Redirect Loop</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }
+        .success { color: green; font-weight: bold; }
+        .info { background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Fix Login Redirect Loop</h1>
+    
+    <div class="info">
+        <strong>Problem:</strong> You're stuck in a login redirect loop where logging in redirects back to login page.
+    </div>
+    
+    <h2>🚀 Instant Fix</h2>
+    <button class="button" onclick="clearAllStorage()">Clear All Browser Storage</button>
+    <div id="status"></div>
+    
+    <h2>📋 Manual Steps (if button doesn't work)</h2>
+    <ol>
+        <li>Open Developer Tools (F12)</li>
+        <li>Go to <strong>Application</strong> tab</li>
+        <li>Under <strong>Storage</strong>, clear:
+            <ul>
+                <li>Local Storage</li>
+                <li>Session Storage</li>
+                <li>Cookies</li>
+            </ul>
+        </li>
+        <li>Refresh the page</li>
+    </ol>
+    
+    <h2>🔑 Test Login Credentials</h2>
+    <div class="info">
+        <strong>Email:</strong> test@example.com<br>
+        <strong>Password:</strong> password123
+    </div>
+    
+    <h2>🌐 After Clearing Storage</h2>
+    <p><a href="http://localhost:5000/login" target="_blank">Go to Login Page</a></p>
+    
+    <script>
+        function clearAllStorage() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Clear localStorage
+                localStorage.clear();
+                console.log('✅ localStorage cleared');
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                console.log('✅ sessionStorage cleared');
+                
+                // Clear cookies for this domain
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                console.log('✅ Cookies cleared');
+                
+                status.innerHTML = '<div class="success">✅ All storage cleared successfully!</div>';
+                
+                // Auto redirect after 2 seconds
+                setTimeout(() => {
+                    status.innerHTML += '<div>🔄 Redirecting to login page...</div>';
+                    window.location.href = 'http://localhost:5000/login';
+                }, 2000);
+                
+            } catch (error) {
+                status.innerHTML = '<div style="color: red;">❌ Error: ' + error.message + '</div>';
+                console.error('Storage clear error:', error);
+            }
+        }
+        
+        // Auto-clear on page load
+        window.addEventListener('load', () => {
+            console.log('🔧 Auth redirect fix page loaded');
+            console.log('Current localStorage items:', Object.keys(localStorage));
+            console.log('Current sessionStorage items:', Object.keys(sessionStorage));
+        });
+    </script>
+</body>
+</html>
