@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page Visibility Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Login Page Visibility Test</h1>
+    
+    <div class="test-result info">
+        <h3>🎯 What We Fixed:</h3>
+        <ul>
+            <li><strong>App Router Loading Issue:</strong> The Router was stuck showing "Loading..." instead of the login page</li>
+            <li><strong>useAuth Infinite Loop:</strong> The auth hook was getting stuck in loading state</li>
+            <li><strong>Race Conditions:</strong> Multiple auth checks were interfering with each other</li>
+        </ul>
+    </div>
+
+    <div class="test-result pass">
+        <h3>✅ Applied Fixes:</h3>
+        <ol>
+            <li><strong>Force Timeout in Router:</strong> Shows routes after 2 seconds even if auth is loading</li>
+            <li><strong>Removed Infinite Loop:</strong> Removed checkAuth from useEffect dependencies</li>
+            <li><strong>Faster Fallback:</strong> Reduced auth timeout from 15s to 3s</li>
+            <li><strong>Better Loading Logic:</strong> Don't reset loading state during auth checks</li>
+        </ol>
+    </div>
+
+    <div class="test-result warning">
+        <h3>🧪 Test Instructions:</h3>
+        <ol>
+            <li>Click "Clear Auth & Test" button below</li>
+            <li>Navigate to <code>http://localhost:5000/login</code></li>
+            <li><strong>Expected:</strong> Login form should appear within 2-3 seconds</li>
+            <li><strong>Previous Issue:</strong> Would show "Checking authentication..." forever</li>
+        </ol>
+    </div>
+
+    <div class="test-result info">
+        <h3>🔧 Quick Test Tools:</h3>
+        <button class="btn-danger" onclick="clearAuthAndTest()">Clear Auth & Test</button>
+        <button class="btn-primary" onclick="openLoginPage()">Open Login Page</button>
+        <button class="btn-success" onclick="checkCurrentState()">Check Current State</button>
+        
+        <div id="test-results" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-result info">
+        <h3>📊 Success Indicators:</h3>
+        <ul>
+            <li>✅ Login page loads within 2-3 seconds</li>
+            <li>✅ No infinite "Checking authentication..." message</li>
+            <li>✅ Login form is visible and interactive</li>
+            <li>✅ Console shows auth check completing</li>
+            <li>✅ No "Rendered more hooks" errors</li>
+        </ul>
+    </div>
+
+    <script>
+        function clearAuthAndTest() {
+            // Clear all auth data
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="pass">
+                    <h4>✅ Auth Data Cleared</h4>
+                    <p>All authentication data has been removed from localStorage.</p>
+                    <p><strong>Next:</strong> Navigate to <a href="http://localhost:5000/login" target="_blank">http://localhost:5000/login</a></p>
+                    <p><strong>Expected:</strong> Login form should appear within 2-3 seconds (not stuck on "Checking authentication...")</p>
+                </div>
+            `;
+            
+            console.log('🧹 Auth data cleared for testing');
+        }
+
+        function openLoginPage() {
+            window.open('http://localhost:5000/login', '_blank');
+            
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="info">
+                    <h4>🔗 Login Page Opened</h4>
+                    <p>Check the new tab/window for the login page.</p>
+                    <p><strong>What to look for:</strong></p>
+                    <ul>
+                        <li>Login form appears quickly (within 2-3 seconds)</li>
+                        <li>No infinite loading spinner</li>
+                        <li>Email and password fields are visible</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function checkCurrentState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="info">
+                    <h4>📊 Current Authentication State</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">Token:</td>
+                            <td style="padding: 8px;">${token ? '✅ Present' : '❌ Missing'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">User Data:</td>
+                            <td style="padding: 8px;">${user ? '✅ Present' : '❌ Missing'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">Refresh Token:</td>
+                            <td style="padding: 8px;">${refreshToken ? '✅ Present' : '❌ Missing'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; font-weight: bold;">Current URL:</td>
+                            <td style="padding: 8px;">${window.location.href}</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 10px;"><strong>Recommendation:</strong> ${token ? 'You appear to be logged in. Try navigating to the dashboard.' : 'No auth data found. The login page should show immediately.'}</p>
+                </div>
+            `;
+        }
+
+        // Auto-check state on page load
+        window.addEventListener('load', () => {
+            console.log('🔧 Login Page Visibility Test loaded');
+            console.log('📋 Use the buttons above to test the login page fix');
+        });
+
+        // Monitor for specific console messages that indicate the fix is working
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            
+            const message = args.join(' ');
+            if (message.includes('Auth check completed, loading set to false')) {
+                const results = document.getElementById('test-results');
+                if (results) {
+                    results.innerHTML += `
+                        <div class="pass" style="margin-top: 10px;">
+                            <strong>✅ Auth Check Completed!</strong> The loading state should now be false and login page should be visible.
+                        </div>
+                    `;
+                }
+            }
+        };
+    </script>
+</body>
+</html>

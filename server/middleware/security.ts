@@ -126,7 +126,14 @@ export const aiRateLimit = createUserRateLimit(60 * 1000, 20); // 20 AI requests
 export const websocketRateLimit = createRateLimit(60 * 1000, 10); // 10 WebSocket connections per minute
 
 // CORS configuration
-const devOrigins = ['http://localhost:5000', 'http://localhost:5000', 'http://127.0.0.1:5000'];
+const devOrigins = [
+  'http://localhost:5000', 
+  'http://localhost:3000',
+  'http://127.0.0.1:5000',
+  'http://127.0.0.1:3000',
+  'http://0.0.0.0:5000', // ✅ Docker internal routing
+  'http://creator-ai-app:5000' // ✅ Docker container name
+];
 const prodOrigins = ['https://creatornexus.com', 'https://www.creatornexus.com'] as const;
 const maybeFrontend = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
 export const corsOptions: CorsOptions = {

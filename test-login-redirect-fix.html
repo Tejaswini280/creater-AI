@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Redirect Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Login Redirect Fix Test</h1>
+    
+    <div class="test-result pass">
+        <h3>✅ FIXES APPLIED:</h3>
+        <ol>
+            <li><strong>Immediate Auth Event Handling:</strong> Removed debounce for login events</li>
+            <li><strong>Better Token Debugging:</strong> Added detailed logging for token storage</li>
+            <li><strong>Increased Redirect Delay:</strong> Extended delay to 500ms for auth state update</li>
+            <li><strong>Enhanced Error Handling:</strong> Better fallback mechanisms</li>
+        </ol>
+    </div>
+
+    <div class="test-result info">
+        <h3>🎯 What Was Fixed:</h3>
+        <p><strong>Problem:</strong> After successful login, user was redirected back to login page instead of dashboard</p>
+        <p><strong>Root Cause:</strong> Auth state was not updating fast enough after login, causing route guard to redirect back</p>
+        <p><strong>Solution:</strong> Immediate auth-changed event handling + longer delay for state propagation</p>
+    </div>
+
+    <div class="test-result warning">
+        <h3>🧪 Step-by-Step Test:</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Clear browser data and navigate to login page
+            <br><button class="btn-danger" onclick="clearAndNavigate()">Clear Data & Open Login</button>
+        </div>
+        
+        <div class="step">
+            <strong>Step 2:</strong> Enter any email/password (fallback mode accepts anything)
+            <br><em>Example: test@example.com / password123</em>
+        </div>
+        
+        <div class="step">
+            <strong>Step 3:</strong> Click "Sign In" and watch console logs
+            <br><button class="btn-primary" onclick="showExpectedLogs()">Show Expected Console Flow</button>
+        </div>
+        
+        <div class="step">
+            <strong>Step 4:</strong> Verify successful redirect to dashboard
+            <br><em>Should NOT redirect back to login page</em>
+        </div>
+        
+        <div id="test-output" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-result info">
+        <h3>📊 Expected Console Flow:</h3>
+        <pre id="console-flow">
+✅ SUCCESSFUL LOGIN FLOW:
+🔐 Login successful: {user: {...}, accessToken: "...", refreshToken: "..."}
+🔑 Server in fallback mode, storing tokens locally
+🔑 Tokens stored - localStorage check: {token: true, refreshToken: true, user: true}
+🔄 Forcing immediate auth state update...
+📢 Dispatching auth-changed event
+📢 Auth change event received, scheduling recheck...
+📢 Executing immediate auth recheck for login...
+🔍 Checking authentication state...
+🔍 localStorage state - token: true user: true
+✅ User authenticated via localStorage: {id: "...", email: "...", ...}
+✅ Token found: eyJhbGciOiJIUzI1NiIs...
+🔄 Post-login token check: true true
+🔄 Redirecting to dashboard after auth state update...
+
+❌ FAILURE INDICATORS (should NOT see):
+- Redirect back to login page after successful login
+- "No localStorage token/user found" after login
+- Multiple auth checks in a loop
+        </pre>
+    </div>
+
+    <div class="test-result pass">
+        <h3>🎉 Success Criteria:</h3>
+        <ul>
+            <li>✅ Login form accepts credentials</li>
+            <li>✅ "Login Successful!" toast appears</li>
+            <li>✅ Console shows token storage confirmation</li>
+            <li>✅ Auth-changed event is dispatched and handled</li>
+            <li>✅ User is redirected to dashboard (not back to login)</li>
+            <li>✅ Dashboard page loads and stays loaded</li>
+        </ul>
+    </div>
+
+    <div class="test-result info">
+        <h3>🔧 Debug Tools:</h3>
+        <button class="btn-primary" onclick="checkAuthState()">Check Current Auth State</button>
+        <button class="btn-success" onclick="testAuthFlow()">Test Auth Flow</button>
+        <button class="btn-danger" onclick="clearAuthData()">Clear Auth Data</button>
+        
+        <div id="debug-output" style="margin-top: 15px;"></div>
+    </div>
+
+    <script>
+        function clearAndNavigate() {
+            // Clear all auth data
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            // Clear cookies (best effort)
+            document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            const output = document.getElementById('test-output');
+            output.innerHTML = `
+                <div class="pass">
+                    <h4>✅ Auth Data Cleared</h4>
+                    <p>All authentication data has been removed.</p>
+                    <p><strong>Next:</strong> <a href="http://localhost:5000/login" target="_blank">Open Login Page</a></p>
+                    <p><strong>Test Credentials:</strong> Any email/password (fallback mode)</p>
+                </div>
+            `;
+            
+            console.log('🧹 Auth data cleared for testing');
+        }
+
+        function showExpectedLogs() {
+            const output = document.getElementById('test-output');
+            output.innerHTML = `
+                <div class="info">
+                    <h4>📋 Watch for These Console Messages:</h4>
+                    <ol style="font-size: 12px;">
+                        <li>🔐 Login successful: (with user data)</li>
+                        <li>🔑 Tokens stored - localStorage check: {token: true, ...}</li>
+                        <li>📢 Dispatching auth-changed event</li>
+                        <li>📢 Auth change event received, scheduling recheck...</li>
+                        <li>✅ User authenticated via localStorage: (user data)</li>
+                        <li>🔄 Redirecting to dashboard after auth state update...</li>
+                    </ol>
+                    <p><strong>Result:</strong> Should redirect to dashboard and stay there!</p>
+                </div>
+            `;
+        }
+
+        function checkAuthState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            let userData = null;
+            try {
+                userData = user ? JSON.parse(user) : null;
+            } catch (e) {
+                userData = 'Invalid JSON';
+            }
+            
+            const output = document.getElementById('debug-output');
+            output.innerHTML = `
+                <div class="info">
+                    <h4>📊 Current Authentication State</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">Token:</td>
+                            <td style="padding: 8px;">${token ? '✅ Present (' + token.substring(0, 20) + '...)' : '❌ Missing'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">Refresh Token:</td>
+                            <td style="padding: 8px;">${refreshToken ? '✅ Present' : '❌ Missing'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px; font-weight: bold;">User Data:</td>
+                            <td style="padding: 8px;">${userData ? '✅ Present: ' + (userData.email || 'No email') : '❌ Missing'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; font-weight: bold;">Current URL:</td>
+                            <td style="padding: 8px;">${window.location.href}</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 10px;"><strong>Status:</strong> ${token && user ? '✅ Should be authenticated' : '❌ Not authenticated'}</p>
+                </div>
+            `;
+        }
+
+        function testAuthFlow() {
+            const output = document.getElementById('debug-output');
+            output.innerHTML = `
+                <div class="warning">
+                    <h4>🧪 Auth Flow Test</h4>
+                    <p><strong>Instructions:</strong></p>
+                    <ol>
+                        <li>Open browser console (F12)</li>
+                        <li>Navigate to: <a href="http://localhost:5000/login" target="_blank">Login Page</a></li>
+                        <li>Enter any credentials (e.g., test@example.com / password123)</li>
+                        <li>Click "Sign In"</li>
+                        <li>Watch console for the expected flow above</li>
+                        <li>Verify redirect to dashboard (not back to login)</li>
+                    </ol>
+                    <p><strong>Expected Result:</strong> Successful login → Dashboard (no redirect loop)</p>
+                </div>
+            `;
+        }
+
+        function clearAuthData() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            const output = document.getElementById('debug-output');
+            output.innerHTML = `
+                <div class="pass">
+                    <h4>✅ Auth Data Cleared</h4>
+                    <p>All authentication data has been removed from localStorage.</p>
+                </div>
+            `;
+            console.log('🧹 Auth data cleared');
+        }
+
+        // Auto-check auth state on page load
+        window.addEventListener('load', () => {
+            console.log('🔧 Login Redirect Fix Test loaded');
+            console.log('📋 Test the login flow at: http://localhost:5000/login');
+            checkAuthState();
+        });
+    </script>
+</body>
+</html>

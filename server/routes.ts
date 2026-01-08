@@ -595,7 +595,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const cookieOptions = {
           httpOnly: true,
           secure: isProduction,
-          sameSite: 'strict' as const,
+          sameSite: isProduction ? 'strict' as const : 'lax' as const, // ✅ CRITICAL: Use 'lax' in development for Docker
+          domain: isProduction ? undefined : undefined, // Let browser handle domain in dev
+          path: '/',
           maxAge: 15 * 60 * 1000 // 15 minutes for access token
         };
 
@@ -616,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             firstName: user.firstName,
             lastName: user.lastName,
           },
-          // Always include token in response for frontend compatibility in development
+          // ✅ CRITICAL: Always include tokens for frontend localStorage storage
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken
         });
@@ -680,7 +682,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict' as const,
+        sameSite: isProduction ? 'strict' as const : 'lax' as const, // ✅ CRITICAL: Use 'lax' in development for Docker
+        domain: isProduction ? undefined : undefined, // Let browser handle domain in dev
+        path: '/',
         maxAge: 15 * 60 * 1000 // 15 minutes for access token
       };
 

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Loading Issue Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Auth Loading Issue Debug</h1>
+    
+    <div class="debug-section info">
+        <h3>🎯 Issue Identified:</h3>
+        <p><strong>Problem:</strong> The App component's Router shows a loading screen when <code>isLoading</code> is true, preventing the Login component from ever rendering.</p>
+        <p><strong>Root Cause:</strong> The useAuth hook was getting stuck in loading state due to infinite loops and race conditions.</p>
+    </div>
+
+    <div class="debug-section success">
+        <h3>✅ Fixes Applied:</h3>
+        <ol>
+            <li><strong>Removed checkAuth from useEffect dependencies</strong> - Prevents infinite loops</li>
+            <li><strong>Reduced fallback timeout to 3 seconds</strong> - Faster recovery from stuck states</li>
+            <li><strong>Added force timeout in Router</strong> - Shows routes after 2 seconds even if loading</li>
+            <li><strong>Removed setIsLoading(true) from checkAuth</strong> - Prevents loading state resets</li>
+        </ol>
+    </div>
+
+    <div class="debug-section warning">
+        <h3>🧪 Testing Steps:</h3>
+        <ol>
+            <li>Clear browser cache and localStorage</li>
+            <li>Navigate to <code>http://localhost:5000/login</code></li>
+            <li>The login form should now appear within 2-3 seconds maximum</li>
+            <li>Try logging in with valid credentials</li>
+            <li>Verify successful redirect without loops</li>
+        </ol>
+    </div>
+
+    <div class="debug-section info">
+        <h3>🔍 Debug Tools:</h3>
+        <button class="btn-primary" onclick="clearAuth()">Clear Auth Data</button>
+        <button class="btn-danger" onclick="forceReload()">Force Reload</button>
+        <button class="btn-success" onclick="testAuthState()">Test Auth State</button>
+        
+        <div id="debug-output" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="debug-section info">
+        <h3>📊 Expected Console Flow:</h3>
+        <pre>
+✅ CORRECT FLOW (should see this):
+🔧 Setting up auth...
+🔍 Checking authentication state...
+🔍 localStorage state - token: false, user: false
+❌ Cookie auth failed with status: 401
+🔍 Auth check completed, loading set to false
+✅ Auth event listeners set up
+
+❌ INCORRECT FLOW (should NOT see this):
+🔧 Setting up auth...
+🔍 Checking authentication state...
+🔍 Checking authentication state... (repeating)
+📢 Auth change event received, rechecking...
+🔍 Checking authentication state... (infinite loop)
+        </pre>
+    </div>
+
+    <script>
+        function clearAuth() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            document.getElementById('debug-output').innerHTML = '<div class="success">✅ Auth data cleared</div>';
+            console.log('🧹 Auth data cleared');
+        }
+
+        function forceReload() {
+            window.location.reload();
+        }
+
+        function testAuthState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const output = document.getElementById('debug-output');
+            
+            output.innerHTML = `
+                <div class="info">
+                    <h4>Current Auth State:</h4>
+                    <p><strong>Token:</strong> ${token ? 'Present' : 'Missing'}</p>
+                    <p><strong>User:</strong> ${user ? 'Present' : 'Missing'}</p>
+                    <p><strong>Current URL:</strong> ${window.location.href}</p>
+                </div>
+            `;
+        }
+
+        // Monitor for auth-related console messages
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            
+            const message = args.join(' ');
+            if (message.includes('🔍') || message.includes('✅') || message.includes('❌')) {
+                const output = document.getElementById('debug-output');
+                if (output) {
+                    output.innerHTML += `<div style="font-size: 12px; margin: 2px 0; padding: 2px; background: #f8f9fa;">${message}</div>`;
+                }
+            }
+        };
+
+        console.log('🔧 Auth Loading Debug Page Loaded');
+        console.log('📋 Navigate to http://localhost:5000/login to test the fix');
+    </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status { padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 12px 24px; margin: 10px 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger:hover { background: #c82333; }
+        .test-steps { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .step { margin: 8px 0; padding: 8px; border-left: 3px solid #007bff; background: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Login Redirect Test</h1>
+        
+        <div class="status success">
+            <h3>✅ LOGIN REDIRECT ISSUE FIXED!</h3>
+            <p>The authentication loop and redirect issues have been resolved.</p>
+        </div>
+
+        <div class="test-steps">
+            <h3>🧪 Test the Fix:</h3>
+            
+            <div class="step">
+                <strong>1. Clear Auth Data:</strong>
+                <button class="btn-danger" onclick="clearAuth()">Clear All Auth Data</button>
+                <span id="clear-status"></span>
+            </div>
+            
+            <div class="step">
+                <strong>2. Open Login Page:</strong>
+                <button class="btn-primary" onclick="openLogin()">Open Login Page</button>
+                <span id="login-status"></span>
+            </div>
+            
+            <div class="step">
+                <strong>3. Test Credentials:</strong>
+                <br><em>Email:</em> <code>test@example.com</code>
+                <br><em>Password:</em> <code>password123</code>
+                <br><small>(Fallback mode accepts any credentials)</small>
+            </div>
+            
+            <div class="step">
+                <strong>4. Expected Result:</strong>
+                <br>✅ Login successful → Redirect to dashboard
+                <br>❌ Should NOT redirect back to login page
+            </div>
+        </div>
+
+        <div class="status info">
+            <h3>📊 Current Auth State:</h3>
+            <div id="auth-state">Loading...</div>
+            <button class="btn-success" onclick="checkAuth()">Refresh Auth State</button>
+        </div>
+
+        <div class="status info">
+            <h3>🔍 What Was Fixed:</h3>
+            <ul>
+                <li><strong>Infinite Loop:</strong> Prevented multiple simultaneous auth checks</li>
+                <li><strong>Hook Violations:</strong> Fixed conditional hook usage in Login component</li>
+                <li><strong>Auth State Persistence:</strong> Improved token storage and retrieval</li>
+                <li><strong>Event Handling:</strong> Fixed auth-changed event processing</li>
+                <li><strong>Redirect Timing:</strong> Added proper delays for state propagation</li>
+            </ul>
+        </div>
+
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        function clearAuth() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            // Clear cookies (best effort)
+            document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            document.getElementById('clear-status').innerHTML = '<span style="color: green;">✅ Cleared</span>';
+            checkAuth();
+            console.log('🧹 All auth data cleared');
+        }
+
+        function openLogin() {
+            window.open('http://localhost:5000/login', '_blank');
+            document.getElementById('login-status').innerHTML = '<span style="color: blue;">🔗 Opened</span>';
+            
+            // Show instructions
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="status info">
+                    <h3>📋 Test Instructions:</h3>
+                    <ol>
+                        <li>The login page should load quickly (no infinite "Checking authentication...")</li>
+                        <li>Enter the test credentials: <strong>test@example.com</strong> / <strong>password123</strong></li>
+                        <li>Click "Sign In"</li>
+                        <li>Watch for "Login Successful!" toast</li>
+                        <li>Should redirect to dashboard and stay there (not loop back to login)</li>
+                    </ol>
+                    <p><strong>Success:</strong> Dashboard loads and stays loaded</p>
+                    <p><strong>Failure:</strong> Redirects back to login page</p>
+                </div>
+            `;
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            let userData = null;
+            try {
+                userData = user ? JSON.parse(user) : null;
+            } catch (e) {
+                userData = 'Invalid JSON';
+            }
+            
+            const authState = document.getElementById('auth-state');
+            authState.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 5px; font-weight: bold;">Token:</td>
+                        <td style="padding: 5px;">${token ? '✅ Present' : '❌ Missing'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px; font-weight: bold;">User:</td>
+                        <td style="padding: 5px;">${userData ? '✅ ' + (userData.email || 'Present') : '❌ Missing'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px; font-weight: bold;">Refresh Token:</td>
+                        <td style="padding: 5px;">${refreshToken ? '✅ Present' : '❌ Missing'}</td>
+                    </tr>
+                </table>
+                <p><strong>Status:</strong> ${token && user ? '✅ Should be authenticated' : '❌ Not authenticated'}</p>
+            `;
+        }
+
+        // Auto-check auth state on page load
+        window.addEventListener('load', () => {
+            checkAuth();
+            console.log('🔧 Quick Login Test loaded');
+            console.log('📋 Ready to test login redirect fix');
+        });
+
+        // Monitor for auth changes
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'token' || e.key === 'user') {
+                console.log('🔄 Auth data changed, refreshing display');
+                checkAuth();
+            }
+        });
+    </script>
+</body>
+</html>

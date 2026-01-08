@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Auth Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-step {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .step-result {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Comprehensive Authentication Flow Test</h1>
+    
+    <div class="test-step">
+        <div class="step-title">Test Overview</div>
+        <p>This test simulates the exact user journey that's causing the redirect issue:</p>
+        <ol>
+            <li>User visits login page</li>
+            <li>User submits login form</li>
+            <li>Server responds with tokens</li>
+            <li>Frontend stores tokens and updates auth state</li>
+            <li>User should be redirected to dashboard</li>
+        </ol>
+        <button onclick="runFullTest()">🚀 Run Full Test</button>
+        <button onclick="clearAllData()">🧹 Clear All Data</button>
+    </div>
+
+    <div id="testSteps"></div>
+
+    <div class="test-step">
+        <div class="step-title">📝 Detailed Log</div>
+        <div id="detailedLog" class="log"></div>
+    </div>
+
+    <script>
+        let testStepsDiv = document.getElementById('testSteps');
+        let logDiv = document.getElementById('detailedLog');
+        let stepCounter = 0;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function addTestStep(title, status = 'info') {
+            stepCounter++;
+            const stepDiv = document.createElement('div');
+            stepDiv.className = `test-step ${status}`;
+            stepDiv.id = `step-${stepCounter}`;
+            stepDiv.innerHTML = `
+                <div class="step-title">Step ${stepCounter}: ${title}</div>
+                <div class="step-result" id="result-${stepCounter}">Running...</div>
+            `;
+            testStepsDiv.appendChild(stepDiv);
+            return stepCounter;
+        }
+
+        function updateTestStep(stepId, result, status = 'info') {
+            const stepDiv = document.getElementById(`step-${stepId}`);
+            const resultDiv = document.getElementById(`result-${stepId}`);
+            if (stepDiv && resultDiv) {
+                stepDiv.className = `test-step ${status}`;
+                resultDiv.textContent = result;
+            }
+        }
+
+        async function runFullTest() {
+            log('🚀 Starting comprehensive authentication flow test...');
+            testStepsDiv.innerHTML = '';
+            stepCounter = 0;
+
+            // Step 1: Clear existing data
+            const step1 = addTestStep('Clear existing authentication data');
+            clearAllData();
+            updateTestStep(step1, '✅ All data cleared', 'success');
+            log('Step 1: Cleared all existing data');
+
+            // Step 2: Check initial state
+            const step2 = addTestStep('Check initial authentication state');
+            const initialAuth = await checkAuthState();
+            if (!initialAuth) {
+                updateTestStep(step2, '✅ User is not authenticated (expected)', 'success');
+                log('Step 2: Initial state is unauthenticated (correct)');
+            } else {
+                updateTestStep(step2, '❌ User appears to be authenticated (unexpected)', 'error');
+                log('Step 2: ERROR - User appears authenticated when they should not be');
+                return;
+            }
+
+            // Step 3: Simulate login request
+            const step3 = addTestStep('Submit login request');
+            try {
+                const loginResult = await performLogin();
+                if (loginResult.success) {
+                    updateTestStep(step3, `✅ Login successful: ${loginResult.message}`, 'success');
+                    log(`Step 3: Login successful - ${loginResult.message}`);
+                } else {
+                    updateTestStep(step3, `❌ Login failed: ${loginResult.message}`, 'error');
+                    log(`Step 3: ERROR - Login failed - ${loginResult.message}`);
+                    return;
+                }
+            } catch (error) {
+                updateTestStep(step3, `❌ Login error: ${error.message}`, 'error');
+                log(`Step 3: ERROR - Login exception - ${error.message}`);
+                return;
+            }
+
+            // Step 4: Verify tokens are stored
+            const step4 = addTestStep('Verify tokens are stored');
+            const tokensStored = checkTokensStored();
+            if (tokensStored.success) {
+                updateTestStep(step4, `✅ Tokens stored: ${tokensStored.details}`, 'success');
+                log(`Step 4: Tokens stored correctly - ${tokensStored.details}`);
+            } else {
+                updateTestStep(step4, `❌ Tokens not stored: ${tokensStored.details}`, 'error');
+                log(`Step 4: ERROR - Tokens not stored - ${tokensStored.details}`);
+                return;
+            }
+
+            // Step 5: Dispatch auth-changed event
+            const step5 = addTestStep('Dispatch auth-changed event');
+            try {
+                window.dispatchEvent(new Event('auth-changed'));
+                updateTestStep(step5, '✅ Auth-changed event dispatched', 'success');
+                log('Step 5: Auth-changed event dispatched');
+            } catch (error) {
+                updateTestStep(step5, `❌ Failed to dispatch event: ${error.message}`, 'error');
+                log(`Step 5: ERROR - Failed to dispatch event - ${error.message}`);
+            }
+
+            // Step 6: Wait and check auth state
+            const step6 = addTestStep('Check authentication state after login');
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait for event processing
+            
+            const postLoginAuth = await checkAuthState();
+            if (postLoginAuth) {
+                updateTestStep(step6, '✅ User is now authenticated', 'success');
+                log('Step 6: User is now authenticated (correct)');
+            } else {
+                updateTestStep(step6, '❌ User is still not authenticated', 'error');
+                log('Step 6: ERROR - User is still not authenticated after login');
+                return;
+            }
+
+            // Step 7: Simulate navigation logic
+            const step7 = addTestStep('Test navigation logic');
+            const shouldRedirect = simulateNavigationLogic();
+            if (shouldRedirect.toDashboard) {
+                updateTestStep(step7, `✅ Would redirect to dashboard: ${shouldRedirect.reason}`, 'success');
+                log(`Step 7: Navigation logic correct - ${shouldRedirect.reason}`);
+            } else {
+                updateTestStep(step7, `❌ Would not redirect to dashboard: ${shouldRedirect.reason}`, 'error');
+                log(`Step 7: ERROR - Navigation logic incorrect - ${shouldRedirect.reason}`);
+                return;
+            }
+
+            // Final result
+            const finalStep = addTestStep('🎉 Test Complete');
+            updateTestStep(finalStep, '✅ All steps passed! Login redirect should work correctly.', 'success');
+            log('🎉 FINAL RESULT: All tests passed! The login redirect issue should be resolved.');
+        }
+
+        async function performLogin() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store tokens like the real app does
+                    if (data.accessToken && data.refreshToken) {
+                        localStorage.setItem('token', data.accessToken);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                    
+                    return {
+                        success: true,
+                        message: `Logged in as ${data.user.firstName} ${data.user.lastName}`,
+                        data: data
+                    };
+                } else {
+                    const errorData = await response.json();
+                    return {
+                        success: false,
+                        message: errorData.message || 'Login failed'
+                    };
+                }
+            } catch (error) {
+                return {
+                    success: false,
+                    message: error.message
+                };
+            }
+        }
+
+        async function checkAuthState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                return false;
+            }
+
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function checkTokensStored() {
+            const token = localStorage.getItem('token');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const user = localStorage.getItem('user');
+
+            const details = `Token: ${!!token}, RefreshToken: ${!!refreshToken}, User: ${!!user}`;
+            
+            if (token && refreshToken && user) {
+                return { success: true, details };
+            } else {
+                return { success: false, details };
+            }
+        }
+
+        function simulateNavigationLogic() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            if (token && user) {
+                return {
+                    toLogin: false,
+                    toLogin: true,
+                    reason: 'User has valid tokens, should redirect to dashboard'
+                };
+            } else {
+                return {
+                    toLogin: false,
+                    toLogin: false,
+                    reason: 'User has no valid tokens, should redirect to login'
+                };
+            }
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            // Clear cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            log('🧹 Cleared all localStorage and cookies');
+        }
+
+        // Initialize
+        log('🔍 Comprehensive Auth Flow Test initialized');
+        log('Click "Run Full Test" to simulate the complete login flow');
+    </script>
+</body>
+</html>

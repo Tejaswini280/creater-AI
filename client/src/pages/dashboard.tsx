@@ -330,7 +330,15 @@ export default function Dashboard() {
   }
 
   if (!isAuthenticated) {
-    console.log('🔄 Dashboard: Not authenticated, should redirect to login');
+    console.log('🔄 Dashboard: Not authenticated, redirecting to login');
+    // Use useEffect to redirect after component mounts
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        window.location.href = '/login';
+      }, 100);
+      return () => clearTimeout(timer);
+    }, []);
+    
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

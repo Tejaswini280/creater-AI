@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Fix Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .fix-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .fix-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .fix-item .icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .test-result {
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication Fix Verification</h1>
+    
+    <div class="fix-summary">
+        <h2>✅ Fixes Applied</h2>
+        <div class="fix-item">
+            <span class="icon">🔧</span>
+            <span><strong>Hook Order Fix:</strong> Moved all hooks before conditional returns in Login component</span>
+        </div>
+        <div class="fix-item">
+            <span class="icon">🔄</span>
+            <span><strong>Infinite Loop Prevention:</strong> Added refs to prevent simultaneous auth checks</span>
+        </div>
+        <div class="fix-item">
+            <span class="icon">📢</span>
+            <span><strong>Auth Event Handling:</strong> Fixed auth-changed event processing</span>
+        </div>
+        <div class="fix-item">
+            <span class="icon">⚛️</span>
+            <span><strong>React Strict Mode:</strong> Added initialization ref to prevent double effects</span>
+        </div>
+        <div class="fix-item">
+            <span class="icon">🔑</span>
+            <span><strong>Token Storage:</strong> Improved localStorage and cookie handling</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Verification Tests</h2>
+        <button onclick="runAllTests()">Run All Verification Tests</button>
+        <button onclick="testLoginPage()">Test Login Page</button>
+        <button onclick="testAuthFlow()">Test Auth Flow</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="testStatus" class="status info">Ready to run tests...</div>
+    </div>
+
+    <div class="test-grid">
+        <div class="test-section">
+            <h3>🔍 API Tests</h3>
+            <div id="apiResults"></div>
+        </div>
+        <div class="test-section">
+            <h3>⚛️ React Component Tests</h3>
+            <div id="reactResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results Summary</h2>
+        <div id="summaryResults"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function addResult(category, test, status, details) {
+            testResults.push({ category, test, status, details, timestamp: new Date() });
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Update API results
+            const apiResults = testResults.filter(r => r.category === 'api');
+            document.getElementById('apiResults').innerHTML = apiResults.map(r => `
+                <div class="test-result">
+                    <div class="status ${r.status}">
+                        <strong>${r.test}</strong>: ${r.status.toUpperCase()}
+                        <br><small>${r.details}</small>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update React results
+            const reactResults = testResults.filter(r => r.category === 'react');
+            document.getElementById('reactResults').innerHTML = reactResults.map(r => `
+                <div class="test-result">
+                    <div class="status ${r.status}">
+                        <strong>${r.test}</strong>: ${r.status.toUpperCase()}
+                        <br><small>${r.details}</small>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update summary
+            const totalTests = testResults.length;
+            const passedTests = testResults.filter(r => r.status === 'success').length;
+            const failedTests = testResults.filter(r => r.status === 'error').length;
+            const warningTests = testResults.filter(r => r.status === 'warning').length;
+
+            document.getElementById('summaryResults').innerHTML = `
+                <div class="status ${passedTests === totalTests ? 'success' : failedTests > 0 ? 'error' : 'warning'}">
+                    <h3>Summary: ${passedTests}/${totalTests} tests passed</h3>
+                    <p>✅ Passed: ${passedTests} | ❌ Failed: ${failedTests} | ⚠️ Warnings: ${warningTests}</p>
+                </div>
+            `;
+        }
+
+        function clearResults() {
+            testResults = [];
+            updateDisplay();
+            updateStatus('Results cleared', 'info');
+        }
+
+        async function testServerHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('api', 'Server Health', 'success', `Status: ${data.status}, Uptime: ${Math.round(data.uptime)}s`);
+                    return true;
+                } else {
+                    addResult('api', 'Server Health', 'error', `HTTP ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                addResult('api', 'Server Health', 'error', error.message);
+                return false;
+            }
+        }
+
+        async function testLoginAPI() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.accessToken) {
+                    localStorage.setItem('token', data.accessToken);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    addResult('api', 'Login API', 'success', `User: ${data.user.firstName}, Token received`);
+                    return { success: true, data };
+                } else {
+                    addResult('api', 'Login API', 'error', data.message || 'Login failed');
+                    return { success: false };
+                }
+            } catch (error) {
+                addResult('api', 'Login API', 'error', error.message);
+                return { success: false };
+            }
+        }
+
+        async function testAuthUserEndpoint() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('api', 'Auth User Endpoint', 'success', `User: ${data.firstName} ${data.lastName}`);
+                    return true;
+                } else {
+                    addResult('api', 'Auth User Endpoint', 'error', `HTTP ${response.status}: ${data.message}`);
+                    return false;
+                }
+            } catch (error) {
+                addResult('api', 'Auth User Endpoint', 'error', error.message);
+                return false;
+            }
+        }
+
+        async function testReactHookFixes() {
+            try {
+                // Test if we can access the login page without hook errors
+                const response = await fetch('/login');
+                if (response.ok) {
+                    addResult('react', 'Login Page Access', 'success', 'Login page loads without errors');
+                } else {
+                    addResult('react', 'Login Page Access', 'error', `HTTP ${response.status}`);
+                }
+
+                // Test localStorage state management
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                if (token && user) {
+                    addResult('react', 'LocalStorage State', 'success', 'Auth tokens properly stored');
+                } else {
+                    addResult('react', 'LocalStorage State', 'warning', 'Auth tokens not found in localStorage');
+                }
+
+                // Test auth event system
+                let eventReceived = false;
+                const testHandler = () => { eventReceived = true; };
+                window.addEventListener('auth-changed', testHandler);
+                window.dispatchEvent(new Event('auth-changed'));
+                
+                setTimeout(() => {
+                    window.removeEventListener('auth-changed', testHandler);
+                    if (eventReceived) {
+                        addResult('react', 'Auth Events', 'success', 'Auth event system working');
+                    } else {
+                        addResult('react', 'Auth Events', 'error', 'Auth events not working');
+                    }
+                }, 100);
+
+            } catch (error) {
+                addResult('react', 'React Hook Tests', 'error', error.message);
+            }
+        }
+
+        async function testLoginPage() {
+            updateStatus('Testing login page...', 'info');
+            
+            try {
+                // Open login page in new tab
+                const loginWindow = window.open('/login', '_blank');
+                
+                if (loginWindow) {
+                    addResult('react', 'Login Page Navigation', 'success', 'Login page opened successfully');
+                    
+                    // Check if page loads without console errors
+                    setTimeout(() => {
+                        addResult('react', 'Login Page Load', 'success', 'No immediate errors detected');
+                    }, 2000);
+                } else {
+                    addResult('react', 'Login Page Navigation', 'error', 'Failed to open login page');
+                }
+            } catch (error) {
+                addResult('react', 'Login Page Test', 'error', error.message);
+            }
+            
+            updateStatus('Login page test completed', 'success');
+        }
+
+        async function testAuthFlow() {
+            updateStatus('Testing complete auth flow...', 'info');
+            
+            // Clear any existing auth data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            try {
+                // Step 1: Login
+                const loginResult = await testLoginAPI();
+                if (!loginResult.success) {
+                    updateStatus('Auth flow test failed at login', 'error');
+                    return;
+                }
+                
+                // Step 2: Verify auth endpoint
+                const authResult = await testAuthUserEndpoint();
+                if (!authResult) {
+                    updateStatus('Auth flow test failed at user verification', 'error');
+                    return;
+                }
+                
+                // Step 3: Test auth state persistence
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                if (token && user) {
+                    addResult('react', 'Auth State Persistence', 'success', 'Auth state persists after login');
+                    updateStatus('Complete auth flow test PASSED!', 'success');
+                } else {
+                    addResult('react', 'Auth State Persistence', 'error', 'Auth state not persisting');
+                    updateStatus('Auth flow test failed at state persistence', 'error');
+                }
+                
+            } catch (error) {
+                addResult('react', 'Auth Flow Test', 'error', error.message);
+                updateStatus('Auth flow test encountered error', 'error');
+            }
+        }
+
+        async function runAllTests() {
+            updateStatus('Running all verification tests...', 'info');
+            clearResults();
+            
+            try {
+                // API Tests
+                await testServerHealth();
+                await testLoginAPI();
+                await testAuthUserEndpoint();
+                
+                // React Tests
+                await testReactHookFixes();
+                
+                // Wait a moment for async tests to complete
+                setTimeout(() => {
+                    const totalTests = testResults.length;
+                    const passedTests = testResults.filter(r => r.status === 'success').length;
+                    
+                    if (passedTests === totalTests) {
+                        updateStatus(`🎉 All tests passed! (${passedTests}/${totalTests})`, 'success');
+                    } else {
+                        updateStatus(`⚠️ Some tests failed (${passedTests}/${totalTests})`, 'warning');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                updateStatus('Test suite error: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html>

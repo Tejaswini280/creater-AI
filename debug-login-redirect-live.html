@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Login Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Live Login Redirect Debug</h1>
+    
+    <div class="debug-section">
+        <h3>Current Status</h3>
+        <div id="currentStatus" class="status">Checking...</div>
+    </div>
+
+    <div class="grid">
+        <div>
+            <div class="debug-section">
+                <h3>🔐 Authentication Test</h3>
+                <button onclick="testLogin()">Test Login</button>
+                <button onclick="checkAuthState()">Check Auth State</button>
+                <button onclick="clearAll()">Clear All Data</button>
+                <button onclick="simulateRedirect()">Simulate Redirect</button>
+            </div>
+
+            <div class="debug-section">
+                <h3>📊 Current State</h3>
+                <div id="stateInfo"></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="debug-section">
+                <h3>🌐 Network Requests</h3>
+                <div id="networkLog" class="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>📝 Debug Log</h3>
+        <div id="debugLog" class="log"></div>
+    </div>
+
+    <script>
+        let debugLog = document.getElementById('debugLog');
+        let networkLog = document.getElementById('networkLog');
+        let statusDiv = document.getElementById('currentStatus');
+        let stateDiv = document.getElementById('stateInfo');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            debugLog.textContent += logMessage;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        function logNetwork(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            networkLog.textContent += `[${timestamp}] ${message}\n`;
+            networkLog.scrollTop = networkLog.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            stateDiv.innerHTML = `
+                <strong>localStorage:</strong><br>
+                • Token: ${token ? '✅ Present' : '❌ Missing'}<br>
+                • User: ${user ? '✅ Present' : '❌ Missing'}<br>
+                • Refresh Token: ${refreshToken ? '✅ Present' : '❌ Missing'}<br>
+                <br>
+                <strong>Current URL:</strong> ${window.location.href}<br>
+                <strong>Cookies:</strong> ${document.cookie || 'None'}
+            `;
+        }
+
+        async function testLogin() {
+            log('🔐 Starting login test...');
+            updateStatus('Testing login...', 'warning');
+            
+            try {
+                logNetwork('POST /api/auth/login - Starting request');
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                logNetwork(`POST /api/auth/login - Response: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Login successful: ${JSON.stringify(data, null, 2)}`);
+                    
+                    // Store tokens exactly like the real app
+                    if (data.accessToken && data.refreshToken) {
+                        localStorage.setItem('token', data.accessToken);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        log('✅ Tokens stored in localStorage');
+                    }
+                    
+                    // Dispatch auth-changed event
+                    window.dispatchEvent(new Event('auth-changed'));
+                    log('📢 Auth-changed event dispatched');
+                    
+                    updateStatus('Login successful!', 'success');
+                    updateState();
+                    
+                    // Test immediate auth check
+                    setTimeout(() => {
+                        checkAuthState();
+                    }, 100);
+                    
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Login failed: ${JSON.stringify(errorData, null, 2)}`);
+                    updateStatus(`Login failed: ${errorData.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`);
+                logNetwork(`POST /api/auth/login - Error: ${error.message}`);
+                updateStatus(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkAuthState() {
+            log('🔍 Checking authentication state...');
+            updateStatus('Checking auth state...', 'warning');
+            
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            log(`localStorage check - token: ${!!token}, user: ${!!userStr}`);
+            
+            if (token && userStr) {
+                log('✅ localStorage has auth data, testing server validation...');
+                
+                try {
+                    logNetwork('GET /api/auth/user - Starting request');
+                    
+                    const response = await fetch('/api/auth/user', {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    logNetwork(`GET /api/auth/user - Response: ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        log(`✅ Server auth check passed: ${JSON.stringify(userData, null, 2)}`);
+                        updateStatus('User is authenticated!', 'success');
+                        
+                        // Test what would happen on dashboard
+                        log('🔄 User should be able to access dashboard');
+                        
+                    } else {
+                        const errorData = await response.json();
+                        log(`❌ Server auth check failed: ${JSON.stringify(errorData, null, 2)}`);
+                        updateStatus('Authentication failed on server', 'error');
+                    }
+                } catch (error) {
+                    log(`❌ Auth check error: ${error.message}`);
+                    logNetwork(`GET /api/auth/user - Error: ${error.message}`);
+                    updateStatus(`Auth check error: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ No auth data in localStorage');
+                updateStatus('Not authenticated', 'error');
+            }
+            
+            updateState();
+        }
+
+        function clearAll() {
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            log('🧹 Cleared all localStorage and cookies');
+            updateStatus('All data cleared', 'warning');
+            updateState();
+        }
+
+        function simulateRedirect() {
+            log('🔄 Simulating redirect logic...');
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                log('✅ Auth data present - would redirect to dashboard');
+                log('🔄 Simulating: setLocation("/")');
+                updateStatus('Would redirect to dashboard', 'success');
+            } else {
+                log('❌ No auth data - would redirect to login');
+                log('🔄 Simulating: window.location.href = "/login"');
+                updateStatus('Would redirect to login', 'warning');
+            }
+        }
+
+        // Monitor auth-changed events
+        window.addEventListener('auth-changed', () => {
+            log('📢 Auth-changed event received!');
+            updateState();
+        });
+
+        // Initial state check
+        updateState();
+        updateStatus('Ready for testing', 'info');
+        log('🚀 Debug page initialized');
+        
+        // Auto-check current auth state
+        setTimeout(() => {
+            checkAuthState();
+        }, 1000);
+    </script>
+</body>
+</html>
