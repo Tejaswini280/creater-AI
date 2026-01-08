@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useDebouncedCallback } from "@/hooks/useDebounce";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { Sparkles, User, Lock, Mail, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
@@ -14,6 +14,9 @@ import { useLocation } from "wouter";
 export default function Login() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // ✅ CRITICAL FIX: ALL hooks must be called before any conditional returns
   const [activeTab, setActiveTab] = useState("login");
   const [formErrors, setFormErrors] = useState<{
     login?: { email?: string; password?: string };
@@ -34,21 +37,7 @@ export default function Login() {
     lastName: ""
   });
 
-  // Debounced navigation
-  const debouncedNavigate = useDebouncedCallback((url: string) => {
-    try {
-      window.location.href = url;
-    } catch (error) {
-      console.error('Navigation error:', error);
-      toast({
-        title: "Navigation Error",
-        description: "Failed to navigate. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, 300);
-
-  // Form validation
+  // Form validation callbacks
   const validateLoginForm = useCallback(() => {
     const errors: { email?: string; password?: string } = {};
     
@@ -103,7 +92,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       console.log('🔐 Login successful:', data);
-      console.log('🔐 Login response data keys:', Object.keys(data));
+      console.log('🔐 Login response keys:', Object.keys(data));
 
       // Handle fallback mode where server returns tokens in response
       if (data.accessToken && data.refreshToken) {
@@ -111,7 +100,7 @@ export default function Login() {
         localStorage.setItem('token', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.user));
-
+        
         // Debug: Verify tokens were stored
         console.log('🔑 Tokens stored - localStorage check:', {
           token: !!localStorage.getItem('token'),
@@ -120,18 +109,9 @@ export default function Login() {
         });
       } else {
         console.log('🍪 Server in normal mode (cookies), clearing localStorage');
-        // Normal mode - clear any existing localStorage tokens
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-      }
-
-      // Notify app in this tab that auth state changed
-      try {
-        console.log('📢 Dispatching auth-changed event');
-        window.dispatchEvent(new Event('auth-changed'));
-      } catch (error) {
-        console.error('❌ Error dispatching auth-changed event:', error);
       }
 
       toast({
@@ -139,14 +119,28 @@ export default function Login() {
         description: `Welcome back, ${data.user.firstName}!`,
       });
 
-      // Force immediate auth check before redirect
+      // ✅ CRITICAL FIX: More robust auth state update
       console.log('🔄 Forcing immediate auth state update...');
       
-      // Small delay to ensure auth event is processed
-      setTimeout(() => {
-        console.log('🔄 Redirecting to dashboard...');
-        debouncedNavigate('/');
-      }, 100);
+      try {
+        console.log('📢 Dispatching auth-changed event');
+        window.dispatchEvent(new Event('auth-changed'));
+        
+        // ✅ CRITICAL FIX: Wait longer for auth state to update
+        setTimeout(() => {
+          console.log('🔄 Checking if auth state updated...');
+          const tokenCheck = localStorage.getItem('token');
+          const userCheck = localStorage.getItem('user');
+          console.log('🔄 Post-login token check:', !!tokenCheck, !!userCheck);
+          
+          console.log('🔄 Redirecting to dashboard after auth state update...');
+          setLocation('/');
+        }, 500); // ✅ Increased delay to 500ms
+        
+      } catch (error) {
+        console.error('❌ Error dispatching auth-changed event:', error);
+        setLocation('/');
+      }
     },
     onError: (error: any) => {
       toast({
@@ -166,259 +160,223 @@ export default function Login() {
     onSuccess: (data) => {
       toast({
         title: "Registration Successful!",
-        description: `Account created successfully! Please log in with your credentials.`,
+        description: `Welcome, ${data.user.firstName}! Please log in.`,
       });
-      
-      // Clear form data
-      setRegisterData({
-        email: "",
-        password: "",
-        firstName: "",
-        lastName: ""
-      });
-      
-      // Switch to login tab
       setActiveTab("login");
-      
-      // Pre-fill email in login form
-      setLoginData(prev => ({
-        ...prev,
-        email: data.user.email
-      }));
     },
     onError: (error: any) => {
       toast({
         title: "Registration Failed",
-        description: error.message || "Failed to create account. Please try again.",
+        description: error.message || "Registration failed. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleLogin = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateLoginForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form.",
-        variant: "destructive",
-      });
-      return;
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      console.log('🔄 User already authenticated, redirecting to dashboard...');
+      setLocation('/');
     }
-    
-    loginMutation.mutate(loginData);
-  }, [loginData, validateLoginForm, loginMutation, toast]);
+  }, [isAuthenticated, isLoading, setLocation]);
 
-  const handleRegister = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateRegisterForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    registerMutation.mutate(registerData);
-  }, [registerData, validateRegisterForm, registerMutation, toast]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4" role="document">
-      <div className="w-full max-w-md">
-        {/* Logo and Title */}
-        <div className="text-center mb-8" role="banner" aria-label="Application header">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">CreatorAI Studio</h1>
-          </div>
-          <p className="text-gray-600">Sign in to your account or create a new one</p>
-        </div>
-
-        {/* Auth Tabs */}
-        <Card id="main-content" className="bg-white/80 backdrop-blur-sm border-0 shadow-xl" role="main" aria-labelledby="auth-title">
-          <CardHeader className="pb-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login" className="flex items-center space-x-2" aria-controls="login-panel" aria-selected={activeTab==='login'}>
-                  <User className="w-4 h-4" />
-                  <span id="auth-title">Login</span>
-                </TabsTrigger>
-                <TabsTrigger value="register" className="flex items-center space-x-2" aria-controls="register-panel" aria-selected={activeTab==='register'}>
-                  <UserPlus className="w-4 h-4" />
-                  <span>Register</span>
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Login Form */}
-              <TabsContent id="login-panel" value="login" className="mt-6" role="tabpanel" aria-labelledby="auth-title">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email" className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>Email</span>
-                    </Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={loginData.email}
-                      onChange={(e) => {
-                        setLoginData({ ...loginData, email: e.target.value });
-                        if (formErrors.login?.email) {
-                          setFormErrors(prev => ({ 
-                            ...prev, 
-                            login: { ...prev.login, email: undefined } 
-                          }));
-                        }
-                      }}
-                      className={formErrors.login?.email ? 'border-red-500' : ''}
-                      required
-                      aria-describedby={formErrors.login?.email ? 'login-email-error' : undefined}
-                    />
-                    {formErrors.login?.email && (
-                      <p id="login-email-error" className="text-sm text-red-500 mt-1">
-                        {formErrors.login.email}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password" className="flex items-center space-x-2">
-                      <Lock className="w-4 h-4" />
-                      <span>Password</span>
-                    </Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={loginData.password}
-                      onChange={(e) => {
-                        setLoginData({ ...loginData, password: e.target.value });
-                        if (formErrors.login?.password) {
-                          setFormErrors(prev => ({ 
-                            ...prev, 
-                            login: { ...prev.login, password: undefined } 
-                          }));
-                        }
-                      }}
-                      className={formErrors.login?.password ? 'border-red-500' : ''}
-                      required
-                      aria-describedby={formErrors.login?.password ? 'login-password-error' : undefined}
-                    />
-                    {formErrors.login?.password && (
-                      <p id="login-password-error" className="text-sm text-red-500 mt-1">
-                        {formErrors.login.password}
-                      </p>
-                    )}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                    disabled={loginMutation.isPending}
-                  >
-                    {loginMutation.isPending ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Signing in...</span>
-                      </div>
-                    ) : (
-                      <span>Sign In</span>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              {/* Register Form */}
-              <TabsContent id="register-panel" value="register" className="mt-6" role="tabpanel" aria-labelledby="auth-title">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-firstName">First Name</Label>
-                      <Input
-                        id="register-firstName"
-                        type="text"
-                        placeholder="John"
-                        value={registerData.firstName}
-                        onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-lastName">Last Name</Label>
-                      <Input
-                        id="register-lastName"
-                        type="text"
-                        placeholder="Doe"
-                        value={registerData.lastName}
-                        onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email" className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>Email</span>
-                    </Label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="john@example.com"
-                      value={registerData.email}
-                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password" className="flex items-center space-x-2">
-                      <Lock className="w-4 h-4" />
-                      <span>Password</span>
-                    </Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="At least 6 characters"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Creating account...</span>
-                      </div>
-                    ) : (
-                      <span>Create Account</span>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardHeader>
-        </Card>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-500">
-          <p className="text-sm">
-            By signing in, you agree to our Terms of Service and Privacy Policy
-          </p>
+  // ✅ NOW check conditions AFTER all hooks are called
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle form submissions
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateLoginForm()) {
+      loginMutation.mutate(loginData);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateRegisterForm()) {
+      registerMutation.mutate(registerData);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="text-center pb-2">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Creator AI Studio
+          </CardTitle>
+          <p className="text-gray-600 text-sm">
+            Your AI-powered content creation platform
+          </p>
+        </CardHeader>
+        
+        <CardContent className="pt-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="register" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Sign Up
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login" className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    className={formErrors.login?.email ? "border-red-500" : ""}
+                  />
+                  {formErrors.login?.email && (
+                    <p className="text-sm text-red-500">{formErrors.login.email}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    className={formErrors.login?.password ? "border-red-500" : ""}
+                  />
+                  {formErrors.login?.password && (
+                    <p className="text-sm text-red-500">{formErrors.login.password}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Signing In..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="register" className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="First name"
+                      value={registerData.firstName}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, firstName: e.target.value }))}
+                      className={formErrors.register?.firstName ? "border-red-500" : ""}
+                    />
+                    {formErrors.register?.firstName && (
+                      <p className="text-sm text-red-500">{formErrors.register.firstName}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Last name"
+                      value={registerData.lastName}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, lastName: e.target.value }))}
+                      className={formErrors.register?.lastName ? "border-red-500" : ""}
+                    />
+                    {formErrors.register?.lastName && (
+                      <p className="text-sm text-red-500">{formErrors.register.lastName}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="registerEmail" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </Label>
+                  <Input
+                    id="registerEmail"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                    className={formErrors.register?.email ? "border-red-500" : ""}
+                  />
+                  {formErrors.register?.email && (
+                    <p className="text-sm text-red-500">{formErrors.register.email}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="registerPassword" className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Password
+                  </Label>
+                  <Input
+                    id="registerPassword"
+                    type="password"
+                    placeholder="Create a password"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                    className={formErrors.register?.password ? "border-red-500" : ""}
+                  />
+                  {formErrors.register?.password && (
+                    <p className="text-sm text-red-500">{formErrors.register.password}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
-} 
+}

@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { Suspense, lazy, Component, ErrorInfo, ReactNode } from "react";
+import { Suspense, lazy, Component, ErrorInfo, ReactNode, useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -80,9 +80,27 @@ const Projects = lazy(() => import("@/pages/projects").catch(() => ({ default: (
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // ✅ CRITICAL FIX: Add maximum loading timeout to prevent infinite loading
+  const [forceShowRoutes, setForceShowRoutes] = useState(false);
+  
+  useEffect(() => {
+    // Force show routes after 2 seconds if still loading
+    const forceTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ Forcing routes to show after timeout');
+        setForceShowRoutes(true);
+      }
+    }, 2000);
+    
+    return () => clearTimeout(forceTimeout);
+  }, [isLoading]);
+
+  // Show routes if not loading OR if we've hit the force timeout
+  const shouldShowRoutes = !isLoading || forceShowRoutes;
+
   return (
     <Switch>
-      {isLoading ? (
+      {!shouldShowRoutes ? (
         <div className="min-h-screen flex flex-col" role="document">
           <header role="banner" className="sr-only">Loading header</header>
           <main role="main" className="flex flex-1 items-center justify-center">

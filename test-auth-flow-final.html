@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Flow Test - Final Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication Flow Test - Final Fix</h1>
+    <p>Testing the complete authentication flow with all React hook fixes applied.</p>
+
+    <div class="test-section">
+        <h2>🔧 Test Status</h2>
+        <div id="testStatus" class="status info">Ready to test...</div>
+        <button onclick="runCompleteTest()">Run Complete Auth Test</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Live Logs</h2>
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let logEntries = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logEntries.push({ message: logEntry, type });
+            
+            const logsDiv = document.getElementById('logs');
+            const logElement = document.createElement('div');
+            logElement.className = `log-entry ${type}`;
+            logElement.textContent = logEntry;
+            logsDiv.appendChild(logElement);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function addResult(test, status, details) {
+            testResults.push({ test, status, details, timestamp: new Date().toISOString() });
+            updateResultsDisplay();
+        }
+
+        function updateResultsDisplay() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = testResults.map(result => `
+                <div class="status ${result.status}">
+                    <strong>${result.test}</strong>: ${result.status.toUpperCase()}
+                    <br><small>${result.details}</small>
+                    <br><em>${new Date(result.timestamp).toLocaleTimeString()}</em>
+                </div>
+            `).join('');
+        }
+
+        function clearLogs() {
+            logEntries = [];
+            document.getElementById('logs').innerHTML = '';
+            testResults = [];
+            updateResultsDisplay();
+            updateStatus('Logs cleared', 'info');
+        }
+
+        async function testServerHealth() {
+            log('🏥 Testing server health...', 'info');
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Server health check passed', 'success');
+                    addResult('Server Health', 'success', `Status: ${data.status}, Uptime: ${Math.round(data.uptime)}s`);
+                    return true;
+                } else {
+                    log('❌ Server health check failed', 'error');
+                    addResult('Server Health', 'error', `HTTP ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Server health check error: ${error.message}`, 'error');
+                addResult('Server Health', 'error', error.message);
+                return false;
+            }
+        }
+
+        async function testLoginAPI() {
+            log('🔐 Testing login API...', 'info');
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Login API successful', 'success');
+                    log(`✅ User: ${data.user.firstName} ${data.user.lastName}`, 'success');
+                    log(`✅ Token received: ${data.accessToken ? 'Yes' : 'No'}`, 'success');
+                    
+                    // Store tokens for testing
+                    if (data.accessToken) {
+                        localStorage.setItem('token', data.accessToken);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        log('✅ Tokens stored in localStorage', 'success');
+                    }
+                    
+                    addResult('Login API', 'success', `User: ${data.user.firstName}, Token: ${data.accessToken ? 'Present' : 'Missing'}`);
+                    return { success: true, data };
+                } else {
+                    log(`❌ Login API failed: ${data.message}`, 'error');
+                    addResult('Login API', 'error', data.message);
+                    return { success: false, error: data.message };
+                }
+            } catch (error) {
+                log(`❌ Login API error: ${error.message}`, 'error');
+                addResult('Login API', 'error', error.message);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testAuthUser() {
+            log('👤 Testing auth/user endpoint...', 'info');
+            try {
+                const token = localStorage.getItem('token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    headers,
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Auth user endpoint successful', 'success');
+                    log(`✅ User data: ${data.firstName} ${data.lastName} (${data.email})`, 'success');
+                    addResult('Auth User', 'success', `${data.firstName} ${data.lastName}`);
+                    return { success: true, data };
+                } else {
+                    log(`❌ Auth user endpoint failed: ${data.message}`, 'error');
+                    addResult('Auth User', 'error', `HTTP ${response.status}: ${data.message}`);
+                    return { success: false, error: data.message };
+                }
+            } catch (error) {
+                log(`❌ Auth user endpoint error: ${error.message}`, 'error');
+                addResult('Auth User', 'error', error.message);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testFrontendAccess() {
+            log('🌐 Testing frontend access...', 'info');
+            try {
+                // Test if we can access the main app
+                const response = await fetch('/', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    log('✅ Frontend accessible', 'success');
+                    addResult('Frontend Access', 'success', 'Main app loads successfully');
+                    return true;
+                } else {
+                    log(`❌ Frontend access failed: HTTP ${response.status}`, 'error');
+                    addResult('Frontend Access', 'error', `HTTP ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Frontend access error: ${error.message}`, 'error');
+                addResult('Frontend Access', 'error', error.message);
+                return false;
+            }
+        }
+
+        async function testLocalStorageState() {
+            log('💾 Testing localStorage state...', 'info');
+            try {
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                if (token && user) {
+                    const userData = JSON.parse(user);
+                    log('✅ localStorage has valid auth data', 'success');
+                    log(`✅ Token: ${token.substring(0, 20)}...`, 'success');
+                    log(`✅ User: ${userData.firstName} ${userData.lastName}`, 'success');
+                    addResult('LocalStorage State', 'success', `Token and user data present`);
+                    return true;
+                } else {
+                    log('❌ localStorage missing auth data', 'error');
+                    log(`❌ Token: ${token ? 'Present' : 'Missing'}`, 'error');
+                    log(`❌ User: ${user ? 'Present' : 'Missing'}`, 'error');
+                    addResult('LocalStorage State', 'error', 'Missing token or user data');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ localStorage test error: ${error.message}`, 'error');
+                addResult('LocalStorage State', 'error', error.message);
+                return false;
+            }
+        }
+
+        async function runCompleteTest() {
+            updateStatus('Running complete authentication test...', 'info');
+            log('🚀 Starting complete authentication flow test', 'info');
+            
+            // Clear previous results
+            testResults = [];
+            updateResultsDisplay();
+            
+            try {
+                // Test 1: Server Health
+                const healthOk = await testServerHealth();
+                if (!healthOk) {
+                    updateStatus('Test failed - Server not healthy', 'error');
+                    return;
+                }
+                
+                // Test 2: Login API
+                const loginResult = await testLoginAPI();
+                if (!loginResult.success) {
+                    updateStatus('Test failed - Login API error', 'error');
+                    return;
+                }
+                
+                // Test 3: LocalStorage State
+                const storageOk = await testLocalStorageState();
+                if (!storageOk) {
+                    updateStatus('Test failed - LocalStorage issues', 'warning');
+                }
+                
+                // Test 4: Auth User Endpoint
+                const authResult = await testAuthUser();
+                if (!authResult.success) {
+                    updateStatus('Test failed - Auth user endpoint error', 'error');
+                    return;
+                }
+                
+                // Test 5: Frontend Access
+                const frontendOk = await testFrontendAccess();
+                if (!frontendOk) {
+                    updateStatus('Test failed - Frontend access issues', 'warning');
+                }
+                
+                // Final assessment
+                const successCount = testResults.filter(r => r.status === 'success').length;
+                const totalTests = testResults.length;
+                
+                if (successCount === totalTests) {
+                    updateStatus(`✅ All tests passed! (${successCount}/${totalTests})`, 'success');
+                    log('🎉 Complete authentication flow test PASSED!', 'success');
+                } else {
+                    updateStatus(`⚠️ Some tests failed (${successCount}/${totalTests})`, 'warning');
+                    log('⚠️ Authentication flow test completed with issues', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Test suite error: ${error.message}`, 'error');
+                updateStatus('Test suite encountered an error', 'error');
+            }
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            log('📄 Page loaded, ready for testing', 'info');
+        });
+    </script>
+</body>
+</html>

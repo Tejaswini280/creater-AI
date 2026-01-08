@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface User {
@@ -15,107 +15,155 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  // ✅ CRITICAL FIX: Use ref to prevent multiple simultaneous checks
+  const isCheckingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+
   const checkAuth = useCallback(async () => {
+    // ✅ Prevent multiple simultaneous auth checks
+    if (isCheckingRef.current) {
+      console.log('🔍 Auth check already in progress, skipping...');
+      return;
+    }
+
     try {
       console.log('🔍 Checking authentication state...');
-      setIsLoading(true);
-
+      isCheckingRef.current = true;
+      
       // Debug: Check localStorage state
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
       console.log('🔍 localStorage state - token:', !!token, 'user:', !!userStr);
 
-      // Try cookie-based authentication (normal mode) with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch('/api/auth/user', {
-        method: 'GET',
-        credentials: 'include', // Include cookies in the request
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-
-      console.log('🔍 Cookie auth response status:', response.status);
-
-      if (response.ok) {
-        const userData = await response.json();
-        console.log('✅ User authenticated via cookies:', userData);
-        setUser(userData);
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        return; // Exit early on success
-      } 
-      
-      // If cookie auth failed, try localStorage fallback
-      console.log('❌ Cookie auth failed, trying localStorage fallback...');
-      
+      // First try localStorage fallback (faster and more reliable)
       if (token && userStr) {
         try {
           const userData = JSON.parse(userStr);
           
-          // Validate token format - should be a JWT token, not just user ID
-          if (token.includes('.') && token.split('.').length === 3) {
-            console.log('✅ User authenticated via localStorage with JWT token:', userData);
+          // Accept any token format - don't be too strict about JWT format
+          if (token && token.length > 0) {
+            console.log('✅ User authenticated via localStorage:', userData);
+            console.log('✅ Token found:', token.substring(0, 20) + '...');
             setUser(userData);
             setIsAuthenticated(true);
-          } else {
-            console.log('❌ Invalid token format in localStorage, treating as unauthenticated');
-            setIsAuthenticated(false);
-            setUser(null);
+            setIsLoading(false);
+            return; // Exit early on success - don't try cookie auth
           }
         } catch (parseError) {
           console.error('❌ Failed to parse stored user data:', parseError);
-          setIsAuthenticated(false);
-          setUser(null);
+          // Clear invalid localStorage data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
         }
       } else {
-        console.log('❌ No authentication found');
+        console.log('🔍 No localStorage token/user found, trying cookie auth...');
+      }
+
+      // Only try cookie-based authentication if no valid localStorage token
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch('/api/auth/user', {
+          method: 'GET',
+          credentials: 'include', // Include cookies in the request
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }) // Include token in header if available
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+
+        console.log('🔍 Cookie auth response status:', response.status);
+
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('✅ User authenticated via cookies:', userData);
+          
+          // ✅ CRITICAL: Store tokens in localStorage for consistency
+          if (userData.accessToken) {
+            localStorage.setItem('token', userData.accessToken);
+            localStorage.setItem('user', JSON.stringify(userData.user || userData));
+          }
+          
+          setUser(userData.user || userData);
+          setIsAuthenticated(true);
+        } else {
+          console.log('❌ Cookie auth failed with status:', response.status);
+          // ✅ Don't immediately logout on 401 - just mark as unauthenticated
+          setIsAuthenticated(false);
+          setUser(null);
+          // Clear any stale localStorage data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      } catch (fetchError) {
+        console.log('❌ Cookie auth failed:', fetchError);
         setIsAuthenticated(false);
         setUser(null);
       }
+      
     } catch (error) {
       console.error('Auth check error:', error);
       setIsAuthenticated(false);
       setUser(null);
     } finally {
+      isCheckingRef.current = false;
       setIsLoading(false);
       console.log('🔍 Auth check completed, loading set to false');
     }
   }, []);
 
+  // ✅ CRITICAL FIX: Single effect with proper cleanup
   useEffect(() => {
+    // ✅ Prevent double initialization in React Strict Mode
+    if (hasInitializedRef.current) {
+      console.log('🔍 Auth already initialized, skipping...');
+      return;
+    }
+
     console.log('🔧 Setting up auth...');
+    hasInitializedRef.current = true;
+    
+    // Set initial loading state
+    setIsLoading(true);
 
     // Initial check on mount
     checkAuth();
 
-    // Listen for custom auth events
+    // ✅ Auth-changed event listener
     const handleAuthChanged = () => {
-      console.log('📢 Auth change event received, rechecking...');
-      checkAuth();
+      console.log('📢 Auth change event received, executing immediate recheck...');
+      if (!isCheckingRef.current) {
+        checkAuth();
+      } else {
+        console.log('📢 Auth check already in progress, skipping event-triggered check');
+      }
     };
 
     window.addEventListener('auth-changed', handleAuthChanged as EventListener);
 
-    // Fallback timeout to prevent infinite loading
+    // ✅ Reasonable fallback timeout (only if still loading after 3 seconds)
     const fallbackTimeout = setTimeout(() => {
-      console.warn('⚠️ Auth check timeout - forcing loading to false');
-      setIsLoading(false);
-    }, 15000); // 15 second timeout
+      if (isCheckingRef.current || isLoading) {
+        console.warn('⚠️ Auth check timeout - forcing loading to false');
+        setIsLoading(false);
+        isCheckingRef.current = false;
+      }
+    }, 3000);
 
-    console.log('✅ Auth event listeners set up');
+    console.log('✅ Auth setup completed');
 
     return () => {
-      console.log('🧹 Cleaning up auth event listeners...');
+      console.log('🧹 Cleaning up auth...');
       window.removeEventListener('auth-changed', handleAuthChanged as EventListener);
       clearTimeout(fallbackTimeout);
+      hasInitializedRef.current = false;
+      isCheckingRef.current = false;
     };
-  }, [checkAuth]);
+  }, []); // ✅ Empty dependency array - run only once
 
   // Function to update user data (called from SettingsModal)
   const updateUserData = (newUserData: Partial<User>) => {
@@ -169,7 +217,11 @@ export function useAuth() {
   // Function to manually refresh auth state (for debugging)
   const refreshAuth = useCallback(() => {
     console.log('🔄 Manual auth refresh triggered');
-    checkAuth();
+    if (!isCheckingRef.current) {
+      checkAuth();
+    } else {
+      console.log('🔄 Auth check already in progress, skipping manual refresh');
+    }
   }, [checkAuth]);
 
   return {

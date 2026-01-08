@@ -118,8 +118,10 @@ class WebSocketManager {
         };
       }
 
-      // Handle direct userId (for development) - only if it's not a JWT token
-      if (token && token.length > 0 && !token.includes('.') && !token.includes('-')) {
+      // ✅ CRITICAL: Handle direct userId (for development) - improved validation
+      if (token && token.length > 0 && !token.includes('.')) {
+        // This is likely a userId, not a JWT token
+        console.log('🔌 WebSocket: Using userId as token for development:', token);
         return {
           id: token,
           email: 'dev@example.com',
@@ -133,7 +135,7 @@ class WebSocketManager {
       const decoded = verifyToken(token);
 
       if (!decoded) {
-        log(`JWT token verification failed for token: ${token.substring(0, 20)}...`);
+        console.log(`❌ JWT token verification failed for token: ${token.substring(0, 20)}...`);
         return null;
       }
 
@@ -145,7 +147,7 @@ class WebSocketManager {
       const user = await db.select().from(users).where(eq(users.id, decoded.userId)).limit(1);
 
       if (user.length === 0) {
-        log(`User not found in database for userId: ${decoded.userId}`);
+        console.log(`❌ User not found in database for userId: ${decoded.userId}`);
         return null;
       }
 

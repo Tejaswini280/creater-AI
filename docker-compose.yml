@@ -47,12 +47,15 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development  # ✅ CRITICAL: Use development mode for proper cookie settings
       - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/creators_dev_db
       - REDIS_URL=redis://redis:6379
       - PORT=5000
+      - JWT_SECRET=CreatorNexus-JWT-Secret-2024-Development
+      - JWT_REFRESH_SECRET=CreatorNexus-Refresh-Secret-2024-Development
+      - SESSION_SECRET=CreatorNexus-Dev-Secret-2024-Change-In-Production
     env_file:
-      - .env.production
+      - .env.development  # ✅ Use development environment for Docker
     depends_on:
       postgres:
         condition: service_healthy
