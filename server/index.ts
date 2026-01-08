@@ -47,7 +47,17 @@ console.log(`Process SKIP_RATE_LIMIT: ${process.env.SKIP_RATE_LIMIT}`);
 // Apply security middleware to all routes
 app.use(requestIdMiddleware);
 // Use centralized helmet configuration to keep CSP consistent across the app
-app.use(helmet(helmetConfig));
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet(helmetConfig));
+} else {
+  // Relaxed security for development
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP in development
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    hsts: false
+  }));
+}
 
 // Add baseline security headers on all responses (defense-in-depth)
 app.use((req, res, next) => {
@@ -58,9 +68,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// HTTPS enforcement in production
+// HTTPS enforcement in production (but not in Docker development)
 app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && req.header('x-forwarded-proto') !== 'https') {
+  // Skip HTTPS redirect in development or when TRUST_PROXY is false
+  const isProduction = process.env.NODE_ENV === 'production';
+  const trustProxy = process.env.TRUST_PROXY !== 'false';
+  const isHttps = req.header('x-forwarded-proto') === 'https';
+  
+  if (isProduction && trustProxy && !isHttps) {
+    console.log('🔒 Redirecting HTTP to HTTPS in production');
     res.redirect(`https://${req.header('host')}${req.url}`);
   } else {
     next();

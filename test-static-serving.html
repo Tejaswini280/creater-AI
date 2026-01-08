@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static File Serving Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Static File Serving Diagnostic</h1>
+        
+        <div class="info">
+            <h3>Testing Docker Application Static Files</h3>
+            <p>This page will test if the static files are being served correctly from the Docker container.</p>
+        </div>
+
+        <div id="test-results">
+            <h3>Test Results:</h3>
+        </div>
+
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testMainApp()">Test Main App</button>
+        <button onclick="testAssets()">Test Assets</button>
+        <button onclick="testAPI()">Test API</button>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testMainApp() {
+            addResult('Testing main application...', 'info');
+            
+            try {
+                const response = await fetch('/');
+                const text = await response.text();
+                
+                if (response.ok) {
+                    if (text.includes('<div id="root">')) {
+                        addResult('✅ Main app HTML structure found', 'success');
+                    } else {
+                        addResult('❌ Main app HTML structure missing', 'error');
+                    }
+                    
+                    if (text.includes('index.DbnIZ__A.js')) {
+                        addResult('✅ Main JavaScript bundle referenced', 'success');
+                    } else {
+                        addResult('❌ Main JavaScript bundle not found in HTML', 'error');
+                    }
+                } else {
+                    addResult(`❌ Main app failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Main app error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAssets() {
+            addResult('Testing static assets...', 'info');
+            
+            const assets = [
+                '/assets/index.DbnIZ__A.js',
+                '/assets/index.RFdhCS3s.css',
+                '/assets/vendor-D25WPXfs.js',
+                '/favicon.ico'
+            ];
+
+            for (const asset of assets) {
+                try {
+                    const response = await fetch(asset);
+                    if (response.ok) {
+                        addResult(`✅ Asset loaded: ${asset}`, 'success');
+                    } else {
+                        addResult(`❌ Asset failed: ${asset} (${response.status})`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ Asset error: ${asset} - ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testAPI() {
+            addResult('Testing API endpoints...', 'info');
+            
+            const endpoints = [
+                '/api/health',
+                '/api/websocket/stats'
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (response.ok) {
+                        const data = await response.json();
+                        addResult(`✅ API working: ${endpoint}`, 'success');
+                    } else {
+                        addResult(`❌ API failed: ${endpoint} (${response.status})`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ API error: ${endpoint} - ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('test-results').innerHTML = '<h3>Test Results:</h3>';
+            
+            await testMainApp();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAssets();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAPI();
+            
+            addResult('All tests completed!', 'info');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html>

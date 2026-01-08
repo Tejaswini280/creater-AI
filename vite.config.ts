@@ -41,10 +41,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunk for React and core libraries
+          // Critical: Keep React in the main vendor chunk to ensure proper loading
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
+              return 'vendor'; // Put React in main vendor chunk
             }
             if (id.includes('@tanstack') || id.includes('react-query')) {
               return 'query-vendor';

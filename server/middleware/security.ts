@@ -132,7 +132,10 @@ const devOrigins = [
   'http://127.0.0.1:5000',
   'http://127.0.0.1:3000',
   'http://0.0.0.0:5000', // ✅ Docker internal routing
-  'http://creator-ai-app:5000' // ✅ Docker container name
+  'http://creator-ai-app:5000', // ✅ Docker container name
+  'http://172.19.0.4:5000', // ✅ Docker container IP
+  'http://172.18.0.4:5000', // ✅ Alternative Docker IP range
+  'http://172.17.0.4:5000'  // ✅ Default Docker bridge IP range
 ];
 const prodOrigins = ['https://creatornexus.com', 'https://www.creatornexus.com'] as const;
 const maybeFrontend = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
@@ -187,11 +190,11 @@ export const helmetConfig: Readonly<HelmetOptions> = {
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  hsts: {
+  hsts: process.env.NODE_ENV === 'production' ? {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
     preload: true
-  },
+  } : false, // Disable HSTS in development
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 };
 

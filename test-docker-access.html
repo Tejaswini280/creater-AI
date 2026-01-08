@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Application Access Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐳 Docker Application Access Test</h1>
+        
+        <div class="success">
+            <h3>✅ Docker Container Status: HEALTHY</h3>
+            <p>The Docker containers are running successfully:</p>
+            <ul>
+                <li><strong>creator-ai-app</strong>: Running and healthy</li>
+                <li><strong>creator-ai-postgres</strong>: Running and healthy</li>
+                <li><strong>creator-ai-redis</strong>: Running and healthy</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <h3>📋 Container Information</h3>
+            <ul>
+                <li><strong>Container IP:</strong> 172.19.0.4</li>
+                <li><strong>Port Mapping:</strong> 5000:5000</li>
+                <li><strong>Environment:</strong> Development Mode</li>
+                <li><strong>HTTPS Enforcement:</strong> Disabled for Docker</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Application Tests</h3>
+            
+            <div>
+                <h4>1. Health Check Test</h4>
+                <button onclick="testHealthCheck()">Test Health Endpoint</button>
+                <div id="health-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div>
+                <h4>2. Main Application Test</h4>
+                <button onclick="testMainApp()">Test Main Application</button>
+                <div id="app-result" class="result" style="display: none;"></div>
+            </div>
+
+            <div>
+                <h4>3. API Test</h4>
+                <button onclick="testAPI()">Test API Endpoints</button>
+                <div id="api-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 Access Methods</h3>
+            <p><strong>Recommended Access URLs:</strong></p>
+            <ul>
+                <li><a href="http://localhost:5000" target="_blank">http://localhost:5000</a> (Primary)</li>
+                <li><a href="http://127.0.0.1:5000" target="_blank">http://127.0.0.1:5000</a> (Alternative)</li>
+            </ul>
+            
+            <div class="info">
+                <p><strong>Note:</strong> On Windows, Docker containers are not directly accessible via their internal IP addresses (172.19.0.4) from the host machine. Use localhost:5000 instead.</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Configuration Changes Made</h3>
+            <ul>
+                <li>✅ Fixed NODE_ENV to use development mode in Docker</li>
+                <li>✅ Disabled HTTPS enforcement for Docker development</li>
+                <li>✅ Updated CORS configuration to include Docker IPs</li>
+                <li>✅ Set TRUST_PROXY=false for Docker development</li>
+                <li>✅ Enabled SKIP_RATE_LIMIT for testing</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function testHealthCheck() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Health Check Passed: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Health Check Failed: ${response.status} - ${response.statusText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Health Check Error: ${error.message}`;
+            }
+        }
+
+        async function testMainApp() {
+            const resultDiv = document.getElementById('app-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('/');
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Main Application Accessible: ${response.status} - ${response.statusText}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Main Application Failed: ${response.status} - ${response.statusText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Main Application Error: ${error.message}`;
+            }
+        }
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('/api/websocket/stats');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ API Accessible: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API Failed: ${response.status} - ${response.statusText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ API Error: ${error.message}`;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testHealthCheck();
+                setTimeout(() => testMainApp(), 1000);
+                setTimeout(() => testAPI(), 2000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
