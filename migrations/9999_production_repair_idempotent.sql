@@ -425,5 +425,5 @@ ON CONFLICT (platform, category) DO NOTHING;
 -- Create test user if needed
 INSERT INTO users (id, email, password, first_name, last_name) 
 VALUES 
-  ('test-user-repair', 'repair@example.com', '$2b$10$rQZ9QmjytWzQgwjvHJ4zKOXvnK4nK4nK4nK4nK4nK4nK4nK4nK4nK4', 'Repair', 'User')
+  ('test-user-repair', 'repair@example.com', 'hashed_password_placeholder', 'Repair', 'User')
 ON CONFLICT (email) DO NOTHING;
