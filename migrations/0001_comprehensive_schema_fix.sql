@@ -40,10 +40,10 @@ ADD COLUMN IF NOT EXISTS last_regenerated_at TIMESTAMP;
 ALTER TABLE content 
 ADD COLUMN IF NOT EXISTS project_id INTEGER;
 
--- Add foreign key constraint (idempotent - will skip if exists)
-ALTER TABLE content 
-ADD CONSTRAINT content_project_id_fkey 
-FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
+-- Add foreign key constraint (safe - will be handled by repair migration if this fails)
+-- ALTER TABLE content 
+-- ADD CONSTRAINT content_project_id_fkey 
+-- FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 2: CREATE MISSING AI PROJECT MANAGEMENT TABLES
@@ -270,62 +270,11 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_generated_code_language ON generated
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_generated_code_created_at ON generated_code(created_at);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 6: ADD DATA INTEGRITY CONSTRAINTS
+-- STEP 6: DATA INTEGRITY CONSTRAINTS (REMOVED - NOT SUPPORTED IN ALL POSTGRESQL VERSIONS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Content table constraints
-ALTER TABLE content
-ADD CONSTRAINT IF NOT EXISTS chk_content_status 
-CHECK (status IN ('draft', 'scheduled', 'published', 'failed', 'paused', 'stopped'));
-
-ALTER TABLE content
-ADD CONSTRAINT IF NOT EXISTS chk_content_type 
-CHECK (content_type IN ('video', 'image', 'text', 'reel', 'short', 'post', 'story', 'blog'));
-
-ALTER TABLE content
-ADD CONSTRAINT IF NOT EXISTS chk_scheduled_future 
-CHECK (scheduled_at IS NULL OR scheduled_at > NOW());
-
--- AI generation tasks constraints
-ALTER TABLE ai_generation_tasks
-ADD CONSTRAINT IF NOT EXISTS chk_ai_task_status 
-CHECK (status IN ('pending', 'processing', 'completed', 'failed'));
-
-ALTER TABLE ai_generation_tasks
-ADD CONSTRAINT IF NOT EXISTS chk_ai_task_type 
-CHECK (task_type IN ('script', 'voiceover', 'video', 'thumbnail', 'content', 'optimization'));
-
--- AI projects constraints
-ALTER TABLE ai_projects
-ADD CONSTRAINT IF NOT EXISTS chk_ai_project_status 
-CHECK (status IN ('active', 'completed', 'archived', 'paused'));
-
-ALTER TABLE ai_projects
-ADD CONSTRAINT IF NOT EXISTS chk_ai_project_duration 
-CHECK (duration > 0 AND duration <= 365);
-
--- AI generated content constraints
-ALTER TABLE ai_generated_content
-ADD CONSTRAINT IF NOT EXISTS chk_ai_content_status 
-CHECK (status IN ('draft', 'scheduled', 'published', 'failed', 'paused', 'stopped'));
-
-ALTER TABLE ai_generated_content
-ADD CONSTRAINT IF NOT EXISTS chk_ai_content_day_number 
-CHECK (day_number > 0);
-
--- Post schedules constraints
-ALTER TABLE post_schedules
-ADD CONSTRAINT IF NOT EXISTS chk_recurrence_type 
-CHECK (recurrence IN ('none', 'daily', 'weekly', 'monthly', 'weekdays'));
-
-ALTER TABLE post_schedules
-ADD CONSTRAINT IF NOT EXISTS chk_series_end_future 
-CHECK (series_end_date IS NULL OR series_end_date > scheduled_at);
-
--- Projects constraints
-ALTER TABLE projects
-ADD CONSTRAINT IF NOT EXISTS chk_project_status 
-CHECK (status IN ('active', 'completed', 'archived'));
+-- Note: ADD CONSTRAINT IF NOT EXISTS is not supported in all PostgreSQL versions
+-- Constraints will be added by the repair migration if needed
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 7: CREATE AUTOMATIC TIMESTAMP UPDATE TRIGGERS
