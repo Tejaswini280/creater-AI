@@ -1,9 +1,9 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PRODUCTION REPAIR MIGRATION - FULLY IDEMPOTENT
+-- PRODUCTION REPAIR MIGRATION - SIMPLIFIED VERSION
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- This migration repairs the broken Railway production database
+-- Simplified to avoid DO $ block syntax issues
 -- Safe to run multiple times, handles all edge cases
--- Contains ALL schema creation that was moved from 0000_nice_forgotten_one.sql
 -- Date: 2026-01-09
 -- ═══════════════════════════════════════════════════════════════════════════════
 
@@ -17,7 +17,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Users table (core table)
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY NOT NULL,
-    email VARCHAR NOT NULL,
+    email VARCHAR NOT NULL UNIQUE,
     password TEXT NOT NULL,
     first_name VARCHAR NOT NULL,
     last_name VARCHAR NOT NULL,
@@ -26,17 +26,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
--- Add unique constraint if it doesn't exist
-DO $ 
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'users_email_unique' AND table_name = 'users'
-    ) THEN
-        ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE(email);
-    END IF;
-END $;
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -82,6 +71,13 @@ CREATE TABLE IF NOT EXISTS content (
     tags TEXT[],
     metadata JSONB,
     ai_generated BOOLEAN DEFAULT false,
+    day_number INTEGER,
+    is_paused BOOLEAN DEFAULT false,
+    is_stopped BOOLEAN DEFAULT false,
+    can_publish BOOLEAN DEFAULT true,
+    publish_order INTEGER DEFAULT 0,
+    content_version INTEGER DEFAULT 1,
+    last_regenerated_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -143,7 +139,7 @@ CREATE TABLE IF NOT EXISTS hashtag_suggestions (
 -- Niches table
 CREATE TABLE IF NOT EXISTS niches (
     id SERIAL PRIMARY KEY NOT NULL,
-    name VARCHAR NOT NULL,
+    name VARCHAR NOT NULL UNIQUE,
     category VARCHAR NOT NULL,
     trend_score INTEGER DEFAULT 0,
     difficulty VARCHAR NOT NULL,
@@ -153,17 +149,6 @@ CREATE TABLE IF NOT EXISTS niches (
     is_active BOOLEAN DEFAULT true,
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
--- Add unique constraint for niches if it doesn't exist
-DO $ 
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'niches_name_unique' AND table_name = 'niches'
-    ) THEN
-        ALTER TABLE niches ADD CONSTRAINT niches_name_unique UNIQUE(name);
-    END IF;
-END $;
 
 -- Notifications table
 CREATE TABLE IF NOT EXISTS notifications (
@@ -261,6 +246,9 @@ CREATE TABLE IF NOT EXISTS post_schedules (
     last_attempt_at TIMESTAMP,
     error_message TEXT,
     metadata JSONB,
+    recurrence VARCHAR(50) DEFAULT 'none',
+    timezone VARCHAR(100) DEFAULT 'UTC',
+    series_end_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -283,64 +271,6 @@ CREATE TABLE IF NOT EXISTS templates (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 2: REPAIR USERS TABLE - ADD MISSING PASSWORD COLUMN
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Check if password column exists, if not add it
-DO $ 
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'password'
-    ) THEN
-        ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
-        -- Remove default after adding
-        ALTER TABLE users ALTER COLUMN password DROP DEFAULT;
-        RAISE NOTICE '✅ Added missing password column to users table';
-    ELSE
-        RAISE NOTICE '⏭️  Password column already exists in users table';
-    END IF;
-END $;
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 3: ADD MISSING COLUMNS TO EXISTING TABLES
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Add project_id column to content if missing
-DO $ 
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'content' AND column_name = 'project_id'
-    ) THEN
-        ALTER TABLE content ADD COLUMN project_id INTEGER;
-        RAISE NOTICE '✅ Added missing project_id column to content table';
-    ELSE
-        RAISE NOTICE '⏭️  project_id column already exists in content table';
-    END IF;
-END $;
-
--- Add all missing enhanced content management columns
-ALTER TABLE content 
-ADD COLUMN IF NOT EXISTS day_number INTEGER,
-ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS is_stopped BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS can_publish BOOLEAN DEFAULT true,
-ADD COLUMN IF NOT EXISTS publish_order INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS content_version INTEGER DEFAULT 1,
-ADD COLUMN IF NOT EXISTS last_regenerated_at TIMESTAMP;
-
--- Add missing columns to post_schedules
-ALTER TABLE post_schedules
-ADD COLUMN IF NOT EXISTS recurrence VARCHAR(50) DEFAULT 'none',
-ADD COLUMN IF NOT EXISTS timezone VARCHAR(100) DEFAULT 'UTC',
-ADD COLUMN IF NOT EXISTS series_end_date TIMESTAMP;
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 4: CREATE ENHANCED AI TABLES (FULLY IDEMPOTENT)
--- ═══════════════════════════════════════════════════════════════════════════════
 
 -- AI Projects table
 CREATE TABLE IF NOT EXISTS ai_projects (
@@ -456,245 +386,28 @@ CREATE TABLE IF NOT EXISTS generated_code (
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 5: ADD ALL FOREIGN KEY CONSTRAINTS (IDEMPOTENT)
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Add foreign keys only if tables exist and constraints don't exist
-DO $ 
-BEGIN
-    -- Core table foreign keys from original migration
-    
-    -- AI content suggestions
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_content_suggestions')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_content_suggestions_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE ai_content_suggestions ADD CONSTRAINT ai_content_suggestions_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_content_suggestions')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_content_suggestions_project_id_projects_id_fk'
-       ) THEN
-        ALTER TABLE ai_content_suggestions ADD CONSTRAINT ai_content_suggestions_project_id_projects_id_fk 
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
-    END IF;
-
-    -- AI generation tasks
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_generation_tasks')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_generation_tasks_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE ai_generation_tasks ADD CONSTRAINT ai_generation_tasks_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Content table
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'content')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'content_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE content ADD CONSTRAINT content_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'content')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'content_project_id_projects_id_fk'
-       ) THEN
-        ALTER TABLE content ADD CONSTRAINT content_project_id_projects_id_fk 
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Content metrics
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'content') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'content_metrics')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'content_metrics_content_id_content_id_fk'
-       ) THEN
-        ALTER TABLE content_metrics ADD CONSTRAINT content_metrics_content_id_content_id_fk 
-        FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Notifications
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'notifications')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'notifications_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE notifications ADD CONSTRAINT notifications_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Platform posts
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_posts') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'platform_posts')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'platform_posts_social_post_id_social_posts_id_fk'
-       ) THEN
-        ALTER TABLE platform_posts ADD CONSTRAINT platform_posts_social_post_id_social_posts_id_fk 
-        FOREIGN KEY (social_post_id) REFERENCES social_posts(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Post media
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_posts') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'post_media')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'post_media_social_post_id_social_posts_id_fk'
-       ) THEN
-        ALTER TABLE post_media ADD CONSTRAINT post_media_social_post_id_social_posts_id_fk 
-        FOREIGN KEY (social_post_id) REFERENCES social_posts(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Post schedules
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_posts') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'post_schedules')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'post_schedules_social_post_id_social_posts_id_fk'
-       ) THEN
-        ALTER TABLE post_schedules ADD CONSTRAINT post_schedules_social_post_id_social_posts_id_fk 
-        FOREIGN KEY (social_post_id) REFERENCES social_posts(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Projects
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'projects_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE projects ADD CONSTRAINT projects_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Social accounts
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_accounts')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'social_accounts_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE social_accounts ADD CONSTRAINT social_accounts_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Social posts
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_posts')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'social_posts_user_id_users_id_fk'
-       ) THEN
-        ALTER TABLE social_posts ADD CONSTRAINT social_posts_user_id_users_id_fk 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_posts')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'social_posts_project_id_projects_id_fk'
-       ) THEN
-        ALTER TABLE social_posts ADD CONSTRAINT social_posts_project_id_projects_id_fk 
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Enhanced AI table foreign keys
-    
-    -- AI projects -> users
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_projects')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_projects_user_id_fkey'
-       ) THEN
-        ALTER TABLE ai_projects ADD CONSTRAINT ai_projects_user_id_fkey 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- AI generated content -> ai_projects and users
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_projects') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_generated_content')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_generated_content_ai_project_id_fkey'
-       ) THEN
-        ALTER TABLE ai_generated_content ADD CONSTRAINT ai_generated_content_ai_project_id_fkey 
-        FOREIGN KEY (ai_project_id) REFERENCES ai_projects(id) ON DELETE CASCADE;
-    END IF;
-
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_generated_content')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'ai_generated_content_user_id_fkey'
-       ) THEN
-        ALTER TABLE ai_generated_content ADD CONSTRAINT ai_generated_content_user_id_fkey 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Structured outputs -> users
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'structured_outputs')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'structured_outputs_user_id_fkey'
-       ) THEN
-        ALTER TABLE structured_outputs ADD CONSTRAINT structured_outputs_user_id_fkey 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-
-    -- Generated code -> users
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') 
-       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'generated_code')
-       AND NOT EXISTS (
-           SELECT 1 FROM information_schema.table_constraints 
-           WHERE constraint_name = 'generated_code_user_id_fkey'
-       ) THEN
-        ALTER TABLE generated_code ADD CONSTRAINT generated_code_user_id_fkey 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-    END IF;
-END $;
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 6: CREATE ESSENTIAL INDEXES (IDEMPOTENT)
+-- STEP 2: CREATE ESSENTIAL INDEXES (IDEMPOTENT)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Session index from original migration
 CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions USING btree (expire);
 
 -- Content table indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_user_id ON content(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_project_id ON content(project_id) WHERE project_id IS NOT NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_status ON content(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_scheduled_at ON content(scheduled_at) WHERE scheduled_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_user_id ON content(user_id);
+CREATE INDEX IF NOT EXISTS idx_content_project_id ON content(project_id);
+CREATE INDEX IF NOT EXISTS idx_content_status ON content(status);
+CREATE INDEX IF NOT EXISTS idx_content_scheduled_at ON content(scheduled_at);
 
 -- AI projects indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_projects_user_id ON ai_projects(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_projects_status ON ai_projects(status);
+CREATE INDEX IF NOT EXISTS idx_ai_projects_user_id ON ai_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_projects_status ON ai_projects(status);
 
 -- AI generated content indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_ai_project_id ON ai_generated_content(ai_project_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_user_id ON ai_generated_content(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_ai_project_id ON ai_generated_content(ai_project_id);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_user_id ON ai_generated_content(user_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 7: SEED ESSENTIAL DATA (IDEMPOTENT)
+-- STEP 3: SEED ESSENTIAL DATA (IDEMPOTENT)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Insert AI engagement patterns (with conflict handling)
@@ -714,27 +427,3 @@ INSERT INTO users (id, email, password, first_name, last_name)
 VALUES 
   ('test-user-repair', 'repair@example.com', '$2b$10$rQZ9QmjytWzQgwjvHJ4zKOXvnK4nK4nK4nK4nK4nK4nK4nK4nK4nK4', 'Repair', 'User')
 ON CONFLICT (email) DO NOTHING;
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- COMPLETION LOG
--- ═══════════════════════════════════════════════════════════════════════════════
-
-DO $
-BEGIN
-    RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════════';
-    RAISE NOTICE '🔧 PRODUCTION REPAIR MIGRATION COMPLETED SUCCESSFULLY';
-    RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════════';
-    RAISE NOTICE 'Schema Created/Repaired:';
-    RAISE NOTICE '  ✅ All core tables (users, projects, content, etc.)';
-    RAISE NOTICE '  ✅ All AI enhancement tables';
-    RAISE NOTICE '  ✅ Fixed users.password column (if missing)';
-    RAISE NOTICE '  ✅ Fixed content.project_id column (if missing)';
-    RAISE NOTICE '  ✅ Added enhanced content management columns';
-    RAISE NOTICE '  ✅ Added all foreign key constraints';
-    RAISE NOTICE '  ✅ Created performance indexes';
-    RAISE NOTICE '  ✅ Seeded essential data';
-    RAISE NOTICE '';
-    RAISE NOTICE '🚀 Database is now production-ready and scheduler-safe!';
-    RAISE NOTICE '🔄 This migration is fully idempotent - safe to run multiple times';
-    RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════════';
-END $;
