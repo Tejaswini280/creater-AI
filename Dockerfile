@@ -52,6 +52,10 @@ RUN rm -f ./server/vite.ts ./server/vite.js
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 COPY --from=builder --chown=nextjs:nodejs /app/uploads ./uploads
 
+# ✅ CRITICAL: Copy migration and script files for database initialization
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
 # Set user
 USER nextjs
 

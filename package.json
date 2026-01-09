@@ -26,7 +26,10 @@
     "perf:server:prod": "npm run build && cross-env NODE_ENV=production SKIP_RATE_LIMIT=1 node dist/index.js",
     "perf:mem:long": "cross-env APP_URL=http://localhost:5000 SKIP_RATE_LIMIT=1 node tests/perf/memory-long.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:migrate": "node scripts/run-migrations.js",
+    "db:seed": "node scripts/seed-database.js",
+    "db:setup": "npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
