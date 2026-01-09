@@ -69,13 +69,21 @@ export class ContentSchedulerService {
   public async initialize(): Promise<void> {
     console.log('🚀 Initializing Content Scheduler Service...');
     
-    // Load existing scheduled content and reschedule jobs
-    await this.loadExistingSchedules();
-    
-    // Start monitoring for new scheduled content
-    this.startMonitoring();
-    
-    console.log('✅ Content Scheduler Service initialized successfully');
+    try {
+      // Load existing scheduled content and reschedule jobs
+      await this.loadExistingSchedules();
+      
+      // Start monitoring for new scheduled content
+      this.startMonitoring();
+      
+      console.log('✅ Content Scheduler Service initialized successfully');
+    } catch (error) {
+      console.error('❌ Content Scheduler Service initialization failed:', error);
+      console.log('⚠️  Scheduler will continue to work for new content, but existing schedules may not be loaded');
+      
+      // Still start monitoring even if loading existing schedules failed
+      this.startMonitoring();
+    }
   }
 
   /**
@@ -83,6 +91,23 @@ export class ContentSchedulerService {
    */
   private async loadExistingSchedules(): Promise<void> {
     try {
+      // Verify database connection and schema before querying
+      console.log('📋 Checking database schema for scheduler...');
+      
+      // Test if content table exists and has required columns
+      const schemaCheck = await db.execute(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'content' 
+        AND column_name IN ('id', 'status', 'scheduled_at', 'user_id')
+      `);
+      
+      if (schemaCheck.length < 4) {
+        throw new Error('Content table schema is not ready - missing required columns');
+      }
+      
+      console.log('✅ Database schema verified for scheduler');
+      
       const scheduledContent = await db
         .select()
         .from(content)
@@ -111,7 +136,9 @@ export class ContentSchedulerService {
       }
     } catch (error) {
       console.error('❌ Error loading existing schedules:', error);
-      console.log('⚠️ Continuing without loading existing schedules - service will still work for new schedules');
+      console.log('⚠️ This is expected if database schema is not ready yet');
+      console.log('⚠️ Scheduler will work for new content once schema is available');
+      throw error; // Re-throw to be handled by initialize()
     }
   }
 

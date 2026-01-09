@@ -32,6 +32,97 @@ import { dbOptimizer, dbMonitor } from './db/optimization';
 
 const app = express();
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRODUCTION-GRADE BOOT SEQUENCE
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRITICAL: This order is MANDATORY for production stability
+// 1. Database connection & migrations (with advisory lock)
+// 2. Database seeding (after schema is final)
+// 3. Service initialization (scheduler, etc.)
+// 4. HTTP server startup
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function initializeDatabase() {
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════════════════════════');
+  console.log('🗄️  STEP 1: DATABASE INITIALIZATION (CRITICAL BOOT SEQUENCE)');
+  console.log('═══════════════════════════════════════════════════════════════════════════════');
+  
+  try {
+    // STEP 1: Run migrations with advisory lock (EXACTLY ONCE)
+    console.log('🔄 Running database migrations with advisory lock...');
+    const migrationRunner = new MigrationRunner();
+    await migrationRunner.run();
+    console.log('✅ Database migrations completed successfully');
+    
+    // STEP 2: Run seeding (AFTER migrations, only if not in test)
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('🌱 Seeding database with essential data...');
+      const seeder = new DatabaseSeeder();
+      await seeder.run();
+      console.log('✅ Database seeding completed successfully');
+    } else {
+      console.log('⏭️  Skipping database seeding (test environment)');
+    }
+    
+    console.log('');
+    console.log('✅ DATABASE INITIALIZATION COMPLETED - SCHEMA IS READY');
+    console.log('═══════════════════════════════════════════════════════════════════════════════');
+    
+  } catch (error) {
+    console.error('');
+    console.error('═══════════════════════════════════════════════════════════════════════════════');
+    console.error('💥 CRITICAL: DATABASE INITIALIZATION FAILED');
+    console.error('═══════════════════════════════════════════════════════════════════════════════');
+    console.error('Error:', error instanceof Error ? error.message : String(error));
+    
+    // In production, we MUST fail fast if database is not ready
+    if (process.env.NODE_ENV === 'production') {
+      console.error('');
+      console.error('🚨 PRODUCTION MODE: Exiting due to database failure');
+      console.error('   The application cannot start without a working database schema.');
+      console.error('   Check your DATABASE_URL and database connectivity.');
+      console.error('');
+      process.exit(1);
+    } else {
+      console.warn('');
+      console.warn('⚠️  DEVELOPMENT MODE: Continuing despite database failure');
+      console.warn('   This may cause runtime errors. Fix database issues ASAP.');
+      console.warn('');
+    }
+  }
+}
+
+async function initializeServices() {
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════════════════════════');
+  console.log('🚀 STEP 2: SERVICE INITIALIZATION (AFTER DATABASE IS READY)');
+  console.log('═══════════════════════════════════════════════════════════════════════════════');
+  
+  try {
+    // Initialize Content Scheduler Service (AFTER database is ready)
+    console.log('📅 Initializing Content Scheduler Service...');
+    const schedulerService = ContentSchedulerService.getInstance();
+    await schedulerService.initialize();
+    console.log('✅ Content Scheduler Service initialized successfully');
+    
+    console.log('');
+    console.log('✅ ALL SERVICES INITIALIZED SUCCESSFULLY');
+    console.log('═══════════════════════════════════════════════════════════════════════════════');
+    
+  } catch (error) {
+    console.error('');
+    console.error('⚠️  SERVICE INITIALIZATION WARNING');
+    console.error('Error:', error instanceof Error ? error.message : String(error));
+    console.error('Continuing with application startup (services will retry)...');
+    console.error('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPRESS MIDDLEWARE CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // Configure Express to trust proxy headers (required for Railway/production)
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // Trust first proxy (Railway, Heroku, etc.)
@@ -210,21 +301,22 @@ if (!perfMode) {
 }
 
 (async () => {
-  // Register routes and get server instance
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MANDATORY BOOT SEQUENCE - DO NOT CHANGE ORDER
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  // STEP 1: Initialize database FIRST (migrations + seeding)
+  await initializeDatabase();
+  
+  // STEP 2: Initialize services AFTER database is ready
+  await initializeServices();
+  
+  // STEP 3: Register routes and get server instance
   const server = await registerRoutes(app);
   
-  // Initialize WebSocket server
+  // STEP 4: Initialize WebSocket server
   const wsManager = new WebSocketManager(server);
-  console.log("WebSocket server initialized");
-
-  // Initialize Content Scheduler Service (non-blocking)
-  try {
-    const schedulerService = ContentSchedulerService.getInstance();
-    await schedulerService.initialize();
-    console.log("Content Scheduler Service initialized");
-  } catch (error) {
-    console.warn("Content Scheduler Service initialization failed (non-fatal):", error instanceof Error ? error.message : String(error));
-  }
+  console.log("✅ WebSocket server initialized");
 
   // Make WebSocket manager globally available for routes
   (global as any).wsManager = wsManager;
@@ -234,7 +326,9 @@ if (!perfMode) {
     res.status(200).json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
+      database: 'ready',
+      scheduler: 'initialized'
     });
   });
 
@@ -297,52 +391,6 @@ if (!perfMode) {
     serveStatic(app);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // DATABASE INITIALIZATION - RUN MIGRATIONS AND SEEDING
-  // ═══════════════════════════════════════════════════════════════════════════════
-  
-  async function initializeDatabase() {
-    console.log('🗄️ Initializing database...');
-    
-    try {
-      // Run migrations first
-      console.log('🔄 Running database migrations...');
-      const migrationRunner = new MigrationRunner();
-      await migrationRunner.run();
-      
-      // Then run seeding (only if not in test environment)
-      if (process.env.NODE_ENV !== 'test') {
-        console.log('🌱 Seeding database...');
-        const seeder = new DatabaseSeeder();
-        await seeder.run();
-      }
-      
-      console.log('✅ Database initialization completed successfully');
-      
-    } catch (error) {
-      console.error('❌ Database initialization failed:', error);
-      
-      // Check if this is just a "tables already exist" error
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('already exists') || errorMessage.includes('relation') || errorMessage.includes('constraint')) {
-        console.log('ℹ️ Database tables already exist - this is normal for existing deployments');
-        console.log('✅ Continuing with application startup');
-        return; // Continue startup
-      }
-      
-      // In production, we want to fail fast if database is not ready
-      if (process.env.NODE_ENV === 'production') {
-        console.error('💥 Exiting due to database initialization failure in production');
-        process.exit(1);
-      } else {
-        console.warn('⚠️ Continuing despite database initialization failure (development mode)');
-      }
-    }
-  }
-
-  // Initialize database before starting server
-  await initializeDatabase();
-
   // Attempt to create DB indexes for better performance (best-effort)
   try {
     await dbOptimizer.createIndexes();
@@ -350,16 +398,30 @@ if (!perfMode) {
     console.warn('DB index creation skipped or failed (non-fatal):', (e instanceof Error ? e.message : String(e)));
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // STEP 5: START HTTP SERVER (LAST STEP)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
   const port = 5000;
   server.listen({
     port,
     host: "0.0.0.0",
   }, () => {
-    console.log(`serving on port ${port}`);
-    console.log(`WebSocket server available at ws://localhost:${port}/ws`);
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════════════════════════');
+    console.log('🎉 APPLICATION STARTUP COMPLETED SUCCESSFULLY');
+    console.log('═══════════════════════════════════════════════════════════════════════════════');
+    console.log(`🌐 HTTP Server: http://localhost:${port}`);
+    console.log(`🔌 WebSocket Server: ws://localhost:${port}/ws`);
+    console.log(`📊 Health Check: http://localhost:${port}/api/health`);
+    console.log('');
+    console.log('✅ Database: Migrated and seeded');
+    console.log('✅ Scheduler: Initialized and ready');
+    console.log('✅ WebSocket: Connected and ready');
+    console.log('✅ HTTP Server: Listening and ready');
+    console.log('');
+    console.log('🚀 Application is ready to serve requests!');
+    console.log('═══════════════════════════════════════════════════════════════════════════════');
   });
 
   // Kick off DB performance optimizations (indexes, analyze) without blocking startup

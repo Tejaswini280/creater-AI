@@ -38,6 +38,7 @@ class MigrationRunner {
   constructor() {
     this.sql = null;
     this.migrations = [];
+    this.lockAcquired = false;
   }
 
   async connect() {
@@ -63,6 +64,34 @@ class MigrationRunner {
     } catch (error) {
       console.error('❌ Database connection failed:', error.message);
       throw error;
+    }
+  }
+
+  async acquireAdvisoryLock() {
+    console.log('🔒 Acquiring PostgreSQL advisory lock for migrations...');
+    
+    try {
+      // Use a unique lock ID for migrations (42424242)
+      const result = await this.sql`SELECT pg_advisory_lock(42424242)`;
+      this.lockAcquired = true;
+      console.log('✅ Advisory lock acquired - this process is the sole migrator');
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to acquire advisory lock:', error.message);
+      throw error;
+    }
+  }
+
+  async releaseAdvisoryLock() {
+    if (this.lockAcquired) {
+      console.log('🔓 Releasing PostgreSQL advisory lock...');
+      try {
+        await this.sql`SELECT pg_advisory_unlock(42424242)`;
+        this.lockAcquired = false;
+        console.log('✅ Advisory lock released');
+      } catch (error) {
+        console.error('❌ Failed to release advisory lock:', error.message);
+      }
     }
   }
 
@@ -199,6 +228,7 @@ class MigrationRunner {
 
   async close() {
     if (this.sql) {
+      await this.releaseAdvisoryLock();
       await this.sql.end();
       console.log('🔌 Database connection closed');
     }
@@ -210,6 +240,7 @@ class MigrationRunner {
     while (retries < config.maxRetries) {
       try {
         await this.connect();
+        await this.acquireAdvisoryLock();
         await this.createMigrationsTable();
         await this.loadMigrations();
         await this.runMigrations();
@@ -219,6 +250,9 @@ class MigrationRunner {
       } catch (error) {
         retries++;
         console.error(`❌ Migration attempt ${retries}/${config.maxRetries} failed:`, error.message);
+        
+        // Always try to release lock on failure
+        await this.releaseAdvisoryLock();
         
         if (retries < config.maxRetries) {
           console.log(`⏳ Retrying in ${config.retryDelay}ms...`);
