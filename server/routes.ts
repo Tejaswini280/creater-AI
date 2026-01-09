@@ -5776,10 +5776,29 @@ End with a clear call to action encouraging engagement.
   });
 
   // Enhanced content scheduling endpoint for Task 3.2
-  app.post('/api/content/schedule', authenticateToken, async (req: any, res) => {
+  app.post('/api/content/schedule', authenticateToken, validateInputSize, sanitizeInput, validateInput(validationSchemas.scheduling), async (req: any, res) => {
     try {
       console.log('Schedule request body:', req.body);
-      const { contentId, id, scheduledAt, scheduledDate, scheduledTime, platforms, contentType, title, description, autoPost, timezone } = req.body;
+      const { 
+        contentId, 
+        id, 
+        scheduledAt, 
+        scheduledDate, 
+        scheduledTime, 
+        platforms, 
+        contentType, 
+        title, 
+        description, 
+        autoPost, 
+        timezone,
+        // CRITICAL FIX: Add missing scheduler form fields
+        duration,
+        tone,
+        targetAudience,
+        timeDistribution,
+        recurrence,
+        seriesEndDate
+      } = req.body;
       const userId = req.user.id;
       
       // Handle both contentId and id parameters for compatibility
@@ -5801,7 +5820,18 @@ End with a clear call to action encouraging engagement.
         finalScheduledAt = `${dateStr}T${scheduledTime}:00.000Z`;
       }
       
-      console.log('Processed parameters:', { finalContentId, finalScheduledAt, platforms, contentType, title, description });
+      console.log('Processed parameters:', { 
+        finalContentId, 
+        finalScheduledAt, 
+        platforms, 
+        contentType, 
+        title, 
+        description,
+        duration,
+        tone,
+        targetAudience,
+        timeDistribution
+      });
       
       if (!finalScheduledAt) {
         return res.status(400).json({
@@ -5845,15 +5875,14 @@ End with a clear call to action encouraging engagement.
           }
           
           // Update the existing content with scheduled status and datetime
-          scheduledContent = await storage.updateContent(parseInt(finalContentId), {
+          scheduledContent = await storage.updateContent(parseInt(finalContentId), userId, {
             status: 'scheduled',
             scheduledAt: scheduledDateTime,
-            updatedAt: new Date()
           });
           
           console.log('Updated existing content to scheduled:', scheduledContent);
         } else {
-          // Create new scheduled content
+          // Create new scheduled content with all form fields
           console.log('Creating new scheduled content');
           scheduledContent = await storage.createScheduledContent({
             userId,
@@ -5862,6 +5891,14 @@ End with a clear call to action encouraging engagement.
             contentType: contentType || 'video',
             title: title || 'Untitled Content',
             description: description || '',
+            // CRITICAL FIX: Map missing scheduler form fields
+            duration: duration || null,
+            tone: tone || null,
+            targetAudience: targetAudience || null,
+            timeDistribution: timeDistribution || null,
+            recurrence: recurrence || 'none',
+            timezone: timezone || 'UTC',
+            seriesEndDate: seriesEndDate ? new Date(seriesEndDate) : null,
             platforms: platforms,
             status: 'scheduled',
             createdAt: new Date(),
@@ -7809,6 +7846,7 @@ End with a clear call to action encouraging engagement.
         console.error('❌ User lookup error:', userError);
       }
       
+      // CRITICAL FIX: Map all project wizard fields to database columns
       const projectData = {
         userId,
         name: req.body.name,
@@ -7821,8 +7859,28 @@ End with a clear call to action encouraging engagement.
         tags: req.body.tags || [],
         isPublic: req.body.isPublic || false,
         status: 'active',
+        // CRITICAL FIX: Add missing project wizard fields
+        contentType: req.body.contentType || null,
+        channelTypes: req.body.channelTypes || null,
+        category: req.body.category || null,
+        duration: req.body.duration || null,
+        contentFrequency: req.body.contentFrequency || null,
+        contentFormats: req.body.contentFormats || null,
+        contentThemes: req.body.contentThemes || null,
+        brandVoice: req.body.brandVoice || null,
+        contentLength: req.body.contentLength || null,
+        postingFrequency: req.body.postingFrequency || null,
+        aiTools: req.body.aiTools || null,
+        schedulingPreferences: req.body.schedulingPreferences || null,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : null,
+        budget: req.body.budget || null,
+        teamMembers: req.body.teamMembers || null,
+        goals: req.body.goals || null,
         metadata: {
           createdAt: new Date().toISOString(),
+          originalData: req.body.metadata?.originalData || req.body,
+          createdViaWizard: true,
+          wizardVersion: '1.0',
           ...req.body.metadata
         }
       };

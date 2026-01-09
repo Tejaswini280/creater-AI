@@ -40,6 +40,15 @@ export const aiGenerationValidationSchema = z.object({
 
 // Scheduling validation schemas
 export const schedulingValidationSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title must be less than 200 characters').optional(),
+  description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
+  platform: z.string().min(1, 'Platform is required').optional(),
+  contentType: z.enum(['video', 'image', 'text', 'reel', 'short', 'story', 'post'], 'Invalid content type').optional(),
+  scheduledAt: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const date = new Date(val);
+    return date > new Date();
+  }, 'Scheduled time must be in the future'),
   recurrence: z.enum(['none', 'daily', 'weekly', 'monthly', 'weekdays']).default('none'),
   timezone: z.string().min(3, 'Timezone must be at least 3 characters').default('UTC'),
   seriesEndDate: z.string().optional().refine((val) => {
@@ -47,6 +56,11 @@ export const schedulingValidationSchema = z.object({
     const date = new Date(val);
     return date > new Date();
   }, 'Series end date must be in the future'),
+  // CRITICAL FIX: Add missing scheduler form fields
+  duration: z.string().optional(),
+  tone: z.enum(['professional', 'casual', 'friendly', 'authoritative', 'playful', 'inspirational']).optional(),
+  targetAudience: z.string().max(200, 'Target audience description too long').optional(),
+  timeDistribution: z.enum(['mixed', 'peak', 'off-peak', 'optimal']).optional(),
 });
 
 // Project validation schemas
@@ -62,12 +76,27 @@ export const projectValidationSchema = z.object({
   isPublic: z.boolean().optional(),
   template: z.string().optional(),
   metadata: z.object({}).optional(),
-  // Additional fields for social media projects
+  // CRITICAL FIX: Add missing project wizard fields
   contentType: z.array(z.string()).optional(),
   channelTypes: z.array(z.string()).optional(),
-  category: z.string().optional(),
-  duration: z.string().optional(),
-  contentFrequency: z.string().optional(),
+  category: z.enum(['fitness', 'tech', 'lifestyle', 'business', 'education', 'entertainment']).optional(),
+  duration: z.enum(['7days', '30days', '90days', 'custom']).optional(),
+  contentFrequency: z.enum(['daily', 'weekly', 'bi-weekly', 'monthly']).optional(),
+  contentFormats: z.array(z.string()).optional(),
+  contentThemes: z.array(z.string()).optional(),
+  brandVoice: z.enum(['professional', 'friendly', 'authoritative', 'playful', 'inspirational', 'educational', 'conversational', 'bold']).optional(),
+  contentLength: z.enum(['short', 'medium', 'long']).optional(),
+  postingFrequency: z.string().optional(),
+  aiTools: z.array(z.string()).optional(),
+  schedulingPreferences: z.object({
+    autoSchedule: z.boolean().optional(),
+    timeZone: z.string().optional(),
+    preferredTimes: z.array(z.string()).optional(),
+  }).optional(),
+  startDate: z.string().optional(),
+  budget: z.string().optional(),
+  teamMembers: z.array(z.string()).optional(),
+  goals: z.array(z.string()).optional(),
   aiEnhancement: z.any().optional(),
 }).passthrough(); // Allow additional fields
 
