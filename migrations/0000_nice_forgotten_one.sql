@@ -10,10 +10,3 @@
 -- This is a NO-OP migration that establishes the baseline
 -- It does nothing and will never fail on existing databases
 SELECT 1 as baseline_migration_complete;
-
--- Log completion
-DO $
-BEGIN
-    RAISE NOTICE '✅ Baseline migration 0000 completed (NO-OP)';
-    RAISE NOTICE '📋 All schema creation handled by repair migration 9999';
-END $;
