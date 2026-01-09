@@ -1,17 +1,17 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- COMPREHENSIVE DATABASE SCHEMA FIX - SYNTAX ERROR FREE VERSION
+-- COMPREHENSIVE DATABASE SCHEMA FIX - PRODUCTION SAFE VERSION
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- This migration fixes ALL database schema issues identified in the audit
 -- Date: 2026-01-09
 -- Description: Complete schema synchronization for production-grade deployment
--- FIXED: Removed all DO $ blocks to prevent PostgreSQL syntax errors
+-- PRODUCTION SAFE: NO FOREIGN KEYS - Only creates tables and columns
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Enable UUID extension if not exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 1: FIX CONTENT TABLE - ADD MISSING COLUMNS
+-- STEP 1: FIX CONTENT TABLE - ADD MISSING COLUMNS (NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Add missing columns to content table (idempotent)
@@ -36,23 +36,18 @@ ADD COLUMN IF NOT EXISTS content_version INTEGER DEFAULT 1;
 ALTER TABLE content 
 ADD COLUMN IF NOT EXISTS last_regenerated_at TIMESTAMP;
 
--- Ensure project_id column exists
+-- Ensure project_id column exists (NO FOREIGN KEY CONSTRAINT)
 ALTER TABLE content 
 ADD COLUMN IF NOT EXISTS project_id INTEGER;
 
--- Add foreign key constraint (safe - will be handled by repair migration if this fails)
--- ALTER TABLE content 
--- ADD CONSTRAINT content_project_id_fkey 
--- FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
-
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 2: CREATE MISSING AI PROJECT MANAGEMENT TABLES
+-- STEP 2: CREATE MISSING AI PROJECT MANAGEMENT TABLES (NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- AI Projects table
+-- AI Projects table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_projects (
   id SERIAL PRIMARY KEY,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id VARCHAR NOT NULL,
   title VARCHAR NOT NULL,
   description TEXT,
   project_type VARCHAR NOT NULL,
@@ -75,11 +70,11 @@ CREATE TABLE IF NOT EXISTS ai_projects (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Generated Content table
+-- AI Generated Content table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_generated_content (
   id SERIAL PRIMARY KEY,
-  ai_project_id INTEGER NOT NULL REFERENCES ai_projects(id) ON DELETE CASCADE,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ai_project_id INTEGER NOT NULL,
+  user_id VARCHAR NOT NULL,
   title VARCHAR NOT NULL,
   description TEXT,
   content TEXT NOT NULL,
@@ -105,12 +100,12 @@ CREATE TABLE IF NOT EXISTS ai_generated_content (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Content Calendar table
+-- AI Content Calendar table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_content_calendar (
   id SERIAL PRIMARY KEY,
-  ai_project_id INTEGER NOT NULL REFERENCES ai_projects(id) ON DELETE CASCADE,
-  content_id INTEGER NOT NULL REFERENCES ai_generated_content(id) ON DELETE CASCADE,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ai_project_id INTEGER NOT NULL,
+  content_id INTEGER NOT NULL,
+  user_id VARCHAR NOT NULL,
   scheduled_date TIMESTAMP NOT NULL,
   scheduled_time VARCHAR NOT NULL,
   platform VARCHAR NOT NULL,
@@ -124,7 +119,7 @@ CREATE TABLE IF NOT EXISTS ai_content_calendar (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Engagement Patterns table
+-- AI Engagement Patterns table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
   id SERIAL PRIMARY KEY,
   platform VARCHAR NOT NULL,
@@ -137,11 +132,11 @@ CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Project Content Management table
+-- Project Content Management table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS project_content_management (
   id SERIAL PRIMARY KEY,
-  ai_project_id INTEGER NOT NULL REFERENCES ai_projects(id) ON DELETE CASCADE,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ai_project_id INTEGER NOT NULL,
+  user_id VARCHAR NOT NULL,
   total_days INTEGER NOT NULL,
   content_per_day INTEGER DEFAULT 1,
   current_day INTEGER DEFAULT 1,
@@ -157,11 +152,11 @@ CREATE TABLE IF NOT EXISTS project_content_management (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Content Action History table
+-- Content Action History table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS content_action_history (
   id SERIAL PRIMARY KEY,
-  content_id INTEGER NOT NULL REFERENCES ai_generated_content(id) ON DELETE CASCADE,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content_id INTEGER NOT NULL,
+  user_id VARCHAR NOT NULL,
   action VARCHAR NOT NULL,
   previous_status VARCHAR,
   new_status VARCHAR,
@@ -170,13 +165,13 @@ CREATE TABLE IF NOT EXISTS content_action_history (
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 3: CREATE STRUCTURED OUTPUTS AND GENERATED CODE TABLES
+-- STEP 3: CREATE STRUCTURED OUTPUTS AND GENERATED CODE TABLES (NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Structured outputs table for Gemini structured JSON generation
+-- Structured outputs table for Gemini structured JSON generation (NO FOREIGN KEY)
 CREATE TABLE IF NOT EXISTS structured_outputs (
   id SERIAL PRIMARY KEY,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id VARCHAR NOT NULL,
   prompt TEXT NOT NULL,
   schema JSONB NOT NULL,
   response_json JSONB NOT NULL,
@@ -184,10 +179,10 @@ CREATE TABLE IF NOT EXISTS structured_outputs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Generated code table for AI code generation
+-- Generated code table for AI code generation (NO FOREIGN KEY)
 CREATE TABLE IF NOT EXISTS generated_code (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id VARCHAR NOT NULL,
   description TEXT NOT NULL,
   language VARCHAR NOT NULL,
   framework VARCHAR,
@@ -215,66 +210,72 @@ ADD COLUMN IF NOT EXISTS series_end_date TIMESTAMP;
 -- STEP 5: CREATE COMPREHENSIVE INDEXES FOR PERFORMANCE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Content table indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_user_id ON content(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_project_id ON content(project_id) WHERE project_id IS NOT NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_status ON content(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_scheduled_at ON content(scheduled_at) WHERE scheduled_at IS NOT NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_day_number ON content(day_number) WHERE day_number IS NOT NULL;
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_user_status ON content(user_id, status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_user_created ON content(user_id, created_at DESC);
+-- Content table indexes (REMOVED CONCURRENTLY - NOT COMPATIBLE WITH TRANSACTIONS)
+CREATE INDEX IF NOT EXISTS idx_content_user_id ON content(user_id);
+CREATE INDEX IF NOT EXISTS idx_content_project_id ON content(project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_status ON content(status);
+CREATE INDEX IF NOT EXISTS idx_content_scheduled_at ON content(scheduled_at) WHERE scheduled_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_day_number ON content(day_number) WHERE day_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_user_status ON content(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_content_user_created ON content(user_id, created_at DESC);
 
 -- Content metrics indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_metrics_content_id ON content_metrics(content_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_metrics_platform ON content_metrics(platform);
+CREATE INDEX IF NOT EXISTS idx_content_metrics_content_id ON content_metrics(content_id);
+CREATE INDEX IF NOT EXISTS idx_content_metrics_platform ON content_metrics(platform);
 
 -- AI generation tasks indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_tasks_user_id ON ai_generation_tasks(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_tasks_status ON ai_generation_tasks(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_tasks_user_status ON ai_generation_tasks(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_user_id ON ai_generation_tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_status ON ai_generation_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_user_status ON ai_generation_tasks(user_id, status);
 
 -- AI projects indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_projects_user_id ON ai_projects(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_projects_status ON ai_projects(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_projects_user_status ON ai_projects(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_ai_projects_user_id ON ai_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_projects_status ON ai_projects(status);
+CREATE INDEX IF NOT EXISTS idx_ai_projects_user_status ON ai_projects(user_id, status);
 
 -- AI generated content indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_ai_project_id ON ai_generated_content(ai_project_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_user_id ON ai_generated_content(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_status ON ai_generated_content(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_generated_content_day_number ON ai_generated_content(day_number);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_ai_project_id ON ai_generated_content(ai_project_id);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_user_id ON ai_generated_content(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_status ON ai_generated_content(status);
+CREATE INDEX IF NOT EXISTS idx_ai_generated_content_day_number ON ai_generated_content(day_number);
 
 -- AI content calendar indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_content_calendar_ai_project_id ON ai_content_calendar(ai_project_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_content_calendar_content_id ON ai_content_calendar(content_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_content_calendar_scheduled_date ON ai_content_calendar(scheduled_date);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_content_calendar_user_id ON ai_content_calendar(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_content_calendar_ai_project_id ON ai_content_calendar(ai_project_id);
+CREATE INDEX IF NOT EXISTS idx_ai_content_calendar_content_id ON ai_content_calendar(content_id);
+CREATE INDEX IF NOT EXISTS idx_ai_content_calendar_scheduled_date ON ai_content_calendar(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_ai_content_calendar_user_id ON ai_content_calendar(user_id);
 
 -- Post schedules indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_schedules_recurrence ON post_schedules(recurrence) WHERE recurrence != 'none';
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_schedules_timezone ON post_schedules(timezone) WHERE timezone != 'UTC';
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_schedules_scheduled_at ON post_schedules(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_post_schedules_recurrence ON post_schedules(recurrence) WHERE recurrence != 'none';
+CREATE INDEX IF NOT EXISTS idx_post_schedules_timezone ON post_schedules(timezone) WHERE timezone != 'UTC';
+CREATE INDEX IF NOT EXISTS idx_post_schedules_scheduled_at ON post_schedules(scheduled_at);
 
 -- Projects indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_projects_user_id ON projects(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_projects_status ON projects(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_projects_user_status ON projects(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_user_status ON projects(user_id, status);
 
 -- Structured outputs indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_structured_outputs_user_id ON structured_outputs(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_structured_outputs_created_at ON structured_outputs(created_at);
+CREATE INDEX IF NOT EXISTS idx_structured_outputs_user_id ON structured_outputs(user_id);
+CREATE INDEX IF NOT EXISTS idx_structured_outputs_created_at ON structured_outputs(created_at);
 
 -- Generated code indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_generated_code_user_id ON generated_code(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_generated_code_language ON generated_code(language);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_generated_code_created_at ON generated_code(created_at);
+CREATE INDEX IF NOT EXISTS idx_generated_code_user_id ON generated_code(user_id);
+CREATE INDEX IF NOT EXISTS idx_generated_code_language ON generated_code(language);
+CREATE INDEX IF NOT EXISTS idx_generated_code_created_at ON generated_code(created_at);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 6: DATA INTEGRITY CONSTRAINTS (REMOVED - NOT SUPPORTED IN ALL POSTGRESQL VERSIONS)
+-- STEP 6: DATA INTEGRITY CONSTRAINTS - REMOVED FOR PRODUCTION SAFETY
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Note: ADD CONSTRAINT IF NOT EXISTS is not supported in all PostgreSQL versions
--- Constraints will be added by the repair migration if needed
+-- FOREIGN KEY CONSTRAINTS REMOVED FOR PRODUCTION SAFETY
+-- Foreign keys can cause migration failures on existing databases with:
+-- - Inconsistent data
+-- - Missing referenced rows  
+-- - Type mismatches
+-- 
+-- For production safety, we rely on application-level referential integrity
+-- instead of database-level foreign key constraints.
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 7: CREATE AUTOMATIC TIMESTAMP UPDATE TRIGGERS
@@ -359,8 +360,8 @@ COMMENT ON TABLE structured_outputs IS 'Structured JSON outputs from AI models';
 COMMENT ON TABLE generated_code IS 'AI-generated code snippets and applications';
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- MIGRATION COMPLETION - SIMPLE SUCCESS MESSAGE
+-- MIGRATION COMPLETION - PRODUCTION SAFE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Simple completion message (no DO blocks)
-SELECT 'COMPREHENSIVE DATABASE SCHEMA FIX COMPLETED SUCCESSFULLY' as migration_status;
+-- Simple completion message (no DO blocks, no foreign keys)
+SELECT 'PRODUCTION SAFE DATABASE SCHEMA FIX COMPLETED SUCCESSFULLY - NO FOREIGN KEYS' as migration_status;

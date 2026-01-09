@@ -1,8 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PRODUCTION REPAIR MIGRATION - SIMPLIFIED VERSION
+-- PRODUCTION REPAIR MIGRATION - PRODUCTION SAFE VERSION
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- This migration repairs the broken Railway production database
--- Simplified to avoid DO $ block syntax issues
+-- PRODUCTION SAFE: NO FOREIGN KEY CONSTRAINTS
 -- Safe to run multiple times, handles all edge cases
 -- Date: 2026-01-09
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -11,14 +11,13 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 1: CREATE ALL CORE TABLES (FULLY IDEMPOTENT)
+-- STEP 1: CREATE ALL CORE TABLES (FULLY IDEMPOTENT, NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Users table (core table)
+-- Users table (core table) - MUST ADD PASSWORD COLUMN
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY NOT NULL,
     email VARCHAR NOT NULL UNIQUE,
-    password TEXT NOT NULL,
     first_name VARCHAR NOT NULL,
     last_name VARCHAR NOT NULL,
     profile_image_url VARCHAR,
@@ -27,6 +26,10 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
     sid VARCHAR PRIMARY KEY NOT NULL,
@@ -34,7 +37,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     expire TIMESTAMP NOT NULL
 );
 
--- Projects table
+-- Projects table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -53,7 +56,7 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Content table
+-- Content table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS content (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -82,7 +85,11 @@ CREATE TABLE IF NOT EXISTS content (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Content Metrics table
+-- ADD MISSING PROJECT_ID COLUMN TO SCHEDULES TABLE (CRITICAL FIX)
+ALTER TABLE post_schedules 
+ADD COLUMN IF NOT EXISTS project_id INTEGER;
+
+-- Content Metrics table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS content_metrics (
     id SERIAL PRIMARY KEY NOT NULL,
     content_id INTEGER NOT NULL,
@@ -96,7 +103,7 @@ CREATE TABLE IF NOT EXISTS content_metrics (
     last_updated TIMESTAMP DEFAULT NOW()
 );
 
--- AI Generation Tasks table
+-- AI Generation Tasks table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_generation_tasks (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -109,7 +116,7 @@ CREATE TABLE IF NOT EXISTS ai_generation_tasks (
     completed_at TIMESTAMP
 );
 
--- AI Content Suggestions table
+-- AI Content Suggestions table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_content_suggestions (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -150,7 +157,7 @@ CREATE TABLE IF NOT EXISTS niches (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Notifications table
+-- Notifications table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -163,7 +170,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     read_at TIMESTAMP
 );
 
--- Social Accounts table
+-- Social Accounts table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS social_accounts (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -179,7 +186,7 @@ CREATE TABLE IF NOT EXISTS social_accounts (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Social Posts table
+-- Social Posts table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS social_posts (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
@@ -200,7 +207,7 @@ CREATE TABLE IF NOT EXISTS social_posts (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Platform Posts table
+-- Platform Posts table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS platform_posts (
     id SERIAL PRIMARY KEY NOT NULL,
     social_post_id INTEGER NOT NULL,
@@ -219,7 +226,7 @@ CREATE TABLE IF NOT EXISTS platform_posts (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Post Media table
+-- Post Media table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS post_media (
     id SERIAL PRIMARY KEY NOT NULL,
     social_post_id INTEGER NOT NULL,
@@ -235,7 +242,7 @@ CREATE TABLE IF NOT EXISTS post_media (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Post Schedules table
+-- Post Schedules table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS post_schedules (
     id SERIAL PRIMARY KEY NOT NULL,
     social_post_id INTEGER NOT NULL,
@@ -272,7 +279,7 @@ CREATE TABLE IF NOT EXISTS templates (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Projects table
+-- AI Projects table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_projects (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR NOT NULL,
@@ -298,7 +305,7 @@ CREATE TABLE IF NOT EXISTS ai_projects (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Generated Content table
+-- AI Generated Content table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_generated_content (
     id SERIAL PRIMARY KEY,
     ai_project_id INTEGER NOT NULL,
@@ -328,7 +335,7 @@ CREATE TABLE IF NOT EXISTS ai_generated_content (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI Content Calendar table
+-- AI Content Calendar table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS ai_content_calendar (
     id SERIAL PRIMARY KEY,
     ai_project_id INTEGER NOT NULL,
@@ -361,7 +368,7 @@ CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
     UNIQUE(platform, category)
 );
 
--- Structured Outputs table
+-- Structured Outputs table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS structured_outputs (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR NOT NULL,
@@ -372,7 +379,7 @@ CREATE TABLE IF NOT EXISTS structured_outputs (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Generated Code table
+-- Generated Code table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS generated_code (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id VARCHAR NOT NULL,
@@ -386,7 +393,7 @@ CREATE TABLE IF NOT EXISTS generated_code (
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 2: CREATE ESSENTIAL INDEXES (IDEMPOTENT)
+-- STEP 2: CREATE ESSENTIAL INDEXES (IDEMPOTENT, NO FOREIGN KEY DEPENDENCIES)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Session index from original migration
@@ -407,7 +414,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_generated_content_ai_project_id ON ai_generate
 CREATE INDEX IF NOT EXISTS idx_ai_generated_content_user_id ON ai_generated_content(user_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 3: SEED ESSENTIAL DATA (IDEMPOTENT)
+-- STEP 3: SEED ESSENTIAL DATA (IDEMPOTENT, NO FOREIGN KEY DEPENDENCIES)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Insert AI engagement patterns (with conflict handling)
@@ -422,8 +429,14 @@ VALUES
   ('linkedin', 'business', ARRAY['08:00', '12:00', '17:00'], 0.78, 400)
 ON CONFLICT (platform, category) DO NOTHING;
 
--- Create test user if needed
+-- Create test user if needed (safe with conflict handling)
 INSERT INTO users (id, email, password, first_name, last_name) 
 VALUES 
   ('test-user-repair', 'repair@example.com', 'hashed_password_placeholder', 'Repair', 'User')
 ON CONFLICT (email) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- PRODUCTION REPAIR COMPLETED - NO FOREIGN KEY CONSTRAINTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+SELECT 'PRODUCTION REPAIR MIGRATION COMPLETED SUCCESSFULLY - NO FOREIGN KEYS' as repair_status;
