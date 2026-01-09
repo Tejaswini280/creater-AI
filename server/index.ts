@@ -3,6 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { WebSocketManager } from "./websocket";
 import { ContentSchedulerService } from "./services/scheduler";
+import MigrationRunner from "../scripts/run-migrations.js";
+import DatabaseSeeder from "../scripts/seed-database.js";
 import {
   authRateLimit,
   aiRateLimit,
@@ -294,6 +296,52 @@ if (!perfMode) {
     const { serveStatic } = await import("./static-server.js");
     serveStatic(app);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DATABASE INITIALIZATION - RUN MIGRATIONS AND SEEDING
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  async function initializeDatabase() {
+    console.log('🗄️ Initializing database...');
+    
+    try {
+      // Run migrations first
+      console.log('🔄 Running database migrations...');
+      const migrationRunner = new MigrationRunner();
+      await migrationRunner.run();
+      
+      // Then run seeding (only if not in test environment)
+      if (process.env.NODE_ENV !== 'test') {
+        console.log('🌱 Seeding database...');
+        const seeder = new DatabaseSeeder();
+        await seeder.run();
+      }
+      
+      console.log('✅ Database initialization completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Database initialization failed:', error);
+      
+      // Check if this is just a "tables already exist" error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('already exists') || errorMessage.includes('relation') || errorMessage.includes('constraint')) {
+        console.log('ℹ️ Database tables already exist - this is normal for existing deployments');
+        console.log('✅ Continuing with application startup');
+        return; // Continue startup
+      }
+      
+      // In production, we want to fail fast if database is not ready
+      if (process.env.NODE_ENV === 'production') {
+        console.error('💥 Exiting due to database initialization failure in production');
+        process.exit(1);
+      } else {
+        console.warn('⚠️ Continuing despite database initialization failure (development mode)');
+      }
+    }
+  }
+
+  // Initialize database before starting server
+  await initializeDatabase();
 
   // Attempt to create DB indexes for better performance (best-effort)
   try {
