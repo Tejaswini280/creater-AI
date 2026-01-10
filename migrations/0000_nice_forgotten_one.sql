@@ -1,12 +1,22 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- BASELINE MIGRATION - NO-OP FOR EXISTING DATABASES
+-- BASELINE MIGRATION - PRODUCTION SAFE INITIALIZATION
 -- ═══════════════════════════════════════════════════════════════════════════════
--- This migration serves as a baseline and does nothing.
--- It will never fail on existing databases.
--- All real schema creation is handled in 9999_production_repair_idempotent.sql
--- Date: 2026-01-09
+-- This migration establishes the baseline for the migration system
+-- Safe to run on fresh DB and existing databases
+-- Date: 2026-01-10
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- This is a NO-OP migration that establishes the baseline
--- It does nothing and will never fail on existing databases
-SELECT 1 as baseline_migration_complete;
+-- Enable required extensions first
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Ensure the migration tracking table exists
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR NOT NULL UNIQUE,
+    executed_at TIMESTAMP DEFAULT NOW(),
+    checksum VARCHAR,
+    execution_time_ms INTEGER
+);
+
+-- This migration establishes the baseline and ensures extensions are available
+SELECT 'Baseline migration completed successfully - Extensions enabled' as baseline_migration_complete;
