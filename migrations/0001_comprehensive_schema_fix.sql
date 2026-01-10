@@ -11,8 +11,24 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 1: FIX CONTENT TABLE - ADD MISSING COLUMNS (NO FOREIGN KEYS)
+-- STEP 1: CREATE USERS TABLE AND FIX CONTENT TABLE - ADD MISSING COLUMNS (NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Create users table if it doesn't exist and ensure password column exists
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR PRIMARY KEY NOT NULL,
+    email VARCHAR NOT NULL UNIQUE,
+    first_name VARCHAR NOT NULL,
+    last_name VARCHAR NOT NULL,
+    profile_image_url VARCHAR,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
 
 -- Add missing columns to content table (idempotent)
 ALTER TABLE content 
@@ -129,7 +145,8 @@ CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
   sample_size INTEGER DEFAULT 0,
   metadata JSONB,
   created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(platform, category)
 );
 
 -- Project Content Management table (NO FOREIGN KEY CONSTRAINTS)
@@ -193,8 +210,23 @@ CREATE TABLE IF NOT EXISTS generated_code (
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 4: ADD MISSING COLUMNS TO POST_SCHEDULES TABLE
+-- STEP 4: CREATE POST_SCHEDULES TABLE IF NOT EXISTS AND ADD MISSING COLUMNS
 -- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Create post_schedules table if it doesn't exist (idempotent)
+CREATE TABLE IF NOT EXISTS post_schedules (
+    id SERIAL PRIMARY KEY NOT NULL,
+    social_post_id INTEGER NOT NULL,
+    platform VARCHAR NOT NULL,
+    scheduled_at TIMESTAMP NOT NULL,
+    status VARCHAR DEFAULT 'pending' NOT NULL,
+    retry_count INTEGER DEFAULT 0,
+    last_attempt_at TIMESTAMP,
+    error_message TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
 -- Add recurrence fields to post_schedules table (idempotent)
 ALTER TABLE post_schedules
@@ -205,6 +237,10 @@ ADD COLUMN IF NOT EXISTS timezone VARCHAR(100) DEFAULT 'UTC';
 
 ALTER TABLE post_schedules
 ADD COLUMN IF NOT EXISTS series_end_date TIMESTAMP;
+
+-- Add project_id column if missing (idempotent)
+ALTER TABLE post_schedules 
+ADD COLUMN IF NOT EXISTS project_id INTEGER;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 5: CREATE COMPREHENSIVE INDEXES FOR PERFORMANCE
@@ -336,7 +372,7 @@ VALUES
   ('facebook', 'lifestyle', ARRAY['09:00', '15:00', '19:00'], 0.75, 900),
   ('tiktok', 'fitness', ARRAY['18:00', '20:00', '22:00'], 0.92, 1500),
   ('linkedin', 'business', ARRAY['08:00', '12:00', '17:00'], 0.78, 400)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (platform, category) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 9: ADD HELPFUL COMMENTS FOR DOCUMENTATION
