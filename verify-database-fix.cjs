@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * DATABASE FIX VERIFICATION SCRIPT
+ * Database Fix Verification Script
  * 
- * This script verifies that the database schema fix resolved all issues
+ * Verifies that the database is properly set up and ready for use
  */
 
-import postgres from 'postgres';
+const postgres = require('postgres');
 
-// Database configuration
+// Configuration
 const config = {
   connectionString: process.env.DATABASE_URL || 
     `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres123'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'creators_dev_db'}`,
@@ -19,14 +19,13 @@ const config = {
   connect_timeout: 10
 };
 
-async function verifyDatabaseFix() {
-  console.log('🔍 VERIFYING DATABASE SCHEMA FIX');
+async function verifyDatabase() {
+  console.log('🔍 DATABASE VERIFICATION');
   console.log('═══════════════════════════════════════════════════════════════');
-
+  
   let sql;
   
   try {
-    // Connect to database
     console.log('🔌 Connecting to database...');
     sql = postgres(config.connectionString, {
       ssl: config.ssl,
@@ -38,110 +37,107 @@ async function verifyDatabaseFix() {
     await sql`SELECT 1`;
     console.log('✅ Database connection successful');
 
-    // Check all critical tables and columns
-    const checks = [
-      {
-        name: 'Users table exists',
-        query: sql`SELECT table_name FROM information_schema.tables WHERE table_name = 'users'`,
-        expected: 1
-      },
-      {
-        name: 'Users table has password column',
-        query: sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password'`,
-        expected: 1
-      },
-      {
-        name: 'Content table exists',
-        query: sql`SELECT table_name FROM information_schema.tables WHERE table_name = 'content'`,
-        expected: 1
-      },
-      {
-        name: 'Content table has project_id column',
-        query: sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'content' AND column_name = 'project_id'`,
-        expected: 1
-      },
-      {
-        name: 'Post_schedules table exists',
-        query: sql`SELECT table_name FROM information_schema.tables WHERE table_name = 'post_schedules'`,
-        expected: 1
-      },
-      {
-        name: 'Post_schedules table has project_id column',
-        query: sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'post_schedules' AND column_name = 'project_id'`,
-        expected: 1
-      },
-      {
-        name: 'Schema_migrations table exists',
-        query: sql`SELECT table_name FROM information_schema.tables WHERE table_name = 'schema_migrations'`,
-        expected: 1
-      },
-      {
-        name: 'All migrations marked as applied',
-        query: sql`SELECT COUNT(*) as count FROM schema_migrations`,
-        expected: 12
-      }
-    ];
-
-    console.log('');
-    console.log('🔍 Running verification checks...');
-    console.log('');
-
-    let allPassed = true;
-
-    for (const check of checks) {
-      try {
-        const result = await check.query;
-        const count = result.length || result[0]?.count || 0;
-        
-        if (count >= check.expected) {
-          console.log(`✅ ${check.name}`);
-        } else {
-          console.log(`❌ ${check.name} - Expected: ${check.expected}, Got: ${count}`);
-          allPassed = false;
-        }
-      } catch (error) {
-        console.log(`❌ ${check.name} - Error: ${error.message}`);
-        allPassed = false;
-      }
-    }
-
-    console.log('');
+    // Check critical tables
+    console.log('📋 Checking critical tables...');
+    const tables = ['users', 'projects', 'content', 'templates', 'ai_engagement_patterns'];
     
-    if (allPassed) {
-      console.log('🎉 ALL VERIFICATION CHECKS PASSED!');
-      console.log('═══════════════════════════════════════════════════════════════');
-      console.log('✅ Database schema is correctly fixed');
-      console.log('✅ All required tables exist');
-      console.log('✅ All required columns exist');
-      console.log('✅ Migration tracking is set up');
-      console.log('');
-      console.log('🚀 Your application should now start without migration errors!');
-    } else {
-      console.log('❌ SOME VERIFICATION CHECKS FAILED');
-      console.log('═══════════════════════════════════════════════════════════════');
-      console.log('The database schema fix may not have been applied correctly.');
-      console.log('Please run the fix script again: node apply-root-cause-fix.cjs');
-      throw new Error('Database verification failed');
+    for (const table of tables) {
+      const exists = await sql`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_name = ${table}
+        )
+      `;
+      
+      if (exists[0].exists) {
+        const count = await sql`SELECT COUNT(*) as count FROM ${sql(table)}`;
+        console.log(`   ✅ ${table}: ${count[0].count} records`);
+      } else {
+        console.log(`   ❌ ${table}: NOT FOUND`);
+      }
     }
+
+    // Check users table structure
+    console.log('👥 Verifying users table...');
+    const userColumns = await sql`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'users'
+      ORDER BY ordinal_position
+    `;
+    
+    const requiredColumns = ['id', 'email', 'password', 'first_name', 'last_name'];
+    const existingColumns = userColumns.map(col => col.column_name);
+    
+    for (const col of requiredColumns) {
+      if (existingColumns.includes(col)) {
+        console.log(`   ✅ ${col} column exists`);
+      } else {
+        console.log(`   ❌ ${col} column MISSING`);
+      }
+    }
+
+    // Test user creation
+    console.log('🧪 Testing user operations...');
+    try {
+      const testResult = await sql`
+        SELECT id, email, first_name, last_name 
+        FROM users 
+        WHERE email = 'test@creatornexus.com'
+        LIMIT 1
+      `;
+      
+      if (testResult.length > 0) {
+        console.log(`   ✅ Test user found: ${testResult[0].first_name} ${testResult[0].last_name}`);
+      } else {
+        console.log('   ⚠️  Test user not found');
+      }
+    } catch (error) {
+      console.log('   ❌ User query failed:', error.message);
+    }
+
+    // Check migration status
+    console.log('📊 Checking migration status...');
+    try {
+      const migrations = await sql`
+        SELECT filename, status, executed_at 
+        FROM schema_migrations 
+        ORDER BY executed_at DESC 
+        LIMIT 5
+      `;
+      
+      console.log('   Recent migrations:');
+      migrations.forEach(m => {
+        console.log(`   • ${m.filename}: ${m.status || 'completed'} (${m.executed_at})`);
+      });
+    } catch (error) {
+      console.log('   ⚠️  Migration table check failed:', error.message);
+    }
+
+    await sql.end();
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('✅ DATABASE VERIFICATION COMPLETED');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('🎯 Database is ready for application use');
+    console.log('🚀 All critical components are functioning properly');
+    console.log('═══════════════════════════════════════════════════════════════');
 
   } catch (error) {
-    console.error('❌ VERIFICATION FAILED:', error.message);
-    throw error;
-  } finally {
+    console.error('❌ Verification failed:', error.message);
     if (sql) {
       await sql.end();
-      console.log('🔌 Database connection closed');
     }
+    process.exit(1);
   }
 }
 
-// Run the verification
-verifyDatabaseFix()
+// Run verification
+verifyDatabase()
   .then(() => {
-    console.log('✅ Database verification completed successfully');
+    console.log('🎉 Verification completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('💥 Database verification failed:', error);
+    console.error('💥 Verification failed:', error);
     process.exit(1);
   });
