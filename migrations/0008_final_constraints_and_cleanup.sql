@@ -166,7 +166,7 @@ ANALYZE niches;
 DO $$
 DECLARE
     missing_tables TEXT[] := ARRAY[]::TEXT[];
-    table_name TEXT;
+    tbl_name TEXT;
     required_tables TEXT[] := ARRAY[
         'users', 'projects', 'content', 'content_metrics', 
         'ai_projects', 'ai_generated_content', 'ai_content_calendar',
@@ -174,13 +174,13 @@ DECLARE
         'ai_engagement_patterns', 'niches', 'sessions'
     ];
 BEGIN
-    FOREACH table_name IN ARRAY required_tables
+    FOREACH tbl_name IN ARRAY required_tables
     LOOP
         IF NOT EXISTS (
             SELECT 1 FROM information_schema.tables 
-            WHERE table_name = table_name AND table_schema = 'public'
+            WHERE table_name = tbl_name AND table_schema = 'public'
         ) THEN
-            missing_tables := array_append(missing_tables, table_name);
+            missing_tables := array_append(missing_tables, tbl_name);
         END IF;
     END LOOP;
     

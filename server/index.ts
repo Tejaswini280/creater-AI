@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { WebSocketManager } from "./websocket";
 import { ContentSchedulerService } from "./services/scheduler";
-import MigrationRunner from "../scripts/run-migrations.js";
+import { EnhancedMigrationRunner } from "./services/enhancedMigrationRunner.js";
 import DatabaseSeeder from "../scripts/seed-database.js";
 import {
   authRateLimit,
@@ -51,7 +51,7 @@ async function initializeDatabase() {
   try {
     // STEP 1: Run migrations with advisory lock (EXACTLY ONCE)
     console.log('🔄 Running database migrations with advisory lock...');
-    const migrationRunner = new MigrationRunner();
+    const migrationRunner = new EnhancedMigrationRunner();
     await migrationRunner.run();
     console.log('✅ Database migrations completed successfully');
     

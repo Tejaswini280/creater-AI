@@ -476,40 +476,40 @@ ALTER TABLE post_schedules ADD COLUMN IF NOT EXISTS time_distribution VARCHAR(50
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Add unique constraint for users email (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'users_email_key' 
-        AND table_name = 'users'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'users_email_key' 
+        AND tc.table_name = 'users'
     ) THEN
         ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
     END IF;
-END $;
+END $$;
 
 -- Add unique constraint for ai_engagement_patterns (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'ai_engagement_patterns_platform_category_key' 
-        AND table_name = 'ai_engagement_patterns'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'ai_engagement_patterns_platform_category_key' 
+        AND tc.table_name = 'ai_engagement_patterns'
     ) THEN
         ALTER TABLE ai_engagement_patterns ADD CONSTRAINT ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
     END IF;
-END $;
+END $$;
 
 -- Add unique constraint for niches name (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'niches_name_key' 
-        AND table_name = 'niches'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'niches_name_key' 
+        AND tc.table_name = 'niches'
     ) THEN
         ALTER TABLE niches ADD CONSTRAINT niches_name_key UNIQUE (name);
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 4: CREATE ALL ESSENTIAL INDEXES (IDEMPOTENT)
@@ -613,12 +613,12 @@ CREATE INDEX IF NOT EXISTS idx_post_media_media_type ON post_media(media_type);
 
 -- Create or replace the timestamp update function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$ language 'plpgsql';
+$$ language 'plpgsql';
 
 -- Create triggers for automatic timestamp updates (idempotent)
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
@@ -766,7 +766,7 @@ DO UPDATE SET
 -- Create test user with ON CONFLICT on UNIQUE email constraint
 INSERT INTO users (id, email, password, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway-final', 'test-final@railway.app', '$2b$10$example.hashed.password.placeholder', 'Railway', 'Final', 'https://via.placeholder.com/150')
+  ('test-user-railway-final', 'test-final@railway.app', E'$2b$10$example.hashed.password.placeholder', 'Railway', 'Final', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,
@@ -812,10 +812,10 @@ ANALYZE post_schedules;
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Validate that all critical tables exist
-DO $
+DO $$
 DECLARE
     missing_tables TEXT[] := ARRAY[]::TEXT[];
-    table_name TEXT;
+    table_name_var TEXT;
     required_tables TEXT[] := ARRAY[
         'users', 'projects', 'content', 'content_metrics', 
         'ai_projects', 'ai_generated_content', 'ai_content_calendar',
@@ -825,13 +825,13 @@ DECLARE
         'structured_outputs', 'generated_code'
     ];
 BEGIN
-    FOREACH table_name IN ARRAY required_tables
+    FOREACH table_name_var IN ARRAY required_tables
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.tables 
-            WHERE table_name = table_name AND table_schema = 'public'
+            SELECT 1 FROM information_schema.tables t
+            WHERE t.table_name = table_name_var AND t.table_schema = 'public'
         ) THEN
-            missing_tables := array_append(missing_tables, table_name);
+            missing_tables := array_append(missing_tables, table_name_var);
         END IF;
     END LOOP;
     
@@ -840,51 +840,51 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ All critical tables validated successfully';
-END $;
+END $$;
 
 -- Validate that users table has password column
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'password'
+        SELECT 1 FROM information_schema.columns c
+        WHERE c.table_name = 'users' AND c.column_name = 'password'
     ) THEN
         RAISE EXCEPTION 'CRITICAL: Users table missing password column - authentication will fail';
     END IF;
     
     RAISE NOTICE '✅ Users table password column validated successfully';
-END $;
+END $$;
 
 -- Validate that content table has project_id column
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'content' AND column_name = 'project_id'
+        SELECT 1 FROM information_schema.columns c
+        WHERE c.table_name = 'content' AND c.column_name = 'project_id'
     ) THEN
         RAISE EXCEPTION 'CRITICAL: Content table missing project_id column - project linking will fail';
     END IF;
     
     RAISE NOTICE '✅ Content table project_id column validated successfully';
-END $;
+END $$;
 
 -- Validate that all project wizard columns exist
-DO $
+DO $$
 DECLARE
     missing_columns TEXT[] := ARRAY[]::TEXT[];
-    column_name TEXT;
+    column_name_var TEXT;
     required_columns TEXT[] := ARRAY[
         'content_type', 'channel_types', 'category', 'duration', 
         'content_frequency', 'brand_voice', 'goals'
     ];
 BEGIN
-    FOREACH column_name IN ARRAY required_columns
+    FOREACH column_name_var IN ARRAY required_columns
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = 'projects' AND column_name = column_name
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'projects' AND c.column_name = column_name_var
         ) THEN
-            missing_columns := array_append(missing_columns, column_name);
+            missing_columns := array_append(missing_columns, column_name_var);
         END IF;
     END LOOP;
     
@@ -893,25 +893,25 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ Projects table wizard columns validated successfully';
-END $;
+END $$;
 
 -- Validate that all scheduler form columns exist
-DO $
+DO $$
 DECLARE
     missing_columns TEXT[] := ARRAY[]::TEXT[];
-    column_name TEXT;
+    column_name_var TEXT;
     required_columns TEXT[] := ARRAY[
         'recurrence', 'timezone', 'project_id', 'title', 
         'description', 'content_type', 'tone'
     ];
 BEGIN
-    FOREACH column_name IN ARRAY required_columns
+    FOREACH column_name_var IN ARRAY required_columns
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = 'post_schedules' AND column_name = column_name
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'post_schedules' AND c.column_name = column_name_var
         ) THEN
-            missing_columns := array_append(missing_columns, column_name);
+            missing_columns := array_append(missing_columns, column_name_var);
         END IF;
     END LOOP;
     
@@ -920,35 +920,43 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ Post schedules table form columns validated successfully';
-END $;
+END $$;
 
 -- Validate that all UNIQUE constraints exist for ON CONFLICT
-DO $
+DO $$
 DECLARE
     missing_constraints TEXT[] := ARRAY[]::TEXT[];
-    constraint_info RECORD;
-    required_constraints TEXT[][] := ARRAY[
-        ARRAY['users', 'users_email_key'],
-        ARRAY['ai_engagement_patterns', 'ai_engagement_patterns_platform_category_key'],
-        ARRAY['niches', 'niches_name_key']
-    ];
 BEGIN
-    FOREACH constraint_info IN ARRAY required_constraints
-    LOOP
-        IF NOT EXISTS (
-            SELECT 1 FROM information_schema.table_constraints 
-            WHERE table_name = constraint_info[1] AND constraint_name = constraint_info[2]
-        ) THEN
-            missing_constraints := array_append(missing_constraints, constraint_info[1] || '.' || constraint_info[2]);
-        END IF;
-    END LOOP;
+    -- Check users email constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.table_name = 'users' AND tc.constraint_name = 'users_email_key'
+    ) THEN
+        missing_constraints := array_append(missing_constraints, 'users.users_email_key');
+    END IF;
+    
+    -- Check ai_engagement_patterns constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.table_name = 'ai_engagement_patterns' AND tc.constraint_name = 'ai_engagement_patterns_platform_category_key'
+    ) THEN
+        missing_constraints := array_append(missing_constraints, 'ai_engagement_patterns.ai_engagement_patterns_platform_category_key');
+    END IF;
+    
+    -- Check niches constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.table_name = 'niches' AND tc.constraint_name = 'niches_name_key'
+    ) THEN
+        missing_constraints := array_append(missing_constraints, 'niches.niches_name_key');
+    END IF;
     
     IF array_length(missing_constraints, 1) > 0 THEN
         RAISE EXCEPTION 'CRITICAL: Missing UNIQUE constraints: %', array_to_string(missing_constraints, ', ');
     END IF;
     
     RAISE NOTICE '✅ All UNIQUE constraints for ON CONFLICT validated successfully';
-END $;
+END $$;
 
 -- Final success message with comprehensive status
 SELECT 

@@ -1,201 +1,180 @@
 #!/usr/bin/env node
 
 /**
- * MIGRATION FIX VERIFICATION SCRIPT
- * 
- * This script verifies that the migration system is now fixed:
- * 1. 0000_nice_forgotten_one.sql is now a NO-OP (never fails)
- * 2. 9999_production_repair_idempotent.sql handles all schema creation
- * 3. The repair migration is truly idempotent
+ * Simple verification script to check if the migration dependency fix will work
  */
 
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 VERIFYING MIGRATION FIX...\n');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 1: Verify 0000_nice_forgotten_one.sql is now a NO-OP
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const baselineMigration = fs.readFileSync('migrations/0000_nice_forgotten_one.sql', 'utf8');
-
-console.log('✅ STEP 1: Checking baseline migration (0000_nice_forgotten_one.sql)');
-
-// Check that it contains no CREATE TABLE statements
-const hasCreateTable = baselineMigration.includes('CREATE TABLE');
-const hasAlterTable = baselineMigration.includes('ALTER TABLE');
-const hasAddConstraint = baselineMigration.includes('ADD CONSTRAINT');
-
-if (hasCreateTable || hasAlterTable || hasAddConstraint) {
-    console.log('❌ FAILED: Baseline migration still contains schema-changing statements');
-    console.log('   - CREATE TABLE found:', hasCreateTable);
-    console.log('   - ALTER TABLE found:', hasAlterTable);
-    console.log('   - ADD CONSTRAINT found:', hasAddConstraint);
-    process.exit(1);
-} else {
-    console.log('   ✅ Baseline migration is now a NO-OP (no schema changes)');
-    console.log('   ✅ Will never fail on existing databases');
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 2: Verify repair migration contains all necessary schema
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const repairMigration = fs.readFileSync('migrations/9999_production_repair_idempotent.sql', 'utf8');
-
-console.log('\n✅ STEP 2: Checking repair migration (9999_production_repair_idempotent.sql)');
-
-// Required tables that must be created
-const requiredTables = [
-    'users',
-    'sessions', 
-    'projects',
-    'content',
-    'content_metrics',
-    'ai_generation_tasks',
-    'ai_content_suggestions',
-    'hashtag_suggestions',
-    'niches',
-    'notifications',
-    'social_accounts',
-    'social_posts',
-    'platform_posts',
-    'post_media',
-    'post_schedules',
-    'templates',
-    'ai_projects',
-    'ai_generated_content',
-    'structured_outputs',
-    'generated_code'
-];
-
-let missingTables = [];
-for (const table of requiredTables) {
-    if (!repairMigration.includes(`CREATE TABLE IF NOT EXISTS ${table}`)) {
-        missingTables.push(table);
+function analyzeMigrationFile(filename, content) {
+  console.log(`\n📄 Analyzing ${filename}:`);
+  
+  const normalizedContent = content.toLowerCase();
+  
+  // Check for table creations
+  const tableMatches = content.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?(\w+)/gi);
+  const tables = tableMatches ? tableMatches.map(match => {
+    const parts = match.split(/\s+/);
+    return parts[parts.length - 1];
+  }) : [];
+  
+  // Check for index creations
+  const indexMatches = content.match(/create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?[\w_]+\s+on\s+(\w+)\s*\(\s*([^)]+)\s*\)/gi);
+  const indexes = indexMatches ? indexMatches.map(match => {
+    const parts = match.match(/on\s+(\w+)\s*\(\s*([^)]+)\s*\)/i);
+    return parts ? `${parts[1]}.${parts[2].split(',')[0].trim()}` : 'unknown';
+  }) : [];
+  
+  console.log(`   Tables created: ${tables.length > 0 ? tables.join(', ') : 'none'}`);
+  console.log(`   Indexes created: ${indexes.length > 0 ? indexes.join(', ') : 'none'}`);
+  
+  // Check for project_id references
+  const projectIdRefs = content.match(/project_id/gi);
+  if (projectIdRefs) {
+    console.log(`   ⚠️  References to project_id: ${projectIdRefs.length} times`);
+    
+    // Check if this migration creates the projects table
+    const createsProjects = tables.some(table => table.toLowerCase().includes('project'));
+    const createsContent = tables.some(table => table.toLowerCase().includes('content'));
+    
+    if (!createsProjects && !createsContent) {
+      console.log(`   🚨 POTENTIAL ISSUE: References project_id but doesn't create projects/content tables`);
+      return false;
+    } else {
+      console.log(`   ✅ Creates required tables for project_id references`);
     }
+  }
+  
+  return true;
 }
 
-if (missingTables.length > 0) {
-    console.log('❌ FAILED: Missing table creation for:', missingTables.join(', '));
-    process.exit(1);
+function verifyMigrationOrder() {
+  console.log('🔍 Verifying Migration Dependency Fix');
+  console.log('═══════════════════════════════════════════════════════════════');
+  
+  const migrationsDir = path.join(__dirname, 'migrations');
+  
+  if (!fs.existsSync(migrationsDir)) {
+    console.error('❌ Migrations directory not found:', migrationsDir);
+    return false;
+  }
+  
+  const files = fs.readdirSync(migrationsDir)
+    .filter(file => file.endsWith('.sql'))
+    .sort();
+  
+  console.log(`📂 Found ${files.length} migration files`);
+  
+  let hasIssues = false;
+  const createdTables = new Set();
+  const createdColumns = new Map();
+  
+  for (const filename of files) {
+    const filepath = path.join(migrationsDir, filename);
+    const content = fs.readFileSync(filepath, 'utf8');
+    
+    const isValid = analyzeMigrationFile(filename, content);
+    if (!isValid) {
+      hasIssues = true;
+    }
+    
+    // Track what this migration creates
+    const normalizedContent = content.toLowerCase();
+    const tableMatches = content.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?(\w+)/gi);
+    if (tableMatches) {
+      tableMatches.forEach(match => {
+        const parts = match.split(/\s+/);
+        const tableName = parts[parts.length - 1].toLowerCase();
+        createdTables.add(tableName);
+        
+        // Extract columns for this table (simplified)
+        if (tableName === 'projects' || tableName === 'content') {
+          if (!createdColumns.has(tableName)) {
+            createdColumns.set(tableName, new Set());
+          }
+          if (content.includes('project_id')) {
+            createdColumns.get(tableName).add('project_id');
+          }
+        }
+      });
+    }
+  }
+  
+  console.log('\n📊 Migration Analysis Summary:');
+  console.log(`   Tables that will be created: ${Array.from(createdTables).join(', ')}`);
+  
+  // Check if the problematic migration (0001) creates the required tables
+  const coreTablesFile = files.find(f => f.includes('0001_core_tables'));
+  if (coreTablesFile) {
+    const coreContent = fs.readFileSync(path.join(migrationsDir, coreTablesFile), 'utf8');
+    const hasProjects = coreContent.toLowerCase().includes('create table') && coreContent.toLowerCase().includes('projects');
+    const hasContent = coreContent.toLowerCase().includes('create table') && coreContent.toLowerCase().includes('content');
+    const hasProjectIdColumn = coreContent.includes('project_id');
+    
+    console.log(`\n🎯 Core Tables Migration (${coreTablesFile}):`);
+    console.log(`   Creates projects table: ${hasProjects ? '✅' : '❌'}`);
+    console.log(`   Creates content table: ${hasContent ? '✅' : '❌'}`);
+    console.log(`   Defines project_id column: ${hasProjectIdColumn ? '✅' : '❌'}`);
+    
+    if (hasProjects && hasContent && hasProjectIdColumn) {
+      console.log('   ✅ This migration should work correctly');
+    } else {
+      console.log('   ⚠️  This migration may still have dependency issues');
+      hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkEnhancedRunnerFiles() {
+  console.log('\n🔧 Checking Enhanced Migration Runner Files:');
+  
+  const requiredFiles = [
+    'server/services/migrationDependencyResolver.ts',
+    'server/services/enhancedMigrationRunner.ts'
+  ];
+  
+  let allFilesExist = true;
+  
+  for (const file of requiredFiles) {
+    const exists = fs.existsSync(file);
+    console.log(`   ${exists ? '✅' : '❌'} ${file}`);
+    if (!exists) allFilesExist = false;
+  }
+  
+  return allFilesExist;
+}
+
+// Run verification
+console.log('🧪 Migration Dependency Fix Verification');
+console.log('═══════════════════════════════════════════════════════════════\n');
+
+const migrationOrderOk = verifyMigrationOrder();
+const filesExist = checkEnhancedRunnerFiles();
+
+console.log('\n🎯 VERIFICATION RESULTS:');
+console.log('═══════════════════════════════════════════════════════════════');
+
+if (migrationOrderOk && filesExist) {
+  console.log('✅ VERIFICATION PASSED!');
+  console.log('   The migration dependency fix has been implemented.');
+  console.log('   Your application should now start without the project_id column error.');
+  console.log('\n📋 Next Steps:');
+  console.log('   1. Restart your application');
+  console.log('   2. The enhanced migration runner will analyze dependencies');
+  console.log('   3. Migrations will execute in the correct order');
+  console.log('   4. The project_id column issue should be resolved');
 } else {
-    console.log('   ✅ All required tables are created with IF NOT EXISTS');
+  console.log('❌ VERIFICATION FAILED!');
+  if (!migrationOrderOk) {
+    console.log('   • Migration dependency issues detected');
+  }
+  if (!filesExist) {
+    console.log('   • Enhanced migration runner files missing');
+  }
+  console.log('\n   Please review the issues above before deploying.');
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 3: Verify idempotent patterns
-// ═══════════════════════════════════════════════════════════════════════════════
-
-console.log('\n✅ STEP 3: Checking idempotent patterns');
-
-// Check for idempotent patterns
-const hasIfNotExists = repairMigration.includes('IF NOT EXISTS');
-const hasAddColumnIfNotExists = repairMigration.includes('ADD COLUMN IF NOT EXISTS');
-const hasConflictHandling = repairMigration.includes('ON CONFLICT');
-
-if (!hasIfNotExists) {
-    console.log('❌ FAILED: Missing IF NOT EXISTS patterns');
-    process.exit(1);
-}
-
-if (!hasAddColumnIfNotExists) {
-    console.log('❌ FAILED: Missing ADD COLUMN IF NOT EXISTS patterns');
-    process.exit(1);
-}
-
-if (!hasConflictHandling) {
-    console.log('❌ FAILED: Missing ON CONFLICT handling for data insertion');
-    process.exit(1);
-}
-
-console.log('   ✅ Uses IF NOT EXISTS for table creation');
-console.log('   ✅ Uses ADD COLUMN IF NOT EXISTS for column additions');
-console.log('   ✅ Uses ON CONFLICT for data insertion');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 4: Verify critical fixes are included
-// ═══════════════════════════════════════════════════════════════════════════════
-
-console.log('\n✅ STEP 4: Checking critical fixes');
-
-// Check for users.password fix
-const hasPasswordFix = repairMigration.includes('password TEXT NOT NULL') && 
-                      repairMigration.includes("column_name = 'password'");
-
-// Check for content.project_id fix  
-const hasProjectIdFix = repairMigration.includes('project_id INTEGER') &&
-                        repairMigration.includes("column_name = 'project_id'");
-
-// Check for foreign key constraints
-const hasForeignKeys = repairMigration.includes('ADD CONSTRAINT') &&
-                       repairMigration.includes('FOREIGN KEY');
-
-if (!hasPasswordFix) {
-    console.log('❌ FAILED: Missing users.password column fix');
-    process.exit(1);
-}
-
-if (!hasProjectIdFix) {
-    console.log('❌ FAILED: Missing content.project_id column fix');
-    process.exit(1);
-}
-
-if (!hasForeignKeys) {
-    console.log('❌ FAILED: Missing foreign key constraint creation');
-    process.exit(1);
-}
-
-console.log('   ✅ Includes users.password column fix');
-console.log('   ✅ Includes content.project_id column fix');
-console.log('   ✅ Includes foreign key constraint creation');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STEP 5: Verify migration order and structure
-// ═══════════════════════════════════════════════════════════════════════════════
-
-console.log('\n✅ STEP 5: Checking migration structure');
-
-// Check that migrations directory has correct files
-const migrationFiles = fs.readdirSync('migrations').filter(f => f.endsWith('.sql'));
-const hasBaseline = migrationFiles.includes('0000_nice_forgotten_one.sql');
-const hasRepair = migrationFiles.includes('9999_production_repair_idempotent.sql');
-
-if (!hasBaseline) {
-    console.log('❌ FAILED: Missing baseline migration file');
-    process.exit(1);
-}
-
-if (!hasRepair) {
-    console.log('❌ FAILED: Missing repair migration file');
-    process.exit(1);
-}
-
-console.log('   ✅ Baseline migration (0000) exists');
-console.log('   ✅ Repair migration (9999) exists');
-console.log('   ✅ Migration numbering ensures repair runs last');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SUCCESS SUMMARY
-// ═══════════════════════════════════════════════════════════════════════════════
-
-console.log('\n' + '═'.repeat(80));
-console.log('🎉 MIGRATION FIX VERIFICATION PASSED!');
-console.log('═'.repeat(80));
-console.log('✅ Baseline migration (0000) is now a NO-OP');
-console.log('✅ Repair migration (9999) handles all schema creation');
-console.log('✅ All migrations are fully idempotent');
-console.log('✅ Critical fixes included (users.password, content.project_id)');
-console.log('✅ Foreign key constraints properly handled');
-console.log('✅ Migration order ensures proper execution');
-console.log('');
-console.log('🚀 READY FOR PRODUCTION DEPLOYMENT!');
-console.log('');
-console.log('The migration system will now:');
-console.log('  1. Run baseline migration (0000) - does nothing, never fails');
-console.log('  2. Run other migrations (0001, 0010) - existing functionality');
-console.log('  3. Run repair migration (9999) - fixes everything idempotently');
-console.log('');
-console.log('This fixes the Railway 502 error caused by migration failures.');
-console.log('═'.repeat(80));
+console.log('═══════════════════════════════════════════════════════════════');

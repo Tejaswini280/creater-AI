@@ -27,9 +27,17 @@
     "perf:mem:long": "cross-env APP_URL=http://localhost:5000 SKIP_RATE_LIMIT=1 node tests/perf/memory-long.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "db:migrate": "node scripts/run-migrations.js",
+    "db:migrate": "tsx scripts/run-migrations.js",
     "db:seed": "node scripts/seed-database.js",
-    "db:setup": "npm run db:migrate && npm run db:seed"
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "setup": "node run-creator-ai-studio.mjs setup",
+    "app:start": "node run-creator-ai-studio.mjs start",
+    "app:stop": "node run-creator-ai-studio.mjs stop",
+    "app:restart": "node run-creator-ai-studio.mjs restart",
+    "app:clean": "node run-creator-ai-studio.mjs clean",
+    "app:status": "node run-creator-ai-studio.mjs status",
+    "app:logs": "node run-creator-ai-studio.mjs logs --follow",
+    "app:doctor": "node run-creator-ai-studio.mjs doctor"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",

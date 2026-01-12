@@ -422,16 +422,16 @@ CREATE TABLE IF NOT EXISTS generated_code (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
 
 -- Add unique constraint for users email (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'users_email_key' 
-        AND table_name = 'users'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'users_email_key' 
+        AND tc.table_name = 'users'
     ) THEN
         ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
     END IF;
-END $;
+END $$;
 
 -- Add missing content management columns to content table
 ALTER TABLE content ADD COLUMN IF NOT EXISTS day_number INTEGER;
@@ -481,28 +481,28 @@ ALTER TABLE post_schedules ADD COLUMN IF NOT EXISTS target_audience VARCHAR(200)
 ALTER TABLE post_schedules ADD COLUMN IF NOT EXISTS time_distribution VARCHAR(50);
 
 -- Add unique constraint for ai_engagement_patterns (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'ai_engagement_patterns_platform_category_key' 
-        AND table_name = 'ai_engagement_patterns'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'ai_engagement_patterns_platform_category_key' 
+        AND tc.table_name = 'ai_engagement_patterns'
     ) THEN
         ALTER TABLE ai_engagement_patterns ADD CONSTRAINT ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
     END IF;
-END $;
+END $$;
 
 -- Add unique constraint for niches name (for ON CONFLICT support)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'niches_name_key' 
-        AND table_name = 'niches'
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'niches_name_key' 
+        AND tc.table_name = 'niches'
     ) THEN
         ALTER TABLE niches ADD CONSTRAINT niches_name_key UNIQUE (name);
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: CREATE ALL ESSENTIAL INDEXES (IDEMPOTENT)
@@ -596,12 +596,12 @@ CREATE INDEX IF NOT EXISTS idx_generated_code_created_at ON generated_code(creat
 
 -- Create or replace the timestamp update function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$ language 'plpgsql';
+$$ language 'plpgsql';
 
 -- Create triggers for automatic timestamp updates (idempotent)
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
@@ -749,7 +749,7 @@ DO UPDATE SET
 -- Create test user with ON CONFLICT on UNIQUE email constraint
 INSERT INTO users (id, email, password, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway-repair', 'test-repair@railway.app', '$2b$10$example.hashed.password.placeholder', 'Railway', 'Repair', 'https://via.placeholder.com/150')
+  ('test-user-railway-repair', 'test-repair@railway.app', E'$2b$10$example.hashed.password.placeholder', 'Railway', 'Repair', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,
@@ -795,10 +795,10 @@ ANALYZE post_schedules;
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Validate that all critical tables exist
-DO $
+DO $$
 DECLARE
     missing_tables TEXT[] := ARRAY[]::TEXT[];
-    table_name TEXT;
+    table_name_var TEXT;
     required_tables TEXT[] := ARRAY[
         'users', 'projects', 'content', 'content_metrics', 
         'ai_projects', 'ai_generated_content', 'ai_content_calendar',
@@ -808,13 +808,13 @@ DECLARE
         'structured_outputs', 'generated_code'
     ];
 BEGIN
-    FOREACH table_name IN ARRAY required_tables
+    FOREACH table_name_var IN ARRAY required_tables
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.tables 
-            WHERE table_name = table_name AND table_schema = 'public'
+            SELECT 1 FROM information_schema.tables t
+            WHERE t.table_name = table_name_var AND t.table_schema = 'public'
         ) THEN
-            missing_tables := array_append(missing_tables, table_name);
+            missing_tables := array_append(missing_tables, table_name_var);
         END IF;
     END LOOP;
     
@@ -823,38 +823,38 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ All critical tables validated successfully';
-END $;
+END $$;
 
 -- Validate that users table has password column
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'password'
+        SELECT 1 FROM information_schema.columns c
+        WHERE c.table_name = 'users' AND c.column_name = 'password'
     ) THEN
         RAISE EXCEPTION 'CRITICAL: Users table missing password column - authentication will fail';
     END IF;
     
     RAISE NOTICE '✅ Users table password column validated successfully';
-END $;
+END $$;
 
 -- Validate that all project wizard columns exist
-DO $
+DO $$
 DECLARE
     missing_columns TEXT[] := ARRAY[]::TEXT[];
-    column_name TEXT;
+    column_name_var TEXT;
     required_columns TEXT[] := ARRAY[
         'content_type', 'channel_types', 'category', 'duration', 
         'content_frequency', 'brand_voice', 'goals'
     ];
 BEGIN
-    FOREACH column_name IN ARRAY required_columns
+    FOREACH column_name_var IN ARRAY required_columns
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = 'projects' AND column_name = column_name
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'projects' AND c.column_name = column_name_var
         ) THEN
-            missing_columns := array_append(missing_columns, column_name);
+            missing_columns := array_append(missing_columns, column_name_var);
         END IF;
     END LOOP;
     
@@ -863,25 +863,25 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ Projects table wizard columns validated successfully';
-END $;
+END $$;
 
 -- Validate that all scheduler form columns exist
-DO $
+DO $$
 DECLARE
     missing_columns TEXT[] := ARRAY[]::TEXT[];
-    column_name TEXT;
+    column_name_var TEXT;
     required_columns TEXT[] := ARRAY[
         'recurrence', 'timezone', 'project_id', 'title', 
         'description', 'content_type', 'tone'
     ];
 BEGIN
-    FOREACH column_name IN ARRAY required_columns
+    FOREACH column_name_var IN ARRAY required_columns
     LOOP
         IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = 'post_schedules' AND column_name = column_name
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'post_schedules' AND c.column_name = column_name_var
         ) THEN
-            missing_columns := array_append(missing_columns, column_name);
+            missing_columns := array_append(missing_columns, column_name_var);
         END IF;
     END LOOP;
     
@@ -890,13 +890,13 @@ BEGIN
     END IF;
     
     RAISE NOTICE '✅ Post schedules table form columns validated successfully';
-END $;
+END $$;
 
 -- Final success message with comprehensive status
 SELECT 
     '🎉 RAILWAY PRODUCTION REPAIR COMPLETED SUCCESSFULLY' as status,
-    (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public') as total_tables,
-    (SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_schema = 'public') as total_constraints,
+    (SELECT COUNT(*) FROM information_schema.tables t WHERE t.table_schema = 'public') as total_tables,
+    (SELECT COUNT(*) FROM information_schema.table_constraints tc WHERE tc.constraint_schema = 'public') as total_constraints,
     (SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public') as total_indexes,
     '✅ All missing columns added' as columns_fix,
     '✅ All required tables created' as tables_fix,

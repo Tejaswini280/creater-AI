@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS content (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
-    project_id INTEGER,
     title VARCHAR NOT NULL,
     description TEXT,
     script TEXT,
@@ -96,6 +95,10 @@ CREATE TABLE IF NOT EXISTS content (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Add project_id column to content table (CRITICAL FIX)
+ALTER TABLE content 
+ADD COLUMN IF NOT EXISTS project_id INTEGER;
 
 -- Content Metrics table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS content_metrics (
