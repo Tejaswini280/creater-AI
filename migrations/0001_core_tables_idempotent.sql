@@ -112,6 +112,17 @@ BEGIN
     ) THEN
         ALTER TABLE content ADD COLUMN project_id INTEGER;
     END IF;
+END $;
+
+-- Add day_number column to content table (CRITICAL FIX)
+DO $ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'content' AND column_name = 'day_number'
+    ) THEN
+        ALTER TABLE content ADD COLUMN day_number INTEGER;
+    END IF;
 END $$;
 
 -- Content Metrics table (NO FOREIGN KEYS)
