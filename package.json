@@ -28,6 +28,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx scripts/run-migrations.js",
+    "migrate": "node server/services/enhancedMigrationRunner.js",
+    "migrate:clean": "node server/services/cleanMigrationRunner.js",
     "db:seed": "node scripts/seed-database.js",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "setup": "node run-creator-ai-studio.mjs setup",
@@ -37,7 +39,9 @@
     "app:clean": "node run-creator-ai-studio.mjs clean",
     "app:status": "node run-creator-ai-studio.mjs status",
     "app:logs": "node run-creator-ai-studio.mjs logs --follow",
-    "app:doctor": "node run-creator-ai-studio.mjs doctor"
+    "app:doctor": "node run-creator-ai-studio.mjs doctor",
+    "migrate:enhanced": "node server/services/enhancedMigrationRunner.js",
+    "migrate:safe": "node server/services/cleanMigrationRunner.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",

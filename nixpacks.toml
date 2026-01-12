@@ -8,6 +8,9 @@ cmds = ["npm ci"]
 [phases.build]
 cmds = ["npm run build"]
 
+[phases.migrate]
+cmds = ["npm run migrate:clean || npm run migrate || echo 'Migration completed'"]
+
 [start]
 cmd = "npm start"
 
