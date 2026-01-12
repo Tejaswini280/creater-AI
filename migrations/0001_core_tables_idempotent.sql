@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- CORE TABLES CREATION - FULLY IDEMPOTENT & PRODUCTION SAFE
+-- CORE TABLES CREATION - FULLY IDEMPOTENT & PRODUCTION SAFE (FIXED)
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Creates all core tables with proper constraints for ON CONFLICT usage
 -- Safe on fresh DB and partially migrated DB
 -- NO FOREIGN KEYS for maximum safety
--- Date: 2026-01-10
+-- Date: 2026-01-12 - SYNTAX ERROR FIXED
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Enable required extensions
@@ -92,7 +92,6 @@ CREATE TABLE IF NOT EXISTS content (
     tags TEXT[],
     metadata JSONB,
     ai_generated BOOLEAN DEFAULT false,
-    day_number INTEGER,
     is_paused BOOLEAN DEFAULT false,
     is_stopped BOOLEAN DEFAULT false,
     can_publish BOOLEAN DEFAULT true,
@@ -112,10 +111,10 @@ BEGIN
     ) THEN
         ALTER TABLE content ADD COLUMN project_id INTEGER;
     END IF;
-END $;
+END $$;
 
 -- Add day_number column to content table (CRITICAL FIX)
-DO $ 
+DO $$ 
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
