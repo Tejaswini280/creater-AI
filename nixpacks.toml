@@ -12,7 +12,7 @@ cmds = ["npm run build"]
 cmds = ["npm run migrate:clean || npm run migrate || echo 'Migration completed'"]
 
 [start]
-cmd = "npm run railway:start"
+cmd = "npm run start"
 
 [variables]
 NODE_ENV = "production"

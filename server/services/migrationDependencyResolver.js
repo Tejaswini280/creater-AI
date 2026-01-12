@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 class MigrationDependencyResolver {
     constructor(migrationsDir = 'migrations') {
@@ -102,4 +102,4 @@ class MigrationDependencyResolver {
     }
 }
 
-module.exports = { MigrationDependencyResolver };
+export { MigrationDependencyResolver };

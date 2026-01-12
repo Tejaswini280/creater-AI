@@ -1,8 +1,8 @@
 
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
-const { MigrationDependencyResolver } = require('./migrationDependencyResolver');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
+import { MigrationDependencyResolver } from './migrationDependencyResolver.js';
 
 class EnhancedMigrationRunner {
     constructor() {
@@ -129,8 +129,8 @@ async function runEnhancedMigrations() {
     await runner.run();
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     runEnhancedMigrations();
 }
 
-module.exports = { EnhancedMigrationRunner, runEnhancedMigrations };
+export { EnhancedMigrationRunner, runEnhancedMigrations };

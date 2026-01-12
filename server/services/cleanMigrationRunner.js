@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
 async function runCleanMigrations() {
     const pool = new Pool({
@@ -80,4 +80,4 @@ if (require.main === module) {
     runCleanMigrations();
 }
 
-module.exports = { runCleanMigrations };
+export { runCleanMigrations };
