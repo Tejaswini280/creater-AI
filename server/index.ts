@@ -3,8 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { WebSocketManager } from "./websocket";
 import { ContentSchedulerService } from "./services/scheduler";
-import { EnhancedMigrationRunner } from "./services/enhancedMigrationRunner.js";
-import DatabaseSeeder from "../scripts/seed-database.js";
+import { ProductionMigrationRunner } from "./services/productionMigrationRunner.js";
+import { ProductionSeeder } from "./services/productionSeeder.js";
 import {
   authRateLimit,
   aiRateLimit,
@@ -49,18 +49,41 @@ async function initializeDatabase() {
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   
   try {
-    // STEP 1: Run migrations with advisory lock (EXACTLY ONCE)
-    console.log('🔄 Running database migrations with advisory lock...');
-    const migrationRunner = new EnhancedMigrationRunner();
-    await migrationRunner.run();
-    console.log('✅ Database migrations completed successfully');
+    // STEP 1: Run migrations with production-grade validation
+    console.log('🔄 Running database migrations with production validation...');
+    const migrationRunner = new ProductionMigrationRunner();
+    const migrationResult = await migrationRunner.run();
     
-    // STEP 2: Run seeding (AFTER migrations, only if not in test)
+    if (!migrationResult.success) {
+      console.error('💥 CRITICAL: Database migrations failed!');
+      console.error('Errors:', migrationResult.errors);
+      
+      // In production, we MUST exit if migrations fail
+      if (process.env.NODE_ENV === 'production') {
+        console.error('🚨 PRODUCTION MODE: Exiting due to migration failure');
+        process.exit(1);
+      } else {
+        throw new Error(`Migration failed: ${migrationResult.errors.join(', ')}`);
+      }
+    }
+    
+    console.log('✅ Database migrations completed successfully');
+    console.log(`📊 Migration summary: ${migrationResult.migrationsRun} executed, ${migrationResult.migrationsSkipped} skipped, ${migrationResult.tablesCreated} tables verified`);
+    
+    // STEP 2: Run seeding (AFTER migrations pass validation, only if not in test)
     if (process.env.NODE_ENV !== 'test') {
       console.log('🌱 Seeding database with essential data...');
-      const seeder = new DatabaseSeeder();
-      await seeder.run();
-      console.log('✅ Database seeding completed successfully');
+      const seeder = new ProductionSeeder();
+      const seedResult = await seeder.run();
+      
+      if (!seedResult.success) {
+        console.warn('⚠️  Database seeding completed with warnings');
+        console.warn('Errors:', seedResult.errors);
+        // Seeding failures are not fatal - continue startup
+      } else {
+        console.log('✅ Database seeding completed successfully');
+        console.log(`📊 Seeding summary: ${seedResult.tablesSeeded} tables seeded, ${seedResult.totalInserts} total inserts`);
+      }
     } else {
       console.log('⏭️  Skipping database seeding (test environment)');
     }
@@ -321,14 +344,28 @@ if (!perfMode) {
   // Make WebSocket manager globally available for routes
   (global as any).wsManager = wsManager;
 
-  // Health check endpoint for Railway
+  // Health check endpoint for Railway - CRITICAL: Must return 200 for Railway health checks
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: 'ready',
+      scheduler: 'initialized',
+      port: process.env.PORT || '5000',
+      host: '0.0.0.0'
+    });
+  });
+
   app.get('/api/health', (req, res) => {
     res.status(200).json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       database: 'ready',
-      scheduler: 'initialized'
+      scheduler: 'initialized',
+      port: process.env.PORT || '5000',
+      host: '0.0.0.0'
     });
   });
 
@@ -399,21 +436,28 @@ if (!perfMode) {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // STEP 5: START HTTP SERVER (LAST STEP)
+  // STEP 5: START HTTP SERVER (LAST STEP) - CRITICAL: Use Railway PORT
   // ═══════════════════════════════════════════════════════════════════════════════
   
-  const port = 5000;
+  // CRITICAL FIX: Use Railway's PORT environment variable
+  const port = parseInt(process.env.PORT || '5000', 10);
+  const host = '0.0.0.0'; // CRITICAL: Bind to all interfaces for Railway
+  
+  console.log(`🌐 Starting server on ${host}:${port}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 Railway PORT: ${process.env.PORT || 'not set (using default 5000)'}`);
+  
   server.listen({
     port,
-    host: "0.0.0.0",
+    host,
   }, () => {
     console.log('');
     console.log('═══════════════════════════════════════════════════════════════════════════════');
     console.log('🎉 APPLICATION STARTUP COMPLETED SUCCESSFULLY');
     console.log('═══════════════════════════════════════════════════════════════════════════════');
-    console.log(`🌐 HTTP Server: http://localhost:${port}`);
-    console.log(`🔌 WebSocket Server: ws://localhost:${port}/ws`);
-    console.log(`📊 Health Check: http://localhost:${port}/api/health`);
+    console.log(`🌐 HTTP Server: http://${host}:${port}`);
+    console.log(`🔌 WebSocket Server: ws://${host}:${port}/ws`);
+    console.log(`📊 Health Check: http://${host}:${port}/api/health`);
     console.log('');
     console.log('✅ Database: Migrated and seeded');
     console.log('✅ Scheduler: Initialized and ready');
