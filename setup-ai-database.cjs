@@ -305,8 +305,7 @@ async function setupAIDatabase() {
         const hashedPassword = await bcrypt.hash('password123', 10);
         
         await client.query(`
-          INSERT INTO users (id, email, password, first_name, last_name)
-          VALUES ('test-user-123', 'test@example.com', $1, 'Test', 'User')
+          INSERT INTO users (id, email, first_name, last_name) VALUES ('test-user-oauth-ai', 'test@creatornexus.dev', 'OAuth', 'TestUser')
         `, [hashedPassword]);
         
         console.log('✅ Test user created (email: test@example.com, password: password123)');

@@ -31,14 +31,13 @@ CREATE TABLE IF NOT EXISTS sessions (
     expire TIMESTAMP NOT NULL
 );
 
--- Create a basic test user
-INSERT INTO users (id, email, password, first_name, last_name, is_active)
+-- Create a passwordless test user for OAuth system
+INSERT INTO users (id, email, first_name, last_name, is_active)
 VALUES (
-  'test-user-id',
-  'test@creatornexus.com',
-  '$2b$10$rQZ8qNqZ8qNqZ8qNqZ8qNOe', -- hashed 'password123'
-  'Test',
-  'User',
+  'test-user-oauth-init',
+  'test@creatornexus.dev',
+  'OAuth',
+  'TestUser',
   true
 )
 ON CONFLICT (id) DO NOTHING;

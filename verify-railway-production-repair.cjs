@@ -170,8 +170,7 @@ async function testBasicOperations(client) {
     const testEmail = `test-verify-${Date.now()}@example.com`;
     
     await client.query(`
-      INSERT INTO users (id, email, password, first_name, last_name) 
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO users (id, email, first_name, last_name) VALUES ($1, $2, $3, $4)
       ON CONFLICT (email) DO UPDATE SET updated_at = NOW()
     `, [testUserId, testEmail, 'test_password_hash', 'Test', 'User']);
 

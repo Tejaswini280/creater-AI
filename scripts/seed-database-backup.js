@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * Production-Grade Database Seeding Script - PASSWORDLESS OAUTH VERSION
+ * Production-Grade Database Seeding Script
  * 
  * This script seeds the database with essential baseline data
  * Safe to run multiple times (idempotent)
- * OAUTH ONLY - NO PASSWORD AUTHENTICATION
  */
 
 import postgres from 'postgres';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const config = {
@@ -89,6 +93,7 @@ class DatabaseSeeder {
           `;
           inserted++;
         } catch (error) {
+          // Pattern might already exist, that's okay
           skipped++;
         }
       }
@@ -259,41 +264,32 @@ class DatabaseSeeder {
   }
 
   async createTestUser() {
-    // Skip test user creation in production for security
-    if (process.env.NODE_ENV === 'production') {
-      console.log('⏭️  Skipping test user creation in production environment');
-      return;
-    }
-
-    console.log('👤 Creating passwordless test user (OAuth system)...');
+    console.log('👤 Creating test user (if needed)...');
     
     try {
       const result = await this.sql`
-        INSERT INTO users (id, email, first_name, last_name, is_active)
+        INSERT INTO users (id, email, password, first_name, last_name, is_active)
         VALUES (
-          'test-user-oauth-dev',
-          'test@creatornexus.dev',
-          'OAuth',
-          'TestUser',
+          'test-user-id',
+          'test@creatornexus.com',
+          '$2b$10$rQZ8qNqZ8qNqZ8qNqZ8qNOe', -- hashed 'password123'
+          'Test',
+          'User',
           true
         )
-        ON CONFLICT (email) DO UPDATE SET 
-          updated_at = NOW(),
-          is_active = true
+        ON CONFLICT (id) DO NOTHING
         RETURNING id
       `;
       
       if (result.length > 0) {
-        console.log('✅ Passwordless test user created/updated: test@creatornexus.dev');
-        console.log('🔐 Authentication: OAuth/Social login only (no password required)');
+        console.log('✅ Test user created: test@creatornexus.com (password: password123)');
       } else {
-        console.log('⏭️  Test user processing completed');
+        console.log('⏭️  Test user already exists');
       }
       
     } catch (error) {
       console.error('❌ Failed to create test user:', error.message);
-      console.log('ℹ️  This is non-critical - application will continue normally');
-      // Don't throw - this is optional and shouldn't block startup
+      // Don't throw - this is optional
     }
   }
 
@@ -319,7 +315,6 @@ class DatabaseSeeder {
       console.log('═══════════════════════════════════════════════════════════════');
       console.log('✅ All essential data has been seeded');
       console.log('✅ Database is ready for application use');
-      console.log('✅ OAuth-only authentication system active');
       console.log('═══════════════════════════════════════════════════════════════');
       
     } catch (error) {

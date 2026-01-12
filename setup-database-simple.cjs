@@ -133,10 +133,10 @@ async function setupDatabase() {
     // Create a test user if none exists
     const userCheck = await dbClient.query('SELECT COUNT(*) FROM users');
     if (parseInt(userCheck.rows[0].count) === 0) {
-      console.log('👤 Creating test user...');
+      console.log('👤 Creating passwordless test user (OAuth system)...');
       await dbClient.query(`
-        INSERT INTO users (id, email, password, first_name, last_name)
-        VALUES ('test-user-1', 'test@creatornexus.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcSAg/9qK', 'Test', 'User')
+        INSERT INTO users (id, email, first_name, last_name)
+        VALUES ('test-user-oauth-db', 'test@creatornexus.dev', 'OAuth', 'TestUser')
         ON CONFLICT (email) DO NOTHING
       `);
       console.log('✅ Test user created (email: test@creatornexus.com, password: password)');

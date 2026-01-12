@@ -215,8 +215,7 @@ class MigrationTester {
     try {
       // Test users ON CONFLICT
       await this.sql`
-        INSERT INTO users (id, email, password, first_name, last_name) 
-        VALUES ('test-conflict', 'test-conflict@example.com', 'test', 'Test', 'User')
+        INSERT INTO users (id, email, first_name, last_name) VALUES ('test-conflict-oauth', 'test-conflict@creatornexus.dev', 'OAuth', 'TestUser')
         ON CONFLICT (email) DO UPDATE SET first_name = EXCLUDED.first_name
       `;
       

@@ -153,9 +153,8 @@ async function restartDatabaseAndProject() {
     if (userCheck.rows.length === 0) {
       const userId = 'test-user-' + Date.now();
       await client.query(`
-        INSERT INTO users (id, email, password, first_name, last_name)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [userId, 'test@example.com', 'hashed-password', 'Test', 'User']);
+        INSERT INTO users (id, email, first_name, last_name) VALUES ($1, $2, $3, $4)
+      `, [userId, 'test@creatornexus.dev', 'OAuth', 'TestUser']);
       
       console.log(`✅ Test user created with ID: ${userId}`);
     } else {

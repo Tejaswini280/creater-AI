@@ -105,9 +105,9 @@ END $$;
 -- Test ON CONFLICT operations to ensure they work
 DO $$
 BEGIN
-    -- Test user insertion with ON CONFLICT
-    INSERT INTO users (id, email, password, first_name, last_name) 
-    VALUES ('test-constraint-check', 'test-constraint@example.com', 'test-password', 'Test', 'Constraint')
+    -- Test passwordless user insertion with ON CONFLICT (OAuth system)
+    INSERT INTO users (id, email, first_name, last_name) 
+    VALUES ('test-constraint-check-oauth', 'test-constraint@example.com', 'Test', 'OAuth')
     ON CONFLICT (email) DO UPDATE SET 
       first_name = EXCLUDED.first_name,
       updated_at = NOW();

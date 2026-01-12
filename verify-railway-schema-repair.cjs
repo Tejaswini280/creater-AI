@@ -266,8 +266,7 @@ class SchemaRepairVerifier {
     try {
       // Test user insertion with ON CONFLICT
       await this.sql`
-        INSERT INTO users (id, email, password, first_name, last_name) 
-        VALUES ('test-verify', 'test-verify@example.com', 'test-password', 'Test', 'Verify')
+        INSERT INTO users (id, email, first_name, last_name) VALUES ('test-verify-oauth', 'test-verify@creatornexus.dev', 'OAuth', 'TestUser')
         ON CONFLICT (email) DO UPDATE SET 
           first_name = EXCLUDED.first_name,
           updated_at = NOW()

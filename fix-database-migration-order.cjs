@@ -126,9 +126,9 @@ async function fixMigrationOrder() {
     // Step 6: Create test user if needed
     console.log('📋 Step 6: Creating test user if needed...');
     await client.query(`
-      INSERT INTO users (id, email, password, first_name, last_name) 
+      INSERT INTO users (id, email, first_name, last_name) 
       VALUES 
-        ('test-user-migration-fix', 'migration-fix@example.com', 'hashed_password_placeholder', 'Migration', 'Fix')
+        ('test-user-migration-oauth', 'migration-fix@creatornexus.dev', 'OAuth', 'TestUser')
       ON CONFLICT (email) DO NOTHING;
     `);
     

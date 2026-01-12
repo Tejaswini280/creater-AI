@@ -24,8 +24,7 @@ async function forceAddData() {
     console.log('👤 Ensuring user exists...');
     try {
       await db.execute(sql`
-        INSERT INTO users (id, email, password, first_name, last_name, is_active, created_at)
-        VALUES (${userId}, 'dashboard@test.com', '$2b$10$hashedpassword', 'Dashboard', 'User', true, NOW())
+        INSERT INTO users (id, email, first_name, last_name, is_active, created_at) VALUES (${userId}, 'dashboard@creatornexus.dev', 'Dashboard', 'OAuth', true, NOW()))
       `);
       console.log('   ✅ User created');
     } catch (e) {

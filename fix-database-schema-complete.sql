@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_content_project_id ON scheduled_content
 CREATE INDEX IF NOT EXISTS idx_scheduled_content_scheduled_at ON scheduled_content(scheduled_at);
 
 -- Insert a default test user if none exists
-INSERT INTO users (email, password, name) 
+INSERT INTO users (email, name) 
 SELECT 'test@example.com', '$2b$10$defaulthashedpassword', 'Test User'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'test@example.com');
 

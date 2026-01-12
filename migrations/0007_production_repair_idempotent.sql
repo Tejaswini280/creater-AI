@@ -429,10 +429,10 @@ VALUES
   ('linkedin', 'business', ARRAY['08:00', '12:00', '17:00'], 0.78, 400)
 ON CONFLICT (platform, category) DO NOTHING;
 
--- Create test user if needed (safe with conflict handling)
-INSERT INTO users (id, email, password, first_name, last_name) 
+-- Create passwordless test user if needed (OAuth system)
+INSERT INTO users (id, email, first_name, last_name) 
 VALUES 
-  ('test-user-repair', 'repair@example.com', 'hashed_password_placeholder', 'Repair', 'User')
+  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth')
 ON CONFLICT (email) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════════

@@ -161,12 +161,12 @@ async function setupLocalDatabase() {
       CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions USING btree (expire)
     `);
     
-    // Create test user
-    console.log('📋 Step 4: Creating test user...');
+    // Create passwordless test user (OAuth system)
+    console.log('📋 Step 4: Creating passwordless test user (OAuth system)...');
     await client.query(`
-      INSERT INTO users (id, email, password, first_name, last_name) 
+      INSERT INTO users (id, email, first_name, last_name) 
       VALUES 
-        ('test-user-local', 'test@example.com', 'hashed_password_placeholder', 'Test', 'User')
+        ('test-user-local-oauth', 'test@creatornexus.dev', 'OAuth', 'TestUser')
       ON CONFLICT (email) DO NOTHING
     `);
     

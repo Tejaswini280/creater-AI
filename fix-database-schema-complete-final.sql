@@ -332,10 +332,10 @@ ON CONFLICT DO NOTHING;
 -- STEP 11: CREATE TEST USER IF NEEDED
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Create a test user for development/testing (idempotent)
-INSERT INTO users (id, email, password, first_name, last_name) 
+-- Create a passwordless test user for development/testing (OAuth system)
+INSERT INTO users (id, email, first_name, last_name) 
 VALUES 
-  ('test-user-1', 'test@example.com', '$2b$10$rQZ9QmjytWzQgwjvHJ4zKOXvnK4nK4nK4nK4nK4nK4nK4nK4nK4nK4', 'Test', 'User')
+  ('test-user-oauth-complete', 'test@creatornexus.dev', 'OAuth', 'TestUser')
 ON CONFLICT (email) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════════

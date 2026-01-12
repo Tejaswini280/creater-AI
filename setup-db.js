@@ -168,8 +168,8 @@ async function setupDatabase() {
     };
     
     await client.query(`
-      INSERT INTO users (id, email, password, first_name, last_name)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO users (id, email, first_name, last_name)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (id) DO NOTHING
     `, [testUser.id, testUser.email, testUser.password, testUser.first_name, testUser.last_name]);
     

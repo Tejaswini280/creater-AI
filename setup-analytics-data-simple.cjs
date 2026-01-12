@@ -72,13 +72,13 @@ async function setupAnalyticsData() {
       testUserId = userResult.rows[0].id;
       console.log(`✅ Using existing user: ${testUserId}`);
     } else {
-      // Create user with password
-      testUserId = 'analytics-test-user';
+      // Create passwordless user (OAuth system)
+      testUserId = 'analytics-test-user-oauth';
       await client.query(`
-        INSERT INTO users (id, email, password, first_name, last_name, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        INSERT INTO users (id, email, first_name, last_name, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, NOW(), NOW())
         ON CONFLICT (id) DO NOTHING
-      `, [testUserId, 'analytics@test.com', 'hashedpassword123', 'Analytics', 'User']);
+      `, [testUserId, 'analytics@creatornexus.dev', 'Analytics', 'OAuth']);
       console.log('✅ Test user created');
     }
 

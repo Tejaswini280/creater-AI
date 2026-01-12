@@ -231,7 +231,7 @@ class MigrationVerifier {
       // Test inserting into users table
       const testUserId = `test-verify-${Date.now()}`;
       await this.sql`
-        INSERT INTO users (id, email, password, first_name, last_name)
+        INSERT INTO users (id, email, first_name, last_name)
         VALUES (${testUserId}, ${`test-${Date.now()}@example.com`}, 'test', 'Test', 'User')
       `;
       

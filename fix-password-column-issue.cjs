@@ -66,13 +66,9 @@ async function fixPasswordColumn() {
     console.log('👤 Creating test user (if needed)...');
     try {
       const result = await sql`
-        INSERT INTO users (id, email, password, first_name, last_name, is_active)
+        INSERT INTO users (id, email, first_name, last_name, is_active)
         VALUES (
-          'test-user-id',
-          'test@creatornexus.com',
-          '$2b$10$rQZ8qNqZ8qNqZ8qNqZ8qNOe',
-          'Test',
-          'User',
+          'test-user-oauth-fix', 'test@creatornexus.dev', 'OAuth', 'TestUser',
           true
         )
         ON CONFLICT (id) DO NOTHING

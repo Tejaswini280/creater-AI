@@ -763,10 +763,10 @@ DO UPDATE SET
   description = EXCLUDED.description,
   updated_at = NOW();
 
--- Create test user with ON CONFLICT on UNIQUE email constraint
-INSERT INTO users (id, email, password, first_name, last_name, profile_image_url) 
+-- Create passwordless test user with ON CONFLICT on UNIQUE email constraint (OAuth system)
+INSERT INTO users (id, email, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway-final', 'test-final@railway.app', E'$2b$10$example.hashed.password.placeholder', 'Railway', 'Final', 'https://via.placeholder.com/150')
+  ('test-user-railway-final-oauth', 'test-final@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,

@@ -202,10 +202,10 @@ DO UPDATE SET
 -- STEP 5: CREATE TEST USER WITH ON CONFLICT
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Create test user with ON CONFLICT on UNIQUE email constraint
-INSERT INTO users (id, email, password, first_name, last_name, profile_image_url) 
+-- Create passwordless test user with ON CONFLICT on UNIQUE email constraint (OAuth system)
+INSERT INTO users (id, email, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway', 'test@railway.app', '$2b$10$example.hashed.password.placeholder', 'Railway', 'Test', 'https://via.placeholder.com/150')
+  ('test-user-railway-oauth', 'test@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,
