@@ -46,8 +46,15 @@ BEGIN
 END $$;
 
 -- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
-ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'password'
+    ) THEN
+        ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+    END IF;
+END $$;
 
 -- Projects table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS projects (
@@ -97,8 +104,15 @@ CREATE TABLE IF NOT EXISTS content (
 );
 
 -- Add project_id column to content table (CRITICAL FIX)
-ALTER TABLE content 
-ADD COLUMN IF NOT EXISTS project_id INTEGER;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'content' AND column_name = 'project_id'
+    ) THEN
+        ALTER TABLE content ADD COLUMN project_id INTEGER;
+    END IF;
+END $$;
 
 -- Content Metrics table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS content_metrics (
