@@ -188,6 +188,18 @@ export class ProductionMigrationRunner {
           throw new Error(`CRITICAL: Migration file is empty: ${filepath}`);
         }
         
+        // CRITICAL: Validate SQL is complete and not truncated
+        const trimmedContent = content.trim();
+        if (trimmedContent.includes('IF NOT EXISTS (SELECT 1 FROM informat') || 
+            trimmedContent.endsWith('IF NOT EXISTS (SELECT 1 FROM informat')) {
+          throw new Error(`CRITICAL: Migration file contains incomplete SQL (truncated): ${filepath}`);
+        }
+        
+        // Check for other common incomplete SQL patterns
+        if (trimmedContent.includes('DO $') && !trimmedContent.includes('END $')) {
+          throw new Error(`CRITICAL: Migration file contains incomplete DO block: ${filepath}`);
+        }
+        
         const checksum = createHash('md5').update(content).digest('hex');
         
         this.migrations.push({
