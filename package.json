@@ -41,7 +41,8 @@
     "app:logs": "node run-creator-ai-studio.mjs logs --follow",
     "app:doctor": "node run-creator-ai-studio.mjs doctor",
     "migrate:enhanced": "node server/services/enhancedMigrationRunner.js",
-    "migrate:safe": "node server/services/cleanMigrationRunner.js"
+    "migrate:safe": "node server/services/cleanMigrationRunner.js",
+    "railway:start": "npm run build && npm run start"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
