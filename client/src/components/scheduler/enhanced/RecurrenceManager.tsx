@@ -500,7 +500,7 @@ export default function RecurrenceManager({
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* End Conditions */}
         <Card className="p-6">
