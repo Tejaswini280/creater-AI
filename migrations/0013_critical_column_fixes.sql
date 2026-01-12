@@ -309,15 +309,6 @@ SET
     password = 'temp_password_needs_reset'
 WHERE password IS NULL OR password = '';
 
--- Update projects with missing categories
-UPDATE projects 
-SET 
-    category = 'general',
-    content_type = 'mixed',
-    duration = '30 days',
-    content_frequency = 'daily'
-WHERE category IS NULL;
-
 -- Update content with missing status
 UPDATE content 
 SET 

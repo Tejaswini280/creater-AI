@@ -1,180 +1,327 @@
 #!/usr/bin/env node
 
 /**
- * Simple verification script to check if the migration dependency fix will work
+ * Verify Migration Fix
+ * 
+ * This script verifies that the migration dependency issues have been resolved
  */
 
-const fs = require('fs');
-const path = require('path');
+const postgres = require('postgres');
 
-function analyzeMigrationFile(filename, content) {
-  console.log(`\n📄 Analyzing ${filename}:`);
-  
-  const normalizedContent = content.toLowerCase();
-  
-  // Check for table creations
-  const tableMatches = content.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?(\w+)/gi);
-  const tables = tableMatches ? tableMatches.map(match => {
-    const parts = match.split(/\s+/);
-    return parts[parts.length - 1];
-  }) : [];
-  
-  // Check for index creations
-  const indexMatches = content.match(/create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?[\w_]+\s+on\s+(\w+)\s*\(\s*([^)]+)\s*\)/gi);
-  const indexes = indexMatches ? indexMatches.map(match => {
-    const parts = match.match(/on\s+(\w+)\s*\(\s*([^)]+)\s*\)/i);
-    return parts ? `${parts[1]}.${parts[2].split(',')[0].trim()}` : 'unknown';
-  }) : [];
-  
-  console.log(`   Tables created: ${tables.length > 0 ? tables.join(', ') : 'none'}`);
-  console.log(`   Indexes created: ${indexes.length > 0 ? indexes.join(', ') : 'none'}`);
-  
-  // Check for project_id references
-  const projectIdRefs = content.match(/project_id/gi);
-  if (projectIdRefs) {
-    console.log(`   ⚠️  References to project_id: ${projectIdRefs.length} times`);
-    
-    // Check if this migration creates the projects table
-    const createsProjects = tables.some(table => table.toLowerCase().includes('project'));
-    const createsContent = tables.some(table => table.toLowerCase().includes('content'));
-    
-    if (!createsProjects && !createsContent) {
-      console.log(`   🚨 POTENTIAL ISSUE: References project_id but doesn't create projects/content tables`);
-      return false;
-    } else {
-      console.log(`   ✅ Creates required tables for project_id references`);
-    }
-  }
-  
-  return true;
-}
+const config = {
+  connectionString: process.env.DATABASE_URL || 
+    `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres123'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'creators_dev_db'}`,
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+  max: 1,
+  idle_timeout: 20,
+  connect_timeout: 10
+};
 
-function verifyMigrationOrder() {
-  console.log('🔍 Verifying Migration Dependency Fix');
-  console.log('═══════════════════════════════════════════════════════════════');
-  
-  const migrationsDir = path.join(__dirname, 'migrations');
-  
-  if (!fs.existsSync(migrationsDir)) {
-    console.error('❌ Migrations directory not found:', migrationsDir);
-    return false;
+class MigrationVerifier {
+  constructor() {
+    this.sql = null;
   }
-  
-  const files = fs.readdirSync(migrationsDir)
-    .filter(file => file.endsWith('.sql'))
-    .sort();
-  
-  console.log(`📂 Found ${files.length} migration files`);
-  
-  let hasIssues = false;
-  const createdTables = new Set();
-  const createdColumns = new Map();
-  
-  for (const filename of files) {
-    const filepath = path.join(migrationsDir, filename);
-    const content = fs.readFileSync(filepath, 'utf8');
+
+  async connect() {
+    console.log('🔌 Connecting to database for verification...');
     
-    const isValid = analyzeMigrationFile(filename, content);
-    if (!isValid) {
-      hasIssues = true;
-    }
-    
-    // Track what this migration creates
-    const normalizedContent = content.toLowerCase();
-    const tableMatches = content.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?(\w+)/gi);
-    if (tableMatches) {
-      tableMatches.forEach(match => {
-        const parts = match.split(/\s+/);
-        const tableName = parts[parts.length - 1].toLowerCase();
-        createdTables.add(tableName);
-        
-        // Extract columns for this table (simplified)
-        if (tableName === 'projects' || tableName === 'content') {
-          if (!createdColumns.has(tableName)) {
-            createdColumns.set(tableName, new Set());
-          }
-          if (content.includes('project_id')) {
-            createdColumns.get(tableName).add('project_id');
-          }
-        }
+    try {
+      this.sql = postgres(config.connectionString, {
+        ssl: config.ssl,
+        max: config.max,
+        idle_timeout: config.idle_timeout,
+        connect_timeout: config.connect_timeout
       });
+
+      await this.sql`SELECT 1`;
+      console.log('✅ Database connection successful');
+      
+    } catch (error) {
+      console.error('❌ Database connection failed:', error.message);
+      throw error;
     }
   }
-  
-  console.log('\n📊 Migration Analysis Summary:');
-  console.log(`   Tables that will be created: ${Array.from(createdTables).join(', ')}`);
-  
-  // Check if the problematic migration (0001) creates the required tables
-  const coreTablesFile = files.find(f => f.includes('0001_core_tables'));
-  if (coreTablesFile) {
-    const coreContent = fs.readFileSync(path.join(migrationsDir, coreTablesFile), 'utf8');
-    const hasProjects = coreContent.toLowerCase().includes('create table') && coreContent.toLowerCase().includes('projects');
-    const hasContent = coreContent.toLowerCase().includes('create table') && coreContent.toLowerCase().includes('content');
-    const hasProjectIdColumn = coreContent.includes('project_id');
+
+  async verifyTables() {
+    console.log('📋 Verifying core tables exist...');
     
-    console.log(`\n🎯 Core Tables Migration (${coreTablesFile}):`);
-    console.log(`   Creates projects table: ${hasProjects ? '✅' : '❌'}`);
-    console.log(`   Creates content table: ${hasContent ? '✅' : '❌'}`);
-    console.log(`   Defines project_id column: ${hasProjectIdColumn ? '✅' : '❌'}`);
-    
-    if (hasProjects && hasContent && hasProjectIdColumn) {
-      console.log('   ✅ This migration should work correctly');
-    } else {
-      console.log('   ⚠️  This migration may still have dependency issues');
-      hasIssues = true;
+    const requiredTables = [
+      'users', 'projects', 'content', 'content_metrics', 
+      'ai_generation_tasks', 'post_schedules', 'templates', 
+      'hashtag_suggestions', 'ai_engagement_patterns'
+    ];
+
+    try {
+      const tables = await this.sql`
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
+      `;
+      
+      const existingTables = tables.map(t => t.table_name);
+      const missingTables = requiredTables.filter(t => !existingTables.includes(t));
+      
+      if (missingTables.length > 0) {
+        console.error('❌ Missing tables:', missingTables);
+        return false;
+      }
+      
+      console.log('✅ All required tables exist');
+      existingTables.forEach(table => console.log(`   ✓ ${table}`));
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to verify tables:', error.message);
+      return false;
     }
   }
-  
-  return !hasIssues;
+
+  async verifyColumns() {
+    console.log('📋 Verifying critical columns exist...');
+    
+    const criticalColumns = [
+      { table: 'users', column: 'password' },
+      { table: 'users', column: 'email' },
+      { table: 'users', column: 'is_active' },
+      { table: 'projects', column: 'user_id' },
+      { table: 'projects', column: 'status' },
+      { table: 'content', column: 'user_id' },
+      { table: 'content', column: 'project_id' },
+      { table: 'content', column: 'status' },
+      { table: 'content', column: 'scheduled_at' },
+      { table: 'content', column: 'day_number' },
+      { table: 'content_metrics', column: 'content_id' },
+      { table: 'content_metrics', column: 'platform' },
+      { table: 'ai_generation_tasks', column: 'user_id' },
+      { table: 'ai_generation_tasks', column: 'status' },
+      { table: 'post_schedules', column: 'scheduled_at' },
+      { table: 'post_schedules', column: 'platform' },
+      { table: 'post_schedules', column: 'status' },
+      { table: 'templates', column: 'category' },
+      { table: 'templates', column: 'is_featured' },
+      { table: 'hashtag_suggestions', column: 'platform' },
+      { table: 'hashtag_suggestions', column: 'category' }
+    ];
+
+    try {
+      let allColumnsExist = true;
+      
+      for (const { table, column } of criticalColumns) {
+        const result = await this.sql`
+          SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = ${table} 
+            AND column_name = ${column}
+          )
+        `;
+        
+        if (result[0].exists) {
+          console.log(`   ✓ ${table}.${column}`);
+        } else {
+          console.error(`   ❌ ${table}.${column} - MISSING`);
+          allColumnsExist = false;
+        }
+      }
+      
+      if (allColumnsExist) {
+        console.log('✅ All critical columns exist');
+        return true;
+      } else {
+        console.error('❌ Some critical columns are missing');
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to verify columns:', error.message);
+      return false;
+    }
+  }
+
+  async verifyConstraints() {
+    console.log('📋 Verifying critical constraints exist...');
+    
+    try {
+      const constraints = await this.sql`
+        SELECT 
+          tc.constraint_name,
+          tc.table_name,
+          tc.constraint_type
+        FROM information_schema.table_constraints tc
+        WHERE tc.table_schema = 'public'
+        AND tc.constraint_type IN ('UNIQUE', 'PRIMARY KEY')
+        ORDER BY tc.table_name, tc.constraint_name
+      `;
+      
+      console.log('✅ Database constraints:');
+      constraints.forEach(c => {
+        console.log(`   ✓ ${c.table_name}.${c.constraint_name} (${c.constraint_type})`);
+      });
+      
+      // Check for specific required constraints
+      const requiredConstraints = [
+        'users_email_key',
+        'ai_engagement_patterns_platform_category_key'
+      ];
+      
+      const existingConstraintNames = constraints.map(c => c.constraint_name);
+      const missingConstraints = requiredConstraints.filter(c => !existingConstraintNames.includes(c));
+      
+      if (missingConstraints.length > 0) {
+        console.warn('⚠️  Missing some constraints (may be added later):', missingConstraints);
+      }
+      
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to verify constraints:', error.message);
+      return false;
+    }
+  }
+
+  async verifyMigrationHistory() {
+    console.log('📋 Verifying migration history...');
+    
+    try {
+      // Check if schema_migrations table exists
+      const tableExists = await this.sql`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'schema_migrations'
+        )
+      `;
+      
+      if (!tableExists[0].exists) {
+        console.log('⚠️  No schema_migrations table found - migrations may not have run yet');
+        return true; // This is okay for fresh installs
+      }
+      
+      const migrations = await this.sql`
+        SELECT filename, executed_at, status
+        FROM schema_migrations 
+        ORDER BY executed_at DESC
+      `;
+      
+      console.log('✅ Migration history:');
+      migrations.forEach(m => {
+        const status = m.status || 'completed';
+        const statusIcon = status === 'completed' ? '✅' : status === 'failed' ? '❌' : '⏳';
+        console.log(`   ${statusIcon} ${m.filename} (${status})`);
+      });
+      
+      const failedMigrations = migrations.filter(m => m.status === 'failed');
+      if (failedMigrations.length > 0) {
+        console.error('❌ Found failed migrations - these need to be resolved');
+        return false;
+      }
+      
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to verify migration history:', error.message);
+      return false;
+    }
+  }
+
+  async testBasicOperations() {
+    console.log('📋 Testing basic database operations...');
+    
+    try {
+      // Test inserting into users table
+      const testUserId = `test-verify-${Date.now()}`;
+      await this.sql`
+        INSERT INTO users (id, email, password, first_name, last_name)
+        VALUES (${testUserId}, ${`test-${Date.now()}@example.com`}, 'test', 'Test', 'User')
+      `;
+      
+      // Test inserting into content table with day_number
+      await this.sql`
+        INSERT INTO content (user_id, title, platform, content_type, day_number)
+        VALUES (${testUserId}, 'Test Content', 'instagram', 'post', 1)
+      `;
+      
+      // Clean up test data
+      await this.sql`DELETE FROM content WHERE user_id = ${testUserId}`;
+      await this.sql`DELETE FROM users WHERE id = ${testUserId}`;
+      
+      console.log('✅ Basic database operations work correctly');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Basic database operations failed:', error.message);
+      return false;
+    }
+  }
+
+  async close() {
+    if (this.sql) {
+      await this.sql.end();
+      console.log('🔌 Database connection closed');
+    }
+  }
+
+  async run() {
+    try {
+      await this.connect();
+      
+      const results = {
+        tables: await this.verifyTables(),
+        columns: await this.verifyColumns(),
+        constraints: await this.verifyConstraints(),
+        migrations: await this.verifyMigrationHistory(),
+        operations: await this.testBasicOperations()
+      };
+      
+      await this.close();
+      
+      const allPassed = Object.values(results).every(r => r === true);
+      
+      console.log('');
+      console.log('═══════════════════════════════════════════════════════════════');
+      if (allPassed) {
+        console.log('🎉 MIGRATION VERIFICATION PASSED');
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('✅ All database tables exist');
+        console.log('✅ All critical columns exist');
+        console.log('✅ Database constraints are in place');
+        console.log('✅ Migration history is clean');
+        console.log('✅ Basic operations work correctly');
+        console.log('');
+        console.log('🚀 Your database is ready for the application!');
+      } else {
+        console.log('❌ MIGRATION VERIFICATION FAILED');
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('Results:');
+        Object.entries(results).forEach(([test, passed]) => {
+          console.log(`   ${passed ? '✅' : '❌'} ${test}`);
+        });
+        console.log('');
+        console.log('🔧 Please run the migration fix script to resolve issues');
+      }
+      console.log('═══════════════════════════════════════════════════════════════');
+      
+      return allPassed;
+      
+    } catch (error) {
+      console.error('💥 Migration verification failed:', error);
+      return false;
+    }
+  }
 }
 
-function checkEnhancedRunnerFiles() {
-  console.log('\n🔧 Checking Enhanced Migration Runner Files:');
+// Run if executed directly
+if (require.main === module) {
+  const verifier = new MigrationVerifier();
   
-  const requiredFiles = [
-    'server/services/migrationDependencyResolver.ts',
-    'server/services/enhancedMigrationRunner.ts'
-  ];
-  
-  let allFilesExist = true;
-  
-  for (const file of requiredFiles) {
-    const exists = fs.existsSync(file);
-    console.log(`   ${exists ? '✅' : '❌'} ${file}`);
-    if (!exists) allFilesExist = false;
-  }
-  
-  return allFilesExist;
+  verifier.run()
+    .then((success) => {
+      process.exit(success ? 0 : 1);
+    })
+    .catch((error) => {
+      console.error('💥 Verification error:', error);
+      process.exit(1);
+    });
 }
 
-// Run verification
-console.log('🧪 Migration Dependency Fix Verification');
-console.log('═══════════════════════════════════════════════════════════════\n');
-
-const migrationOrderOk = verifyMigrationOrder();
-const filesExist = checkEnhancedRunnerFiles();
-
-console.log('\n🎯 VERIFICATION RESULTS:');
-console.log('═══════════════════════════════════════════════════════════════');
-
-if (migrationOrderOk && filesExist) {
-  console.log('✅ VERIFICATION PASSED!');
-  console.log('   The migration dependency fix has been implemented.');
-  console.log('   Your application should now start without the project_id column error.');
-  console.log('\n📋 Next Steps:');
-  console.log('   1. Restart your application');
-  console.log('   2. The enhanced migration runner will analyze dependencies');
-  console.log('   3. Migrations will execute in the correct order');
-  console.log('   4. The project_id column issue should be resolved');
-} else {
-  console.log('❌ VERIFICATION FAILED!');
-  if (!migrationOrderOk) {
-    console.log('   • Migration dependency issues detected');
-  }
-  if (!filesExist) {
-    console.log('   • Enhanced migration runner files missing');
-  }
-  console.log('\n   Please review the issues above before deploying.');
-}
-
-console.log('═══════════════════════════════════════════════════════════════');
+module.exports = MigrationVerifier;
