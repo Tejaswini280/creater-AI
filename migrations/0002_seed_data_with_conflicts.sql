@@ -203,9 +203,10 @@ DO UPDATE SET
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Create passwordless test user with ON CONFLICT on UNIQUE email constraint (OAuth system)
-INSERT INTO users (id, email, first_name, last_name, profile_image_url) 
+-- Fixed: Removed explicit ID to let database auto-generate it
+INSERT INTO users (email, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway-oauth', 'test@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
+  ('test@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,
