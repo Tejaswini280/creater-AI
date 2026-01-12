@@ -1,6 +1,11 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runCleanMigrations() {
     const pool = new Pool({
@@ -76,7 +81,7 @@ async function runCleanMigrations() {
     }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     runCleanMigrations();
 }
 

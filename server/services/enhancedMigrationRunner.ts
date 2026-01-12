@@ -8,8 +8,13 @@
 import postgres from 'postgres';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
 import { MigrationDependencyResolver, type MigrationFile, type ValidationResult } from './migrationDependencyResolver.ts';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface MigrationConfig {
   connectionString: string;
