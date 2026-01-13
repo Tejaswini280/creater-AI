@@ -345,13 +345,11 @@ export class ProductionMigrationRunner {
       const executedChecksum = executedMigrations.get(migration.filename);
       
       if (executedChecksum) {
-        if (executedChecksum === migration.checksum) {
-          console.log(`⏭️  Skipping (already executed): ${migration.filename}`);
-          migrationsSkipped++;
-          continue;
-        } else {
-          console.log(`🔄 Re-executing (checksum changed): ${migration.filename}`);
-        }
+        // CRITICAL FIX: In production, NEVER re-execute migrations
+        // This prevents infinite loops and log flooding on Railway
+        console.log(`⏭️  Skipping (already executed): ${migration.filename}`);
+        migrationsSkipped++;
+        continue;
       }
 
       try {
