@@ -124,11 +124,11 @@ jobs:
           
           echo "🔗 Linking to Railway project and service..."
           # Link to project using the correct flag syntax
-          railway link --project 711091cc-10bf-41a3-87cf-8d058419de4f
+          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }}
           
           echo "📦 Starting deployment..."
           # Deploy to specific service in staging environment
-          railway up --service 01abc727-2496-4948-95e7-c05f629936e8
+          railway up --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }}
           
           echo "✅ Deployment initiated successfully!"
         env:
