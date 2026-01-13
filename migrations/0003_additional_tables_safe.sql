@@ -215,6 +215,12 @@ ALTER TABLE content ADD COLUMN IF NOT EXISTS engagement_prediction JSONB;
 ALTER TABLE content ADD COLUMN IF NOT EXISTS target_audience VARCHAR(100);
 ALTER TABLE content ADD COLUMN IF NOT EXISTS optimal_posting_time TIMESTAMP;
 ALTER TABLE content ADD COLUMN IF NOT EXISTS content_metadata JSONB;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS day_number INTEGER;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT false;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS is_stopped BOOLEAN DEFAULT false;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS can_publish BOOLEAN DEFAULT true;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS publish_order INTEGER DEFAULT 0;
+ALTER TABLE content ADD COLUMN IF NOT EXISTS content_version INTEGER DEFAULT 1;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 5: CREATE COMPREHENSIVE INDEXES FOR PERFORMANCE
@@ -318,6 +324,7 @@ COMMENT ON TABLE generated_code IS 'AI-generated code snippets and applications'
 COMMENT ON TABLE project_content_management IS 'Management of content lifecycle within AI projects';
 COMMENT ON TABLE content_action_history IS 'Audit trail of all content actions and changes';
 
+-- Only add comments for columns we just created in the content table
 COMMENT ON COLUMN content.day_number IS 'Day number in the project timeline (1, 2, 3, etc.)';
 COMMENT ON COLUMN content.is_paused IS 'Individual content pause state';
 COMMENT ON COLUMN content.is_stopped IS 'Individual content stop state';

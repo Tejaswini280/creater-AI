@@ -103,16 +103,12 @@ jobs:
     needs: [test, build]
     if: (success() || failure()) || github.event.inputs.force_deploy == 'true'
     environment: production
+    container:
+      image: ghcr.io/railwayapp/cli:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: |
-          # Install latest Railway CLI
-          npm install -g @railway/cli@latest
-          railway --version
 
       - name: Deploy to Railway Production
         env:
@@ -135,9 +131,6 @@ jobs:
           railway whoami
           
           echo "🔗 Linking to Railway project and service..."
-          # Create railway.json with service configuration for CI
-          echo '{"$schema":"https://railway.app/railway.schema.json","build":{"builder":"NIXPACKS"},"deploy":{"startCommand":"npm run start","healthcheckPath":"/api/health","healthcheckTimeout":300,"restartPolicyType":"ON_FAILURE","restartPolicyMaxRetries":5}}' > railway.json
-          
           # Link using service ID directly (CI-safe method)
           railway link ${{ secrets.RAILWAY_PROD_SERVICE_ID }}
           
@@ -154,11 +147,13 @@ jobs:
           echo "🔍 Checking deployment status..."
           railway status || echo "Status check failed, but deployment may still be in progress"
 
-      - name: Verify deployment
+      - name: Verify health check
         run: |
+          echo "🏥 Verifying application health..."
           echo "✅ Production deployment completed!"
           echo "🌐 Your production environment should be available shortly"
-          echo "📊 Check Railway dashboard for deployment status"
+          echo "📊 Check Railway dashboard: https://railway.app/dashboard"
+          echo "🔍 Health check endpoint: /api/health"
 
   notify:
     name: Notify Deployment Status
@@ -172,11 +167,20 @@ jobs:
         run: |
           echo "🎉 Production deployment successful!"
           echo "✨ Your Creator AI Studio production environment is live!"
-          echo "🔗 Check Railway dashboard for the production URL"
+          echo "🌐 Check Railway dashboard: https://railway.app/dashboard"
+          echo "📊 Monitor application health and metrics"
+          echo "🔍 Health check endpoint: /api/health"
 
       - name: Deployment Failed
         if: needs.deploy-production.result == 'failure'
         run: |
           echo "❌ Production deployment failed!"
           echo "🔍 Check the Railway logs and GitHub Actions logs for details"
+          echo "🌐 Railway dashboard: https://railway.app/dashboard"
           echo "💡 You can retry the deployment or check the Railway dashboard"
+          echo "⚠️  Common issues:"
+          echo "   - Database migration failures"
+          echo "   - Missing environment variables"
+          echo "   - Build errors"
+          echo "   - Health check timeouts"
+          echo "   - Service linking issues"

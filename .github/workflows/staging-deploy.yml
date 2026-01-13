@@ -50,6 +50,16 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creators_test_db
           SKIP_RATE_LIMIT: 1
 
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-staging
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
   build:
     name: Build Application
     runs-on: ubuntu-latest
@@ -73,14 +83,11 @@ jobs:
     needs: [test, build]
     if: (success() || failure()) || github.event.inputs.force_deploy == 'true'
     environment: staging
+    container:
+      image: ghcr.io/railwayapp/cli:latest
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: |
-          npm install -g @railway/cli@latest
-          railway --version
 
       - name: Deploy to Railway Staging
         env:
@@ -108,6 +115,7 @@ jobs:
             --detach
 
           echo "✅ Deployment triggered successfully"
+          echo "🌐 Check Railway dashboard: https://railway.app/dashboard"
 
   notify:
     name: Notify Deployment Status
@@ -120,10 +128,18 @@ jobs:
         if: needs.deploy-staging.result == 'success'
         run: |
           echo "🎉 Staging deployment successful!"
-          echo "🌐 Check Railway dashboard for the live URL"
+          echo "🌐 Check Railway dashboard: https://railway.app/dashboard"
+          echo "📊 View deployment logs and metrics in Railway"
+          echo "✅ Application should be live shortly"
 
       - name: Failure
         if: needs.deploy-staging.result == 'failure'
         run: |
           echo "❌ Staging deployment failed"
-          echo "🔍 Check GitHub Actions + Railway logs"
+          echo "🔍 Check GitHub Actions logs above for details"
+          echo "🌐 Check Railway dashboard: https://railway.app/dashboard"
+          echo "💡 Common issues:"
+          echo "   - Database migration failures"
+          echo "   - Missing environment variables"
+          echo "   - Build errors"
+          echo "   - Health check timeouts"
