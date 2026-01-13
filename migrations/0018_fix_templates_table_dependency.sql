@@ -1,0 +1,128 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- FIX TEMPLATES TABLE DEPENDENCY ISSUE
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Migration: 0018_fix_templates_table_dependency.sql
+-- Purpose: Ensure templates table exists before seeding data
+-- Root Cause: Migration 0003_essential_tables.sql was skipped because 
+--             0003_additional_tables_safe.sql already executed
+-- Date: 2026-01-13
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 1: CREATE TEMPLATES TABLE IF NOT EXISTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    category VARCHAR(100),
+    template_data JSONB,
+    is_featured BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 2: CREATE OTHER ESSENTIAL TABLES FROM 0003_essential_tables.sql
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Hashtag suggestions table
+CREATE TABLE IF NOT EXISTS hashtag_suggestions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hashtag VARCHAR(255) NOT NULL,
+    platform VARCHAR(50) NOT NULL,
+    category VARCHAR(100),
+    popularity_score DECIMAL(5,2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(hashtag, platform)
+);
+
+-- AI engagement patterns table
+CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    platform VARCHAR(50) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    optimal_times TIME[],
+    engagement_score DECIMAL(5,2) DEFAULT 0,
+    sample_size INTEGER DEFAULT 0,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(platform, category)
+);
+
+-- Niches table
+CREATE TABLE IF NOT EXISTS niches (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    trend_score DECIMAL(5,2) DEFAULT 0,
+    difficulty DECIMAL(5,2) DEFAULT 0,
+    profitability DECIMAL(5,2) DEFAULT 0,
+    keywords TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 3: CREATE INDEXES FOR PERFORMANCE
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE INDEX IF NOT EXISTS idx_templates_category ON templates(category);
+CREATE INDEX IF NOT EXISTS idx_templates_is_featured ON templates(is_featured);
+CREATE INDEX IF NOT EXISTS idx_templates_name ON templates(name);
+
+CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_platform ON hashtag_suggestions(platform);
+CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_category ON hashtag_suggestions(category);
+CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_hashtag ON hashtag_suggestions(hashtag);
+
+CREATE INDEX IF NOT EXISTS idx_ai_engagement_patterns_platform ON ai_engagement_patterns(platform);
+CREATE INDEX IF NOT EXISTS idx_ai_engagement_patterns_category ON ai_engagement_patterns(category);
+
+CREATE INDEX IF NOT EXISTS idx_niches_name ON niches(name);
+CREATE INDEX IF NOT EXISTS idx_niches_trend_score ON niches(trend_score);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 4: ADD UPDATE TRIGGERS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+DROP TRIGGER IF EXISTS update_templates_updated_at ON templates;
+CREATE TRIGGER update_templates_updated_at 
+    BEFORE UPDATE ON templates 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hashtag_suggestions_updated_at ON hashtag_suggestions;
+CREATE TRIGGER update_hashtag_suggestions_updated_at 
+    BEFORE UPDATE ON hashtag_suggestions 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_ai_engagement_patterns_updated_at ON ai_engagement_patterns;
+CREATE TRIGGER update_ai_engagement_patterns_updated_at 
+    BEFORE UPDATE ON ai_engagement_patterns 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_niches_updated_at ON niches;
+CREATE TRIGGER update_niches_updated_at 
+    BEFORE UPDATE ON niches 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 5: ADD HELPFUL COMMENTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+COMMENT ON TABLE templates IS 'Content templates for various platforms and content types';
+COMMENT ON TABLE hashtag_suggestions IS 'AI-powered hashtag suggestions by platform and category';
+COMMENT ON TABLE ai_engagement_patterns IS 'Optimal posting times and engagement patterns by platform';
+COMMENT ON TABLE niches IS 'Content niches with trend analysis and profitability scores';
+
+COMMENT ON COLUMN templates.name IS 'Unique template name';
+COMMENT ON COLUMN templates.template_data IS 'JSON structure defining template format and fields';
+COMMENT ON COLUMN templates.is_featured IS 'Whether template is featured in UI';
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- MIGRATION COMPLETION
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+SELECT 'Templates table dependency fix completed - Migration 0004 can now execute' as status;
