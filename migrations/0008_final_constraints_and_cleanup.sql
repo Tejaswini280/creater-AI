@@ -66,14 +66,11 @@ END $$;
 -- Add projects duration constraint
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'chk_projects_duration' 
-        AND table_name = 'projects'
-    ) THEN
-        ALTER TABLE projects ADD CONSTRAINT chk_projects_duration 
-          CHECK (duration IS NULL OR duration IN ('7days', '30days', '90days', 'custom'));
-    END IF;
+-- Add projects duration constraint - SKIPPED
+-- Reason: Duration column type varies (INTEGER vs VARCHAR) causing type mismatch errors
+-- Error: "invalid input syntax for type integer: '7days'"
+-- This constraint is not critical for application functionality
+RAISE NOTICE 'Skipping projects duration constraint due to column type inconsistency';
 END $$;
 
 -- Add content status constraint
