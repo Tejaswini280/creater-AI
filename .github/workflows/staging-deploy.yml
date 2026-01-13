@@ -120,11 +120,11 @@ jobs:
           echo "🔐 Railway authentication configured via environment variable"
           
           # Verify Railway CLI authentication
-          railway whoami || echo "Railway authentication configured"
+          railway whoami || echo "⚠️ Railway authentication check failed, but continuing with token..."
           
           echo "🔗 Linking to Railway project and service..."
-          # Link to project with environment (CI-safe method)
-          railway link 711091cc-10bf-41a3-87cf-8d058419de4f
+          # Link to project using the correct flag syntax
+          railway link --project 711091cc-10bf-41a3-87cf-8d058419de4f
           
           echo "📦 Starting deployment..."
           # Deploy to specific service in staging environment
