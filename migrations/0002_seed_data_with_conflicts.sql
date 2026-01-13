@@ -199,19 +199,20 @@ DO UPDATE SET
   updated_at = NOW();
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- STEP 5: CREATE TEST USER WITH ON CONFLICT
+-- STEP 5: CREATE TEST USER WITH ON CONFLICT (OAUTH COMPATIBLE)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Create passwordless test user with ON CONFLICT on UNIQUE email constraint (OAuth system)
--- Fixed: Removed explicit ID to let database auto-generate it
-INSERT INTO users (email, first_name, last_name, profile_image_url) 
+-- Fixed: Explicitly set password to NULL for OAuth compatibility
+INSERT INTO users (email, first_name, last_name, profile_image_url, password) 
 VALUES 
-  ('test@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
+  ('test@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150', NULL)
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,
   last_name = EXCLUDED.last_name,
   profile_image_url = EXCLUDED.profile_image_url,
+  password = NULL,
   updated_at = NOW();
 
 -- ═══════════════════════════════════════════════════════════════════════════════
