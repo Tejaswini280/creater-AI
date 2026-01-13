@@ -18,7 +18,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS content_type TEXT[];
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS channel_types TEXT[];
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS category VARCHAR(100);
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS duration VARCHAR(50);
+-- Note: duration column already exists as INTEGER from migration 0002, skip adding as VARCHAR
+-- ALTER TABLE projects ADD COLUMN IF NOT EXISTS duration VARCHAR(50);
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS content_frequency VARCHAR(50);
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS content_formats TEXT[];
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS content_themes TEXT[];
@@ -66,7 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_post_schedules_duration ON post_schedules(duratio
 COMMENT ON COLUMN projects.content_type IS 'Array of content types (video, image, carousel, etc.)';
 COMMENT ON COLUMN projects.channel_types IS 'Array of channel types for content distribution';
 COMMENT ON COLUMN projects.category IS 'Project category (fitness, tech, lifestyle, business, education)';
-COMMENT ON COLUMN projects.duration IS 'Project duration (7days, 30days, 90days, custom)';
+COMMENT ON COLUMN projects.duration IS 'Project duration in days (INTEGER: 7, 30, 90, etc.)';
 COMMENT ON COLUMN projects.content_frequency IS 'Content posting frequency (daily, weekly, bi-weekly)';
 COMMENT ON COLUMN projects.content_formats IS 'Array of content formats (video, image, carousel, stories, reels)';
 COMMENT ON COLUMN projects.content_themes IS 'Array of content themes (educational, behind-scenes, etc.)';
@@ -268,15 +269,9 @@ BEGIN
           CHECK (category IS NULL OR category IN ('fitness', 'tech', 'lifestyle', 'business', 'education', 'entertainment'));
     END IF;
 
-    -- Add projects duration constraint
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'chk_projects_duration' 
-        AND table_name = 'projects'
-    ) THEN
-        ALTER TABLE projects ADD CONSTRAINT chk_projects_duration 
-          CHECK (duration IS NULL OR duration IN ('7days', '30days', '90days', 'custom'));
-    END IF;
+    -- Note: duration column is INTEGER (from migration 0002), not VARCHAR
+    -- Skipping duration constraint as it should accept numeric values (7, 30, 90, etc.)
+    -- The constraint check with string values like '7days' would fail for INTEGER column
 
     -- Add projects content frequency constraint
     IF NOT EXISTS (
