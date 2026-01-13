@@ -1,15 +1,16 @@
-# Minimal nixpacks configuration for Railway
+# Ultra-minimal nixpacks configuration to prevent Docker connection issues
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --production=false"]
 
 [phases.build]
-cmds = ["npm run build:simple"]
+cmds = ["npm run railway:build"]
 
 [start]
 cmd = "npm run start"
 
 [variables]
 NODE_ENV = "production"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"

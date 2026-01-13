@@ -1,15 +1,12 @@
-# Minimal nixpacks configuration for Railway
+# Railway Simple - Minimal configuration to avoid Docker issues
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm install"]
 
 [phases.build]
 cmds = ["npm run build:simple"]
 
 [start]
-cmd = "npm run start"
-
-[variables]
-NODE_ENV = "production"
+cmd = "node dist/index.js || npm start"
