@@ -119,10 +119,10 @@ jobs:
           echo "🚀 Deploying to staging environment..."
           echo "🔐 Railway authentication configured via environment variable"
           
-          echo "📦 Starting deployment with project and service targeting..."
-          # CORRECTED: Use railway up with --project and --service flags directly
+          echo "📦 Starting deployment with project, environment, and service targeting..."
+          # CORRECTED: Use railway up with --environment flag (required when using --project)
           # This bypasses the need for railway link and works in CI environments
-          railway up --project ${{ secrets.RAILWAY_PROJECT_ID }} --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }} --detach
+          railway up --environment staging --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }} --detach
           
           echo "✅ Deployment initiated successfully!"
         env:
