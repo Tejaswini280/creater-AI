@@ -26,6 +26,18 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- FIX: Ensure id column is VARCHAR type (handles INTEGER to VARCHAR conversion)
+-- This is safe to run even if id is already VARCHAR
+-- Step 1: Drop and recreate primary key to allow type change
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pkey CASCADE;
+
+-- Step 2: Change column type - converts INTEGER to VARCHAR if needed
+-- If already VARCHAR, this is a no-op
+ALTER TABLE users ALTER COLUMN id TYPE VARCHAR USING id::VARCHAR;
+
+-- Step 3: Recreate primary key
+ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
 -- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
 ALTER TABLE users 
 ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
