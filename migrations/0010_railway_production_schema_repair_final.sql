@@ -421,8 +421,8 @@ CREATE TABLE IF NOT EXISTS post_media (
 -- STEP 2: ADD ALL MISSING COLUMNS TO EXISTING TABLES (CRITICAL FIXES)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- CRITICAL FIX #1: Add missing password column to users table
-ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+-- CRITICAL FIX #1: Add missing password column to users table (nullable for OAuth users)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
 
 -- CRITICAL FIX #2: Add missing content management columns to content table
 ALTER TABLE content ADD COLUMN IF NOT EXISTS day_number INTEGER;
@@ -793,10 +793,10 @@ UPDATE projects
 SET status = 'active' 
 WHERE status IS NULL OR status = '';
 
--- Ensure all users have password column populated
+-- Clean up password column (allow NULL for OAuth users)
 UPDATE users 
-SET password = 'temp_password_needs_reset' 
-WHERE password IS NULL OR password = '';
+SET password = NULL 
+WHERE password = '' OR password = 'temp_password_needs_reset';
 
 -- Update table statistics for query planner
 ANALYZE users;
