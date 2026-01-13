@@ -38,9 +38,10 @@ ALTER TABLE users ALTER COLUMN id TYPE VARCHAR USING id::VARCHAR;
 -- Step 3: Recreate primary key
 ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
--- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
+-- ADD MISSING PASSWORD_HASH COLUMN TO USERS TABLE (CRITICAL FIX)
+-- Using password_hash to match the application schema
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+ADD COLUMN IF NOT EXISTS password_hash TEXT NOT NULL DEFAULT 'oauth_user_no_password';
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -442,9 +443,10 @@ VALUES
 ON CONFLICT (platform, category) DO NOTHING;
 
 -- Create passwordless test user if needed (OAuth system)
-INSERT INTO users (id, email, first_name, last_name) 
+-- Include password_hash to satisfy NOT NULL constraint
+INSERT INTO users (id, email, first_name, last_name, password_hash) 
 VALUES 
-  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth')
+  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth', 'oauth_user_no_password')
 ON CONFLICT (email) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════════

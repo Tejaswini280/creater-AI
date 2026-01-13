@@ -106,8 +106,9 @@ END $$;
 DO $$
 BEGIN
     -- Test passwordless user insertion with ON CONFLICT (OAuth system)
-    INSERT INTO users (id, email, first_name, last_name) 
-    VALUES ('test-constraint-check-oauth', 'test-constraint@example.com', 'Test', 'OAuth')
+    -- Include password_hash to satisfy NOT NULL constraint
+    INSERT INTO users (id, email, first_name, last_name, password_hash) 
+    VALUES ('test-constraint-check-oauth', 'test-constraint@example.com', 'Test', 'OAuth', 'oauth_user_no_password')
     ON CONFLICT (email) DO UPDATE SET 
       first_name = EXCLUDED.first_name,
       updated_at = NOW();
