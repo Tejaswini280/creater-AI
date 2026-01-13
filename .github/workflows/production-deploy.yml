@@ -115,9 +115,24 @@ jobs:
           railway --version
 
       - name: Deploy to Railway Production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
+          set -e
+          
           echo "🚀 Deploying to production environment..."
-          echo "🔐 Railway authentication configured via environment variable"
+          
+          # Verify token is set
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "❌ RAILWAY_TOKEN is not set"
+            exit 1
+          fi
+          
+          echo "🔐 Authenticating with Railway..."
+          echo "$RAILWAY_TOKEN" | railway login --browserless
+          
+          echo "✅ Authentication successful"
+          railway whoami
           
           echo "🔗 Linking to Railway project and service..."
           # Create railway.json with service configuration for CI
@@ -130,8 +145,6 @@ jobs:
           railway up --detach
           
           echo "✅ Deployment initiated successfully!"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Wait for deployment
         run: |
