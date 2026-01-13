@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:vite --external:@vitejs/plugin-react --external:@replit/vite-plugin-runtime-error-modal --external:@replit/vite-plugin-cartographer",
+    "build": "vite build && npm run build:server",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "test": "cross-env NODE_ENV=test SKIP_RATE_LIMIT=1 NODE_OPTIONS=--max_old_space_size=4096 jest --runInBand --coverage",
     "test:watch": "cross-env NODE_ENV=test SKIP_RATE_LIMIT=1 jest --watch",
@@ -42,7 +42,12 @@
     "app:doctor": "node run-creator-ai-studio.mjs doctor",
     "migrate:enhanced": "node server/services/enhancedMigrationRunner.js",
     "migrate:safe": "node server/services/cleanMigrationRunner.js",
-    "railway:start": "npm run start"
+    "railway:start": "npm run start",
+    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:vite",
+    "build:simple": "vite build",
+    "railway:build": "npm run build:simple",
+    "verify:build": "node verify-build.cjs",
+    "start:fallback": "node start-fallback.cjs"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
