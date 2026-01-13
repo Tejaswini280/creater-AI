@@ -40,9 +40,14 @@ ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 -- ADD MISSING PASSWORD_HASH COLUMN TO USERS TABLE (CRITICAL FIX)
 -- Using password_hash to match the application schema
--- NULL allowed for OAuth users who don't have passwords
+-- Default value for OAuth users who don't have passwords
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ADD COLUMN IF NOT EXISTS password_hash TEXT DEFAULT 'oauth_user_no_password';
+
+-- Update existing NULL values to the OAuth placeholder
+UPDATE users 
+SET password_hash = 'oauth_user_no_password'
+WHERE password_hash IS NULL;
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
