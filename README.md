@@ -1,4 +1,4 @@
-# Creator AI Studio
+# Creator AI Studio.
 
 A comprehensive AI-powered content creation platform built with Node.js, React, and TypeScript.
 
