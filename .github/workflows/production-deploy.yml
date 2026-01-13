@@ -119,10 +119,15 @@ jobs:
           echo "🚀 Deploying to production environment..."
           echo "🔐 Railway authentication configured via environment variable"
           
-          echo "📦 Starting deployment with project, environment, and service targeting..."
-          # CORRECTED: Use railway up with --environment flag (required when using --project)
-          # This bypasses the need for railway link and works in CI environments
-          railway up --environment production --service ${{ secrets.RAILWAY_PROD_SERVICE_ID }} --detach
+          echo "🔗 Linking to Railway project and service..."
+          # Create railway.json with service configuration for CI
+          echo '{"$schema":"https://railway.app/railway.schema.json","build":{"builder":"NIXPACKS"},"deploy":{"startCommand":"npm run start","healthcheckPath":"/api/health","healthcheckTimeout":300,"restartPolicyType":"ON_FAILURE","restartPolicyMaxRetries":5}}' > railway.json
+          
+          # Link using service ID directly (CI-safe method)
+          railway link ${{ secrets.RAILWAY_PROD_SERVICE_ID }}
+          
+          echo "📦 Starting deployment..."
+          railway up --detach
           
           echo "✅ Deployment initiated successfully!"
         env:
