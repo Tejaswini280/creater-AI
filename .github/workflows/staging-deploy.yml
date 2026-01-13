@@ -74,37 +74,38 @@ jobs:
     if: (success() || failure()) || github.event.inputs.force_deploy == 'true'
     environment: staging
 
-  steps:
-    - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Install Railway CLI
-      run: |
-        npm install -g @railway/cli@latest
-        railway --version
+      - name: Install Railway CLI
+        run: |
+          npm install -g @railway/cli@latest
+          railway --version
 
-    - name: Deploy to Railway Staging
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        RAILWAY_SERVICE_NAME: ${{ secrets.RAILWAY_STAGING_SERVICE_NAME }}
-      run: |
-        set -e
+      - name: Deploy to Railway Staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_NAME: ${{ secrets.RAILWAY_STAGING_SERVICE_NAME }}
+        run: |
+          set -e
 
-        echo "🚀 Deploying to Railway Staging..."
+          echo "🚀 Deploying to Railway Staging..."
 
-        echo "🔐 Verifying Railway authentication..."
-        railway whoami
+          echo "🔐 Verifying Railway authentication..."
+          railway whoami
 
-        echo "📦 Deploying service..."
-        railway up \
-          --project "$RAILWAY_PROJECT_ID" \
-          --service "$RAILWAY_SERVICE_NAME" \
-          --detach
+          echo "📦 Deploying service..."
+          railway up \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SERVICE_NAME" \
+            --detach
 
-        echo "✅ Deployment triggered successfully"
+          echo "✅ Deployment triggered successfully"
 
   notify:
     name: Notify Deployment Status
+    runs-on: ubuntu-latest
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: always()
