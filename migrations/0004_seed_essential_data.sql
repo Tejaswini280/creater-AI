@@ -47,21 +47,51 @@ BEGIN
     END IF;
 END $$;
 
--- Insert hashtag suggestions (with conflict resolution)
-INSERT INTO hashtag_suggestions (hashtag, platform, category, popularity_score)
-VALUES 
-    ('#socialmedia', 'instagram', 'marketing', 4.8),
-    ('#contentcreator', 'instagram', 'lifestyle', 4.7),
-    ('#digitalmarketing', 'linkedin', 'business', 4.9),
-    ('#tech', 'twitter', 'technology', 4.6),
-    ('#startup', 'linkedin', 'business', 4.5),
-    ('#ai', 'twitter', 'technology', 4.8),
-    ('#marketing', 'facebook', 'business', 4.7),
-    ('#content', 'instagram', 'lifestyle', 4.4)
-ON CONFLICT (hashtag, platform) DO UPDATE SET
-    category = EXCLUDED.category,
-    popularity_score = EXCLUDED.popularity_score,
-    updated_at = NOW();
+-- Insert hashtag suggestions (with idempotent check)
+-- Note: Using trend_score (0-100) instead of popularity_score to match actual schema
+DO $
+BEGIN
+    -- Check and insert each hashtag suggestion
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#socialmedia' AND platform = 'instagram') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#socialmedia', 'instagram', 'marketing', 96, 15000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#contentcreator' AND platform = 'instagram') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#contentcreator', 'instagram', 'lifestyle', 94, 12000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#digitalmarketing' AND platform = 'linkedin') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#digitalmarketing', 'linkedin', 'business', 98, 18000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#tech' AND platform = 'twitter') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#tech', 'twitter', 'technology', 92, 10000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#startup' AND platform = 'linkedin') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#startup', 'linkedin', 'business', 90, 8000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#ai' AND platform = 'twitter') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#ai', 'twitter', 'technology', 96, 16000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#marketing' AND platform = 'facebook') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#marketing', 'facebook', 'business', 94, 14000);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#content' AND platform = 'instagram') THEN
+        INSERT INTO hashtag_suggestions (hashtag, platform, category, trend_score, usage_count)
+        VALUES ('#content', 'instagram', 'lifestyle', 88, 9000);
+    END IF;
+END $;
 
 -- Insert sample niches (with conflict resolution)
 INSERT INTO niches (name, description, trend_score, difficulty, profitability, keywords)
