@@ -11,7 +11,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Remove NOT NULL constraint from password column if it exists
-DO $ 
+DO $$ 
 BEGIN
     -- First check if the column exists and has NOT NULL constraint
     IF EXISTS (
@@ -33,14 +33,16 @@ BEGIN
         ALTER TABLE users ADD COLUMN password TEXT NULL DEFAULT NULL;
         RAISE NOTICE 'Password column added as nullable for OAuth compatibility';
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 2: UPDATE EXISTING USERS WITH REQUIRED PASSWORDS TO NULL (OAUTH MIGRATION)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Clear placeholder passwords for OAuth users
-DO $ 
+DO $$ 
+DECLARE
+    updated_count INTEGER;
 BEGIN
     UPDATE users 
     SET password = NULL 
@@ -54,14 +56,14 @@ BEGIN
     
     GET DIAGNOSTICS updated_count = ROW_COUNT;
     RAISE NOTICE 'Cleared % placeholder passwords for OAuth migration', updated_count;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: CREATE PASSWORDLESS TEST USER (DEVELOPMENT ONLY)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Only create test user in development environments
-DO $ 
+DO $$ 
 BEGIN
     -- Check if we're in a development environment (not production)
     IF current_setting('server_version_num')::int > 0 THEN -- Always true, but allows conditional logic
@@ -86,7 +88,7 @@ BEGIN
             
         RAISE NOTICE 'Passwordless OAuth test user created/updated: test@creatornexus.dev';
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- MIGRATION COMPLETION

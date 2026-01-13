@@ -10,9 +10,15 @@
 -- STEP 1: FIX USERS TABLE - ADD MISSING COLUMNS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Add password column to users table (CRITICAL)
+-- Add password column to users table (CRITICAL) - nullable for OAuth
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+ADD COLUMN IF NOT EXISTS password TEXT NULL;
+
+-- Add name columns (CRITICAL for seeding)
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS first_name VARCHAR,
+ADD COLUMN IF NOT EXISTS last_name VARCHAR,
+ADD COLUMN IF NOT EXISTS full_name VARCHAR;
 
 -- Add other missing user columns
 ALTER TABLE users 
@@ -303,11 +309,10 @@ CREATE TRIGGER update_project_extensions_updated_at
 -- STEP 7: UPDATE EXISTING DATA WITH SAFE DEFAULTS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Update users with missing data
+-- Update users with missing data (make password nullable for OAuth)
 UPDATE users 
-SET 
-    password = 'temp_password_needs_reset'
-WHERE password IS NULL OR password = '';
+SET password = NULL
+WHERE password = 'temp_password_needs_reset' OR password = '';
 
 -- Update content with missing status
 UPDATE content 

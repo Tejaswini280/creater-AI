@@ -86,24 +86,34 @@ END $$;
 -- STEP 3: CREATE OAUTH TEST USER (SAFE)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Create or update OAuth test user with explicit NULL password
-INSERT INTO users (email, first_name, last_name, profile_image_url, password, is_active) 
-VALUES (
-    'test-oauth@railway.app', 
-    'OAuth', 
-    'Test', 
-    'https://via.placeholder.com/150', 
-    NULL,
-    true
-)
-ON CONFLICT (email) 
-DO UPDATE SET 
-    first_name = EXCLUDED.first_name,
-    last_name = EXCLUDED.last_name,
-    profile_image_url = EXCLUDED.profile_image_url,
-    password = NULL,
-    is_active = true,
-    updated_at = NOW();
+-- Create or update OAuth test user with explicit NULL password (only if users table has required columns)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'email') THEN
+        -- Only insert if user doesn't exist (avoid id constraint violation)
+        IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'test-oauth@railway.app') THEN
+            INSERT INTO users (id, email, first_name, last_name, profile_image_url, password, is_active) 
+            VALUES (
+                'oauth-test-user-' || gen_random_uuid()::text,
+                'test-oauth@railway.app', 
+                'OAuth', 
+                'Test', 
+                'https://via.placeholder.com/150', 
+                NULL,
+                true
+            );
+        ELSE
+            UPDATE users SET
+                first_name = 'OAuth',
+                last_name = 'Test',
+                profile_image_url = 'https://via.placeholder.com/150',
+                password = NULL,
+                is_active = true,
+                updated_at = NOW()
+            WHERE email = 'test-oauth@railway.app';
+        END IF;
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 4: VERIFY SCHEMA IS CORRECT
