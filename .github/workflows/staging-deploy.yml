@@ -117,17 +117,12 @@ jobs:
       - name: Deploy to Railway Staging
         run: |
           echo "🚀 Deploying to staging environment..."
-          echo "🔐 Setting up Railway authentication..."
+          echo "🔐 Railway authentication configured via environment variable"
           
-          # Set Railway token
-          export RAILWAY_TOKEN="${{ secrets.RAILWAY_TOKEN }}"
-          
-          echo "🔗 Linking to Railway project..."
-          # FIXED: Use correct Railway CLI syntax with proper flags
-          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }}
-          
-          echo "📦 Starting deployment..."
-          railway up --detach
+          echo "📦 Starting deployment with project and service targeting..."
+          # CORRECTED: Use railway up with --project and --service flags directly
+          # This bypasses the need for railway link and works in CI environments
+          railway up --project ${{ secrets.RAILWAY_PROJECT_ID }} --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }} --detach
           
           echo "✅ Deployment initiated successfully!"
         env:
