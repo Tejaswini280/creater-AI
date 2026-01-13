@@ -1,0 +1,113 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- FIX TEMPLATES TABLE SCHEMA CONFLICT - PERMANENT SOLUTION
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Migration: 0019_fix_templates_schema_conflict.sql
+-- Purpose: Reconcile conflicting templates table schemas between migrations
+-- Root Cause: Migration 0001 creates templates with 'title' column
+--             Migration 0018 expects templates with 'name' column
+--             Migration 0004 seed data uses 'name' column
+-- Solution: Add 'name' column and migrate data from 'title' if needed
+-- Date: 2026-01-13
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 1: ADD MISSING 'name' COLUMN TO TEMPLATES TABLE
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+DO $
+BEGIN
+    -- Add 'name' column if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'templates' AND column_name = 'name'
+    ) THEN
+        -- Add name column (nullable initially to allow data migration)
+        ALTER TABLE templates ADD COLUMN name VARCHAR(255);
+        
+        -- Migrate existing data: copy 'title' to 'name' for existing rows
+        UPDATE templates SET name = title WHERE name IS NULL AND title IS NOT NULL;
+        
+        -- Now make it NOT NULL and UNIQUE
+        ALTER TABLE templates ALTER COLUMN name SET NOT NULL;
+        
+        -- Add unique constraint if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE constraint_name = 'templates_name_key' 
+            AND table_name = 'templates'
+        ) THEN
+            ALTER TABLE templates ADD CONSTRAINT templates_name_key UNIQUE (name);
+        END IF;
+        
+        RAISE NOTICE 'Added name column to templates table and migrated data from title';
+    ELSE
+        RAISE NOTICE 'Column name already exists in templates table';
+    END IF;
+END $;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 2: ADD MISSING 'template_data' COLUMN IF NEEDED
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+DO $
+BEGIN
+    -- Add 'template_data' column if it doesn't exist (used by migration 0018 schema)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'templates' AND column_name = 'template_data'
+    ) THEN
+        ALTER TABLE templates ADD COLUMN template_data JSONB;
+        RAISE NOTICE 'Added template_data column to templates table';
+    ELSE
+        RAISE NOTICE 'Column template_data already exists in templates table';
+    END IF;
+END $;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 3: ENSURE ALL REQUIRED COLUMNS EXIST
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Ensure description column exists
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'templates' AND column_name = 'description'
+    ) THEN
+        ALTER TABLE templates ADD COLUMN description TEXT;
+    END IF;
+END $;
+
+-- Ensure category column exists
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'templates' AND column_name = 'category'
+    ) THEN
+        ALTER TABLE templates ADD COLUMN category VARCHAR(100);
+    END IF;
+END $;
+
+-- Ensure is_featured column exists
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'templates' AND column_name = 'is_featured'
+    ) THEN
+        ALTER TABLE templates ADD COLUMN is_featured BOOLEAN DEFAULT false;
+    END IF;
+END $;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STEP 4: CREATE INDEX ON 'name' COLUMN
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE INDEX IF NOT EXISTS idx_templates_name ON templates(name);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- MIGRATION COMPLETION
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+SELECT 'Templates schema conflict resolved - Migration 0004 seed data can now execute' as status;
