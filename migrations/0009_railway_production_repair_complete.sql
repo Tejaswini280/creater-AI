@@ -420,7 +420,8 @@ CREATE TABLE IF NOT EXISTS generated_code (
 
 -- CRITICAL FIX: Add missing password_hash column to users table
 -- Using password_hash to match application schema
-ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT NOT NULL DEFAULT 'oauth_user_no_password';
+-- NULL allowed for OAuth users who don't have passwords
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- Add unique constraint for users email (for ON CONFLICT support)
 DO $$ 
@@ -748,10 +749,10 @@ DO UPDATE SET
   updated_at = NOW();
 
 -- Create passwordless test user with ON CONFLICT on UNIQUE email constraint (OAuth system)
--- Include password_hash to satisfy NOT NULL constraint
-INSERT INTO users (id, email, first_name, last_name, profile_image_url, password_hash) 
+-- password_hash is NULL for OAuth users
+INSERT INTO users (id, email, first_name, last_name, profile_image_url) 
 VALUES 
-  ('test-user-railway-repair-oauth', 'test-repair@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150', 'oauth_user_no_password')
+  ('test-user-railway-repair-oauth', 'test-repair@railway.app', 'Railway', 'OAuth', 'https://via.placeholder.com/150')
 ON CONFLICT (email) 
 DO UPDATE SET 
   first_name = EXCLUDED.first_name,

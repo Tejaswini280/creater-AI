@@ -40,8 +40,9 @@ ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 -- ADD MISSING PASSWORD_HASH COLUMN TO USERS TABLE (CRITICAL FIX)
 -- Using password_hash to match the application schema
+-- NULL allowed for OAuth users who don't have passwords
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password_hash TEXT NOT NULL DEFAULT 'oauth_user_no_password';
+ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -443,10 +444,10 @@ VALUES
 ON CONFLICT (platform, category) DO NOTHING;
 
 -- Create passwordless test user if needed (OAuth system)
--- Include password_hash to satisfy NOT NULL constraint
-INSERT INTO users (id, email, first_name, last_name, password_hash) 
+-- password_hash is NULL for OAuth users
+INSERT INTO users (id, email, first_name, last_name) 
 VALUES 
-  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth', 'oauth_user_no_password')
+  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth')
 ON CONFLICT (email) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
