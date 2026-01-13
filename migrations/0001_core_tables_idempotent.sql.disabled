@@ -4,7 +4,7 @@
 -- Creates all core tables with proper constraints for ON CONFLICT usage
 -- Safe on fresh DB and partially migrated DB
 -- NO FOREIGN KEYS for maximum safety
--- Date: 2026-01-12 - SYNTAX ERROR FIXED
+-- Date: 2026-01-13 - USERS TABLE COLUMNS FIXED
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Enable required extensions
@@ -21,12 +21,15 @@ CREATE TABLE IF NOT EXISTS sessions (
     expire TIMESTAMP NOT NULL
 );
 
--- Users table with UNIQUE constraints for ON CONFLICT
+-- Users table with ALL required columns for seeding
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY NOT NULL,
     email VARCHAR NOT NULL,
-    first_name VARCHAR NOT NULL,
-    last_name VARCHAR NOT NULL,
+    username VARCHAR,
+    first_name VARCHAR,
+    last_name VARCHAR,
+    full_name VARCHAR,
+    password TEXT,
     profile_image_url VARCHAR,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -34,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Add UNIQUE constraint for email if not exists (for ON CONFLICT support)
-DO $$ 
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
@@ -45,14 +48,47 @@ BEGIN
     END IF;
 END $$;
 
--- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
+-- ADD MISSING COLUMNS TO USERS TABLE (IDEMPOTENT)
 DO $$ 
 BEGIN
+    -- Add password column if missing
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'users' AND column_name = 'password'
     ) THEN
-        ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+        ALTER TABLE users ADD COLUMN password TEXT;
+    END IF;
+    
+    -- Add username column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'username'
+    ) THEN
+        ALTER TABLE users ADD COLUMN username VARCHAR;
+    END IF;
+    
+    -- Add full_name column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'full_name'
+    ) THEN
+        ALTER TABLE users ADD COLUMN full_name VARCHAR;
+    END IF;
+    
+    -- Add first_name column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'first_name'
+    ) THEN
+        ALTER TABLE users ADD COLUMN first_name VARCHAR;
+    END IF;
+    
+    -- Add last_name column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'last_name'
+    ) THEN
+        ALTER TABLE users ADD COLUMN last_name VARCHAR;
     END IF;
 END $$;
 
@@ -65,7 +101,10 @@ CREATE TABLE IF NOT EXISTS projects (
     type VARCHAR NOT NULL,
     template VARCHAR,
     platform VARCHAR,
+    niche VARCHAR,
     target_audience VARCHAR,
+    content_pillars TEXT[],
+    posting_frequency VARCHAR,
     estimated_duration VARCHAR,
     tags TEXT[],
     is_public BOOLEAN DEFAULT false,
@@ -75,10 +114,39 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Add missing columns to projects table (IDEMPOTENT)
+DO $
+BEGIN
+    -- Add niche column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'projects' AND column_name = 'niche'
+    ) THEN
+        ALTER TABLE projects ADD COLUMN niche VARCHAR;
+    END IF;
+    
+    -- Add content_pillars column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'projects' AND column_name = 'content_pillars'
+    ) THEN
+        ALTER TABLE projects ADD COLUMN content_pillars TEXT[];
+    END IF;
+    
+    -- Add posting_frequency column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'projects' AND column_name = 'posting_frequency'
+    ) THEN
+        ALTER TABLE projects ADD COLUMN posting_frequency VARCHAR;
+    END IF;
+END $;
+
 -- Content table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS content (
     id SERIAL PRIMARY KEY NOT NULL,
     user_id VARCHAR NOT NULL,
+    project_id INTEGER,
     title VARCHAR NOT NULL,
     description TEXT,
     script TEXT,
@@ -97,32 +165,55 @@ CREATE TABLE IF NOT EXISTS content (
     can_publish BOOLEAN DEFAULT true,
     publish_order INTEGER DEFAULT 0,
     content_version INTEGER DEFAULT 1,
+    day_number INTEGER,
     last_regenerated_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Add project_id column to content table (CRITICAL FIX)
-DO $$ 
+-- Add missing columns to content table (IDEMPOTENT)
+DO $
 BEGIN
+    -- Add project_id column if missing
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'content' AND column_name = 'project_id'
     ) THEN
         ALTER TABLE content ADD COLUMN project_id INTEGER;
     END IF;
-END $$;
-
--- Add day_number column to content table (CRITICAL FIX)
-DO $$ 
-BEGIN
+    
+    -- Add day_number column if missing
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'content' AND column_name = 'day_number'
     ) THEN
         ALTER TABLE content ADD COLUMN day_number INTEGER;
     END IF;
-END $$;
+END $;
+
+-- Analytics table (for seeding support)
+CREATE TABLE IF NOT EXISTS analytics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR NOT NULL,
+    project_id INTEGER,
+    metric_type VARCHAR NOT NULL,
+    metric_value NUMERIC NOT NULL,
+    date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Scheduled Content table (for seeding support)
+CREATE TABLE IF NOT EXISTS scheduled_content (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR NOT NULL,
+    project_id INTEGER,
+    title VARCHAR NOT NULL,
+    scheduled_time TIMESTAMP NOT NULL,
+    platform VARCHAR NOT NULL,
+    status VARCHAR DEFAULT 'scheduled' NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
 -- Content Metrics table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS content_metrics (
@@ -258,7 +349,7 @@ CREATE TABLE IF NOT EXISTS ai_engagement_patterns (
 );
 
 -- Add UNIQUE constraint for ai_engagement_patterns (for ON CONFLICT support)
-DO $$ 
+DO $
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
@@ -267,7 +358,7 @@ BEGIN
     ) THEN
         ALTER TABLE ai_engagement_patterns ADD CONSTRAINT ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
     END IF;
-END $$;
+END $;
 
 -- Notifications table (NO FOREIGN KEYS)
 CREATE TABLE IF NOT EXISTS notifications (
@@ -313,7 +404,7 @@ CREATE TABLE IF NOT EXISTS niches (
 );
 
 -- Add UNIQUE constraint for niches name (for ON CONFLICT support)
-DO $$ 
+DO $
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
@@ -322,7 +413,7 @@ BEGIN
     ) THEN
         ALTER TABLE niches ADD CONSTRAINT niches_name_key UNIQUE (name);
     END IF;
-END $$;
+END $;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 2: CREATE ESSENTIAL INDEXES (IDEMPOTENT)
@@ -368,18 +459,28 @@ CREATE INDEX IF NOT EXISTS idx_templates_is_featured ON templates(is_featured) W
 CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_platform ON hashtag_suggestions(platform);
 CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_category ON hashtag_suggestions(category);
 
+-- Analytics indexes
+CREATE INDEX IF NOT EXISTS idx_analytics_user_id ON analytics(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_project_id ON analytics(project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_analytics_date ON analytics(date);
+
+-- Scheduled content indexes
+CREATE INDEX IF NOT EXISTS idx_scheduled_content_user_id ON scheduled_content(user_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_content_scheduled_time ON scheduled_content(scheduled_time);
+CREATE INDEX IF NOT EXISTS idx_scheduled_content_status ON scheduled_content(status);
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: CREATE AUTOMATIC TIMESTAMP UPDATE TRIGGERS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Create or replace the timestamp update function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$ language 'plpgsql';
 
 -- Create triggers for automatic timestamp updates (idempotent)
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
@@ -432,8 +533,18 @@ CREATE TRIGGER update_niches_updated_at
     BEFORE UPDATE ON niches
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_scheduled_content_updated_at ON scheduled_content;
+CREATE TRIGGER update_scheduled_content_updated_at
+    BEFORE UPDATE ON scheduled_content
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- MIGRATION COMPLETION
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-SELECT 'Core tables migration completed successfully - All ON CONFLICT constraints ready' as status;
+SELECT 'Core tables migration completed successfully - All columns and constraints ready for seeding' as status;
+
+
+
+
+

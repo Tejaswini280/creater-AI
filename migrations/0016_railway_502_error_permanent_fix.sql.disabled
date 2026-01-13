@@ -202,17 +202,17 @@ END $$;
 -- STEP 6: CREATE ESSENTIAL PERFORMANCE INDEXES
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Create performance indexes for critical queries
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_user_id ON content(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_project_id ON content(project_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_status ON content(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_content_day_number ON content(day_number);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_projects_user_id ON projects(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_projects_status ON projects(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_schedules_user_id ON post_schedules(social_post_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_schedules_scheduled_at ON post_schedules(scheduled_at);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_social_posts_user_id ON social_posts(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_social_posts_project_id ON social_posts(project_id);
+-- Create performance indexes for critical queries (without CONCURRENTLY to avoid transaction block error)
+CREATE INDEX IF NOT EXISTS idx_content_user_id ON content(user_id);
+CREATE INDEX IF NOT EXISTS idx_content_project_id ON content(project_id);
+CREATE INDEX IF NOT EXISTS idx_content_status ON content(status);
+CREATE INDEX IF NOT EXISTS idx_content_day_number ON content(day_number);
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_post_schedules_user_id ON post_schedules(social_post_id);
+CREATE INDEX IF NOT EXISTS idx_post_schedules_scheduled_at ON post_schedules(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_social_posts_user_id ON social_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_posts_project_id ON social_posts(project_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 7: VALIDATION AND VERIFICATION
@@ -232,7 +232,7 @@ BEGIN
     LOOP
         IF NOT EXISTS (
             SELECT 1 FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_name = table_name
+            WHERE table_schema = 'public' AND information_schema.tables.table_name = table_name
         ) THEN
             missing_tables := array_append(missing_tables, table_name);
         END IF;
@@ -264,7 +264,7 @@ BEGIN
     LOOP
         IF NOT EXISTS (
             SELECT 1 FROM information_schema.columns 
-            WHERE table_name = col_info[1] AND column_name = col_info[2]
+            WHERE information_schema.columns.table_name = col_info[1] AND information_schema.columns.column_name = col_info[2]
         ) THEN
             missing_columns := array_append(missing_columns, col_info[1] || '.' || col_info[2]);
         END IF;
@@ -306,3 +306,4 @@ BEGIN
     RAISE NOTICE '✅ Verified all critical tables and columns exist';
     RAISE NOTICE '🚀 Railway deployment should now succeed!';
 END $$;
+

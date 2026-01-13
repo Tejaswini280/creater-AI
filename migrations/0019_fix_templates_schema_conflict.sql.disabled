@@ -14,8 +14,7 @@
 -- STEP 1: ADD MISSING 'name' COLUMN TO TEMPLATES TABLE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-DO $
-BEGIN
+DO $\nBEGIN
     -- Add 'name' column if it doesn't exist
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
@@ -43,13 +42,13 @@ BEGIN
     ELSE
         RAISE NOTICE 'Column name already exists in templates table';
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 2: ADD MISSING 'template_data' COLUMN IF NEEDED
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-DO $
+DO $$
 BEGIN
     -- Add 'template_data' column if it doesn't exist (used by migration 0018 schema)
     IF NOT EXISTS (
@@ -61,14 +60,14 @@ BEGIN
     ELSE
         RAISE NOTICE 'Column template_data already exists in templates table';
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: ENSURE ALL REQUIRED COLUMNS EXIST
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Ensure description column exists
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
@@ -76,10 +75,10 @@ BEGIN
     ) THEN
         ALTER TABLE templates ADD COLUMN description TEXT;
     END IF;
-END $;
+END $$;
 
 -- Ensure category column exists
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
@@ -87,10 +86,10 @@ BEGIN
     ) THEN
         ALTER TABLE templates ADD COLUMN category VARCHAR(100);
     END IF;
-END $;
+END $$;
 
 -- Ensure is_featured column exists
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
@@ -98,7 +97,7 @@ BEGIN
     ) THEN
         ALTER TABLE templates ADD COLUMN is_featured BOOLEAN DEFAULT false;
     END IF;
-END $;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 4: CREATE INDEX ON 'name' COLUMN
@@ -111,3 +110,9 @@ CREATE INDEX IF NOT EXISTS idx_templates_name ON templates(name);
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 SELECT 'Templates schema conflict resolved - Migration 0004 seed data can now execute' as status;
+
+
+
+
+
+

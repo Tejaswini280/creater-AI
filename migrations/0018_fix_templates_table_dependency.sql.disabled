@@ -70,9 +70,19 @@ CREATE TABLE IF NOT EXISTS niches (
 -- STEP 3: CREATE INDEXES FOR PERFORMANCE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+-- Only create name index if name column exists (migration 0019 adds it)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'templates' AND column_name = 'name') THEN
+        CREATE INDEX IF NOT EXISTS idx_templates_name ON templates(name);
+        RAISE NOTICE 'Created index on templates.name column';
+    ELSE
+        RAISE NOTICE 'Skipping templates.name index - column does not exist yet (will be added by migration 0019)';
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_templates_category ON templates(category);
 CREATE INDEX IF NOT EXISTS idx_templates_is_featured ON templates(is_featured);
-CREATE INDEX IF NOT EXISTS idx_templates_name ON templates(name);
 
 CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_platform ON hashtag_suggestions(platform);
 CREATE INDEX IF NOT EXISTS idx_hashtag_suggestions_category ON hashtag_suggestions(category);

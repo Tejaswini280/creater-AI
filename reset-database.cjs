@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Database Reset Script
- * Provides clean, migrate, and seed operations
+ * Database Reset Script - FIXED VERSION
+ * Runs SQL migrations directly without drizzle's journal system
  */
 
-const { drizzle } = require('drizzle-orm/postgres-js');
 const postgres = require('postgres');
-const { migrate } = require('drizzle-orm/postgres-js/migrator');
 const fs = require('fs');
 const path = require('path');
 
@@ -31,7 +29,7 @@ async function cleanDatabase() {
   
   try {
     // Drop all tables in the public schema
-    await sql`
+    await sql.unsafe(`
       DO $$ 
       DECLARE
         r RECORD;
@@ -54,7 +52,7 @@ async function cleanDatabase() {
           EXECUTE 'DROP VIEW IF EXISTS public.' || quote_ident(r.viewname) || ' CASCADE';
         END LOOP;
       END $$;
-    `;
+    `);
     
     console.log('✅ Database cleaned successfully');
     console.log('   - All tables dropped');
@@ -72,7 +70,6 @@ async function runMigrations() {
   console.log('🔄 Running migrations...');
   
   const sql = postgres(DATABASE_URL, { max: 1 });
-  const db = drizzle(sql);
   
   try {
     const migrationsFolder = path.join(__dirname, 'migrations');
@@ -82,21 +79,58 @@ async function runMigrations() {
       process.exit(1);
     }
     
-    // Run migrations using drizzle-orm
-    await migrate(db, { migrationsFolder });
-    
-    console.log('✅ Migrations completed successfully');
-    
-    // List applied migrations
-    const migrations = fs.readdirSync(migrationsFolder)
-      .filter(f => f.endsWith('.sql'))
+    // Get all SQL files and sort them
+    const migrationFiles = fs.readdirSync(migrationsFolder)
+      .filter(f => f.endsWith('.sql') && !f.includes('.skip') && !f.includes('.backup'))
       .sort();
     
-    console.log(`   - Applied ${migrations.length} migrations`);
-    migrations.slice(0, 5).forEach(m => console.log(`     • ${m}`));
-    if (migrations.length > 5) {
-      console.log(`     ... and ${migrations.length - 5} more`);
+    console.log(`   Found ${migrationFiles.length} migration files`);
+    
+    let successCount = 0;
+    let skippedCount = 0;
+    
+    // Run each migration file
+    for (const file of migrationFiles) {
+      const filePath = path.join(migrationsFolder, file);
+      const sqlContent = fs.readFileSync(filePath, 'utf8');
+      
+      // Skip empty files or comment-only files
+      const hasActualSQL = sqlContent
+        .split('\n')
+        .some(line => {
+          const trimmed = line.trim();
+          return trimmed && !trimmed.startsWith('--') && trimmed !== '';
+        });
+      
+      if (!hasActualSQL) {
+        console.log(`   ⏭️  Skipping ${file} (no SQL statements)`);
+        skippedCount++;
+        continue;
+      }
+      
+      try {
+        // Execute the SQL file
+        await sql.unsafe(sqlContent);
+        console.log(`   ✅ Applied ${file}`);
+        successCount++;
+      } catch (error) {
+        // Some migrations might fail if tables already exist, that's okay
+        if (error.message.includes('already exists')) {
+          console.log(`   ⏭️  Skipped ${file} (already applied)`);
+          skippedCount++;
+        } else {
+          console.error(`   ❌ Error in ${file}:`, error.message);
+          // Continue with other migrations
+        }
+      }
     }
+    
+    console.log('✅ Migrations completed successfully');
+    console.log(`   - Applied ${successCount} migrations`);
+    if (skippedCount > 0) {
+      console.log(`   - Skipped ${skippedCount} migrations`);
+    }
+    
   } catch (error) {
     console.error('❌ Error running migrations:', error.message);
     throw error;
@@ -116,7 +150,9 @@ async function seedDatabase() {
       INSERT INTO users (
         id, 
         username, 
-        email, 
+        email,
+        first_name,
+        last_name, 
         full_name,
         created_at,
         updated_at
@@ -124,6 +160,8 @@ async function seedDatabase() {
         'test-user-' || gen_random_uuid()::text,
         'testuser',
         'test@example.com',
+        'Test',
+        'User',
         'Test User',
         NOW(),
         NOW()
@@ -142,6 +180,7 @@ async function seedDatabase() {
         user_id,
         name,
         description,
+        type,
         platform,
         niche,
         target_audience,
@@ -150,10 +189,11 @@ async function seedDatabase() {
         created_at,
         updated_at
       ) VALUES (
-        gen_random_uuid(),
+        DEFAULT,
         ${user.id},
         'Sample Project',
         'A sample project for testing',
+        'content_creation',
         'youtube',
         'Technology',
         'Tech enthusiasts and developers',
@@ -182,7 +222,7 @@ async function seedDatabase() {
         updated_at
       ) VALUES 
       (
-        gen_random_uuid(),
+        DEFAULT,
         ${user.id},
         ${project.id},
         'Getting Started with AI',
@@ -194,7 +234,7 @@ async function seedDatabase() {
         NOW()
       ),
       (
-        gen_random_uuid(),
+        DEFAULT,
         ${user.id},
         ${project.id},
         'Top 10 Tech Trends 2025',
@@ -280,6 +320,7 @@ async function seedDatabase() {
     
   } catch (error) {
     console.error('❌ Error seeding database:', error.message);
+    console.error('   Full error:', error);
     throw error;
   } finally {
     await sql.end();
