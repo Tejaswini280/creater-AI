@@ -108,14 +108,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Install Railway CLI (specific version)
+        run: |
+          # Install a specific version that supports token auth
+          npm install -g @railway/cli@3.5.0
+          railway --version
 
       - name: Deploy to Railway Staging
         run: |
           echo "🚀 Deploying to staging environment..."
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway up --service=${{ secrets.RAILWAY_STAGING_SERVICE_ID }} --detach
+          echo "🔐 Authenticating with Railway using token..."
+          # Set the token as environment variable
+          export RAILWAY_TOKEN="${{ secrets.RAILWAY_TOKEN }}"
+          # Try direct deployment with environment variables
+          railway link --project "${{ secrets.RAILWAY_PROJECT_ID }}" --service "${{ secrets.RAILWAY_STAGING_SERVICE_ID }}"
+          railway up --detach
+          echo "✅ Deployment completed!"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
