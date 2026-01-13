@@ -85,23 +85,39 @@ jobs:
       - name: Deploy to Railway Staging
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_SERVICE_NAME: ${{ secrets.RAILWAY_STAGING_SERVICE_NAME }}
         run: |
           set -e
 
           echo "🚀 Deploying to Railway Staging..."
 
-          echo "🔐 Verifying Railway authentication..."
-          railway whoami
+          echo "� Veerifying Railway authentication..."
+          railway whoami || {
+            echo "❌ Railway authentication failed!"
+            echo "Please update RAILWAY_TOKEN in GitHub Secrets:"
+            echo "1. Go to https://railway.app/account/tokens"
+            echo "2. Create a new token"
+            echo "3. Update it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          }
 
-          echo "📦 Deploying service..."
+          echo "🔗 Linking to Railway project..."
+          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} || {
+            echo "❌ Failed to link to Railway project"
+            echo "Please verify RAILWAY_PROJECT_ID in GitHub Secrets"
+            exit 1
+          }
+
+          echo "📦 Deploying to staging service..."
           railway up \
-            --project "$RAILWAY_PROJECT_ID" \
-            --service "$RAILWAY_SERVICE_NAME" \
-            --detach
+            --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }} \
+            --detach || {
+            echo "❌ Deployment failed"
+            echo "Please verify RAILWAY_STAGING_SERVICE_ID in GitHub Secrets"
+            exit 1
+          }
 
           echo "✅ Deployment triggered successfully"
+          echo "🌐 Check Railway dashboard: https://railway.app/project/${{ secrets.RAILWAY_PROJECT_ID }}"
 
   notify:
     name: Notify Deployment Status
