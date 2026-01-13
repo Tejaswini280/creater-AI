@@ -91,7 +91,7 @@ jobs:
 
       - name: Deploy to Railway Staging
         env:
-          echo "🚀 skipping  Railway toke..."
+          # echo "🚀 skipping  Railway toke..."
          # RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set -e
