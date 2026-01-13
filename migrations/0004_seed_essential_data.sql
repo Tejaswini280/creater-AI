@@ -18,18 +18,34 @@ ON CONFLICT (platform, category) DO UPDATE SET
     updated_at = NOW();
 
 -- Insert content templates (with conflict resolution)
-INSERT INTO templates (name, description, category, template_data, is_featured)
-VALUES 
-    ('Social Media Post', 'Basic social media post template', 'social', '{"structure": "hook-content-cta", "length": "short"}'::JSONB, true),
-    ('Blog Article', 'Long-form blog article template', 'blog', '{"structure": "intro-body-conclusion", "length": "long"}'::JSONB, true),
-    ('Product Launch', 'Product announcement template', 'marketing', '{"structure": "problem-solution-benefits", "length": "medium"}'::JSONB, false),
-    ('Educational Content', 'How-to and tutorial template', 'education', '{"structure": "overview-steps-summary", "length": "medium"}'::JSONB, true)
-ON CONFLICT (name) DO UPDATE SET
-    description = EXCLUDED.description,
-    category = EXCLUDED.category,
-    template_data = EXCLUDED.template_data,
-    is_featured = EXCLUDED.is_featured,
-    updated_at = NOW();
+-- Note: Using 'title' column to match the actual schema in 0001_core_tables_idempotent.sql
+-- Since title doesn't have a unique constraint, we'll use a different approach
+DO $$
+BEGIN
+    -- Social Media Post
+    IF NOT EXISTS (SELECT 1 FROM templates WHERE title = 'Social Media Post') THEN
+        INSERT INTO templates (title, description, category, type, metadata, is_featured)
+        VALUES ('Social Media Post', 'Basic social media post template', 'social', 'post', '{"structure": "hook-content-cta", "length": "short"}'::JSONB, true);
+    END IF;
+    
+    -- Blog Article
+    IF NOT EXISTS (SELECT 1 FROM templates WHERE title = 'Blog Article') THEN
+        INSERT INTO templates (title, description, category, type, metadata, is_featured)
+        VALUES ('Blog Article', 'Long-form blog article template', 'blog', 'article', '{"structure": "intro-body-conclusion", "length": "long"}'::JSONB, true);
+    END IF;
+    
+    -- Product Launch
+    IF NOT EXISTS (SELECT 1 FROM templates WHERE title = 'Product Launch') THEN
+        INSERT INTO templates (title, description, category, type, metadata, is_featured)
+        VALUES ('Product Launch', 'Product announcement template', 'marketing', 'announcement', '{"structure": "problem-solution-benefits", "length": "medium"}'::JSONB, false);
+    END IF;
+    
+    -- Educational Content
+    IF NOT EXISTS (SELECT 1 FROM templates WHERE title = 'Educational Content') THEN
+        INSERT INTO templates (title, description, category, type, metadata, is_featured)
+        VALUES ('Educational Content', 'How-to and tutorial template', 'education', 'tutorial', '{"structure": "overview-steps-summary", "length": "medium"}'::JSONB, true);
+    END IF;
+END $$;
 
 -- Insert hashtag suggestions (with conflict resolution)
 INSERT INTO hashtag_suggestions (hashtag, platform, category, popularity_score)
