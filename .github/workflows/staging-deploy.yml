@@ -108,10 +108,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI (specific version)
+      - name: Install Railway CLI
         run: |
-          # Install a specific version that supports token auth
-          npm install -g @railway/cli@3.5.0
+          # Install latest Railway CLI
+          npm install -g @railway/cli@latest
           railway --version
 
       - name: Deploy to Railway Staging
@@ -119,29 +119,27 @@ jobs:
           echo "🚀 Deploying to staging environment..."
           echo "🔐 Setting up Railway authentication..."
           
-          # Method 1: Try environment variable authentication
+          # Set Railway token
           export RAILWAY_TOKEN="${{ secrets.RAILWAY_TOKEN }}"
           
-          # Method 2: If env var doesn't work, try creating a config file
-          mkdir -p ~/.railway
-          echo '{"token":"${{ secrets.RAILWAY_TOKEN }}"}' > ~/.railway/config.json
-          
           echo "🔗 Linking to Railway project..."
-          # Use correct short flags: -p for project, -s for service
-          railway link -p "${{ secrets.RAILWAY_PROJECT_ID }}" -s "${{ secrets.RAILWAY_STAGING_SERVICE_ID }}"
+          # FIXED: Use correct Railway CLI syntax with proper flags
+          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }}
           
           echo "📦 Starting deployment..."
           railway up --detach
           
           echo "✅ Deployment initiated successfully!"
-          echo "🌐 Check Railway dashboard for deployment status"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Wait for deployment
         run: |
           echo "⏳ Waiting for deployment to complete..."
-          sleep 30
+          sleep 60
+          
+          echo "🔍 Checking deployment status..."
+          railway status || echo "Status check failed, but deployment may still be in progress"
 
       - name: Verify deployment
         run: |
