@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PRODUCTION REPAIR MIGRATION - PRODUCTION SAFE VERSION
+-- PRODUCTION REPAIR MIGRATION - PRODUCTION SAFE VERSION V2
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- This migration repairs the broken Railway production database
 -- PRODUCTION SAFE: NO FOREIGN KEY CONSTRAINTS
 -- Safe to run multiple times, handles all edge cases
--- Date: 2026-01-09
+-- Date: 2026-01-13 - FIXED PASSWORD_HASH NULL ISSUE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Enable required extensions
@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- STEP 1: CREATE ALL CORE TABLES (FULLY IDEMPOTENT, NO FOREIGN KEYS)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Users table (core table) - MUST ADD PASSWORD COLUMN
+-- Users table (core table) - CREATE WITHOUT PASSWORD COLUMN FIRST
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY NOT NULL,
     email VARCHAR NOT NULL UNIQUE,
@@ -38,16 +38,41 @@ ALTER TABLE users ALTER COLUMN id TYPE VARCHAR USING id::VARCHAR;
 -- Step 3: Recreate primary key
 ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
--- ADD MISSING PASSWORD_HASH COLUMN TO USERS TABLE (CRITICAL FIX)
--- Using password_hash to match the application schema
--- Default value for OAuth users who don't have passwords
-ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password_hash TEXT DEFAULT 'oauth_user_no_password';
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- CRITICAL FIX: ADD PASSWORD_HASH COLUMN WITH PROPER NULL HANDLING
+-- ═══════════════════════════════════════════════════════════════════════════════
 
--- Update existing NULL values to the OAuth placeholder
+-- Step 1: Add the column if it doesn't exist (allows NULL initially)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'password_hash'
+    ) THEN
+        ALTER TABLE users ADD COLUMN password_hash TEXT;
+    END IF;
+END $$;
+
+-- Step 2: Update ALL NULL values to the OAuth placeholder
+-- This MUST happen before setting any constraints
 UPDATE users 
 SET password_hash = 'oauth_user_no_password'
-WHERE password_hash IS NULL;
+WHERE password_hash IS NULL OR password_hash = '';
+
+-- Step 3: Set default value for future inserts
+ALTER TABLE users 
+ALTER COLUMN password_hash SET DEFAULT 'oauth_user_no_password';
+
+-- Step 4: Verify no NULL values remain
+DO $$
+DECLARE
+    null_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO null_count FROM users WHERE password_hash IS NULL;
+    IF null_count > 0 THEN
+        RAISE EXCEPTION 'Still have % users with NULL password_hash after update', null_count;
+    END IF;
+END $$;
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -103,10 +128,6 @@ CREATE TABLE IF NOT EXISTS content (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
--- ADD MISSING PROJECT_ID COLUMN TO SCHEDULES TABLE (CRITICAL FIX)
-ALTER TABLE post_schedules 
-ADD COLUMN IF NOT EXISTS project_id INTEGER;
 
 -- Content Metrics table (NO FOREIGN KEY CONSTRAINTS)
 CREATE TABLE IF NOT EXISTS content_metrics (
@@ -279,6 +300,10 @@ CREATE TABLE IF NOT EXISTS post_schedules (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ADD MISSING PROJECT_ID COLUMN TO SCHEDULES TABLE (CRITICAL FIX)
+ALTER TABLE post_schedules 
+ADD COLUMN IF NOT EXISTS project_id INTEGER;
+
 -- Templates table
 CREATE TABLE IF NOT EXISTS templates (
     id SERIAL PRIMARY KEY NOT NULL,
@@ -449,14 +474,34 @@ VALUES
 ON CONFLICT (platform, category) DO NOTHING;
 
 -- Create passwordless test user if needed (OAuth system)
--- password_hash is NULL for OAuth users
-INSERT INTO users (id, email, first_name, last_name) 
+-- password_hash is set to placeholder for OAuth users
+INSERT INTO users (id, email, first_name, last_name, password_hash) 
 VALUES 
-  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth')
+  ('test-user-repair-oauth', 'repair@example.com', 'Repair', 'OAuth', 'oauth_user_no_password')
 ON CONFLICT (email) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- FINAL VERIFICATION
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Verify password_hash column exists and has no NULL values
+DO $$
+DECLARE
+    null_count INTEGER;
+    total_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO total_count FROM users;
+    SELECT COUNT(*) INTO null_count FROM users WHERE password_hash IS NULL;
+    
+    RAISE NOTICE 'Total users: %, Users with NULL password_hash: %', total_count, null_count;
+    
+    IF null_count > 0 THEN
+        RAISE EXCEPTION 'CRITICAL: % users still have NULL password_hash!', null_count;
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PRODUCTION REPAIR COMPLETED - NO FOREIGN KEY CONSTRAINTS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-SELECT 'PRODUCTION REPAIR MIGRATION COMPLETED SUCCESSFULLY - NO FOREIGN KEYS' as repair_status;
+SELECT 'PRODUCTION REPAIR MIGRATION V2 COMPLETED SUCCESSFULLY - NO FOREIGN KEYS - PASSWORD_HASH FIXED' as repair_status;
