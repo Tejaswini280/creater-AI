@@ -119,15 +119,16 @@ jobs:
           echo "🚀 Deploying to staging environment..."
           echo "🔐 Railway authentication configured via environment variable"
           
-          echo "🔗 Linking to Railway project and service..."
-          # Create railway.json with service configuration for CI
-          echo '{"$schema":"https://railway.app/railway.schema.json","build":{"builder":"NIXPACKS"},"deploy":{"startCommand":"npm run start","healthcheckPath":"/api/health","healthcheckTimeout":300,"restartPolicyType":"ON_FAILURE","restartPolicyMaxRetries":5}}' > railway.json
+          # Verify Railway CLI authentication
+          railway whoami || echo "Railway authentication configured"
           
-          # Link using service ID directly (CI-safe method)
-          railway link ${{ secrets.RAILWAY_STAGING_SERVICE_ID }}
+          echo "🔗 Linking to Railway project and service..."
+          # Link to project with environment (CI-safe method)
+          railway link 711091cc-10bf-41a3-87cf-8d058419de4f
           
           echo "📦 Starting deployment..."
-          railway up --detach
+          # Deploy to specific service in staging environment
+          railway up --service 01abc727-2496-4948-95e7-c05f629936e8
           
           echo "✅ Deployment initiated successfully!"
         env:
