@@ -37,7 +37,14 @@ jobs:
 
       - name: Check for vulnerabilities
         run: |
-          if npm audit --audit-level=high --json | jq '.vulnerabilities | length' | grep -q '^0$'; then
+          if npm audit --audit-level=high --json | jq '.vulnerabilities | length' | grep -q '^0'
+          then
+            echo "✅ No high-severity vulnerabilities found"
+          else
+            echo "⚠️ High-severity vulnerabilities detected"
+            npm audit --audit-level=high
+            exit 1
+          fi$'; then
             echo "✅ No high-severity vulnerabilities found"
           else
             echo "⚠️ High-severity vulnerabilities detected"
@@ -173,6 +180,7 @@ jobs:
         run: |
           echo "🚀 Deploying to production environment..."
           echo "⚠️  This is a PRODUCTION deployment"
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
           railway up --service=${{ secrets.RAILWAY_PROD_SERVICE_ID }} --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

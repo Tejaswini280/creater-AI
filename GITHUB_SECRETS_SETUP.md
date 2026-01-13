@@ -6,11 +6,12 @@ This guide explains how to configure GitHub Secrets for automated CI/CD deployme
 
 You need to add these secrets to your GitHub repository:
 
-| Secret Name | Description | Where to Get It |
-|-------------|-------------|-----------------|
-| `RAILWAY_TOKEN` | Railway API token for deployments | Railway Dashboard → Account Settings → Tokens |
-| `RAILWAY_STAGING_SERVICE_ID` | Service ID for staging environment | Railway Project → Staging Service → Settings |
-| `RAILWAY_PROD_SERVICE_ID` | Service ID for production environment | Railway Project → Production Service → Settings |
+| Secret Name | Description | Value (from your Railway setup) |
+|-------------|-------------|----------------------------------|
+| `RAILWAY_TOKEN` | Railway API token for deployments | `7bea4487-4542-4542-a02e-a40888c4b2b8` |
+| `RAILWAY_PROJECT_ID` | Railway project ID | `711091cc-10bf-41a3-87cf-8d058419de4f` |
+| `RAILWAY_STAGING_SERVICE_ID` | Service ID for staging environment | `01abc727-2496-4948-95e7-c05f629936e8` |
+| `RAILWAY_PROD_SERVICE_ID` | Service ID for production environment | `db7499d8-fa40-476e-a943-9d62370bf3a8` |
 
 ## Step-by-Step Setup
 
@@ -50,17 +51,22 @@ You need to add these secrets to your GitHub repository:
 
 **Secret 1: RAILWAY_TOKEN**
 - Name: `RAILWAY_TOKEN`
-- Value: `railway_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- Value: `7bea4487-4542-4542-a02e-a40888c4b2b8`
 - Click "Add secret"
 
-**Secret 2: RAILWAY_STAGING_SERVICE_ID**
+**Secret 2: RAILWAY_PROJECT_ID**
+- Name: `RAILWAY_PROJECT_ID`  
+- Value: `711091cc-10bf-41a3-87cf-8d058419de4f`
+- Click "Add secret"
+
+**Secret 3: RAILWAY_STAGING_SERVICE_ID**
 - Name: `RAILWAY_STAGING_SERVICE_ID`  
-- Value: `srv_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- Value: `01abc727-2496-4948-95e7-c05f629936e8`
 - Click "Add secret"
 
-**Secret 3: RAILWAY_PROD_SERVICE_ID**
+**Secret 4: RAILWAY_PROD_SERVICE_ID**
 - Name: `RAILWAY_PROD_SERVICE_ID`
-- Value: `srv_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- Value: `db7499d8-fa40-476e-a943-9d62370bf3a8`
 - Click "Add secret"
 
 ## Verification
@@ -68,8 +74,9 @@ You need to add these secrets to your GitHub repository:
 After adding all secrets, you should see:
 
 ```
-Repository secrets (3)
+Repository secrets (4)
 ├── RAILWAY_TOKEN                    ••••••••••••••••••••••••••••••••
+├── RAILWAY_PROJECT_ID               ••••••••••••••••••••••••••••••••
 ├── RAILWAY_STAGING_SERVICE_ID       ••••••••••••••••••••••••••••••••
 └── RAILWAY_PROD_SERVICE_ID          ••••••••••••••••••••••••••••••••
 ```
