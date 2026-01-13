@@ -18,7 +18,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -34,37 +34,21 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run check
 
-      - name: Run TypeScript check
-        run: npm run check
-
-      - name: Run tests
-        run: npm test
+      - run: npm test
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creators_test_db
           SKIP_RATE_LIMIT: 1
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-staging
-          path: |
-            coverage/
-            test-results/
-          retention-days: 7
 
   build:
     name: Build Application
@@ -73,29 +57,15 @@ jobs:
     if: (success() || failure()) || github.event.inputs.force_deploy == 'true'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files-staging
-          path: |
-            dist/
-            package*.json
-          retention-days: 3
+      - run: npm ci
+      - run: npm run build
 
   deploy-staging:
     name: Deploy to Railway Staging
@@ -105,66 +75,49 @@ jobs:
     environment: staging
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install Railway CLI
         run: |
-          # Install latest Railway CLI
           npm install -g @railway/cli@latest
           railway --version
 
       - name: Deploy to Railway Staging
-        run: |
-          echo "🚀 Deploying to staging environment..."
-          echo "🔐 Railway authentication configured via environment variable"
-          
-          # Verify Railway CLI authentication
-          railway whoami || echo "⚠️ Railway authentication check failed, but continuing with token..."
-          
-          echo "🔗 Linking to Railway project and service..."
-          # Link to project using the correct flag syntax
-          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }}
-          
-          echo "📦 Starting deployment..."
-          # Deploy to specific service in staging environment
-          railway up --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }}
-          
-          echo "✅ Deployment initiated successfully!"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Wait for deployment
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_NAME: ${{ secrets.RAILWAY_STAGING_SERVICE_NAME }}
         run: |
-          echo "⏳ Waiting for deployment to complete..."
-          sleep 60
-          
-          echo "🔍 Checking deployment status..."
-          railway status || echo "Status check failed, but deployment may still be in progress"
+          set -e
 
-      - name: Verify deployment
-        run: |
-          echo "✅ Staging deployment completed!"
-          echo "🌐 Your staging environment should be available shortly"
-          echo "📊 Check Railway dashboard for deployment status"
+          echo "🚀 Deploying to Railway Staging..."
+
+          echo "🔐 Verifying Railway authentication..."
+          railway whoami
+
+          echo "📦 Deploying service..."
+          railway up \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SERVICE_NAME" \
+            --detach
+
+          echo "✅ Deployment triggered successfully"
 
   notify:
     name: Notify Deployment Status
     runs-on: ubuntu-latest
-    needs: [deploy-staging]
+    needs: deploy-staging
     if: always()
 
     steps:
-      - name: Deployment Success
+      - name: Success
         if: needs.deploy-staging.result == 'success'
         run: |
           echo "🎉 Staging deployment successful!"
-          echo "✨ Your Creator AI Studio staging environment is live!"
-          echo "🔗 Check Railway dashboard for the staging URL"
+          echo "🌐 Check Railway dashboard for the live URL"
 
-      - name: Deployment Failed
+      - name: Failure
         if: needs.deploy-staging.result == 'failure'
         run: |
-          echo "❌ Staging deployment failed!"
-          echo "🔍 Check the Railway logs and GitHub Actions logs for details"
-          echo "💡 You can retry the deployment or check the Railway dashboard"
+          echo "❌ Staging deployment failed"
+          echo "🔍 Check GitHub Actions + Railway logs"
