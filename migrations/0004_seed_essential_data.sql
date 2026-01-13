@@ -73,12 +73,13 @@ SELECT '#content', 'instagram', 'lifestyle', 88, 9000
 WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE hashtag = '#content' AND platform = 'instagram');
 
 -- Insert sample niches (with conflict resolution)
-INSERT INTO niches (name, description, trend_score, difficulty, profitability, keywords)
+INSERT INTO niches (name, category, description, trend_score, difficulty, profitability, keywords)
 VALUES 
-    ('Sustainable Living', 'Eco-friendly lifestyle and products', 0.85, 0.6, 0.7, ARRAY['sustainability', 'eco-friendly', 'green-living']),
-    ('Digital Marketing', 'Online marketing strategies and tools', 0.92, 0.8, 0.9, ARRAY['seo', 'social-media', 'content-marketing']),
-    ('Personal Finance', 'Money management and investment advice', 0.88, 0.7, 0.85, ARRAY['budgeting', 'investing', 'financial-planning'])
+    ('Sustainable Living', 'lifestyle', 'Eco-friendly lifestyle and products', 85, 'medium', 'high', ARRAY['sustainability', 'eco-friendly', 'green-living']),
+    ('Digital Marketing', 'business', 'Online marketing strategies and tools', 92, 'hard', 'very-high', ARRAY['seo', 'social-media', 'content-marketing']),
+    ('Personal Finance', 'finance', 'Money management and investment advice', 88, 'medium', 'high', ARRAY['budgeting', 'investing', 'financial-planning'])
 ON CONFLICT (name) DO UPDATE SET
+    category = EXCLUDED.category,
     description = EXCLUDED.description,
     trend_score = EXCLUDED.trend_score,
     difficulty = EXCLUDED.difficulty,
