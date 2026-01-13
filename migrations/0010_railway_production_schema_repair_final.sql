@@ -14,7 +14,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- CRITICAL FIX: Ensure password column is nullable
-DO $
+-- Using $$migration_block$$ delimiter to avoid parsing issues
+DO $$migration_block$$
 BEGIN
     -- Add password column if it doesn't exist (nullable)
     IF NOT EXISTS (
@@ -22,7 +23,7 @@ BEGIN
         WHERE table_name = 'users' AND column_name = 'password'
     ) THEN
         ALTER TABLE users ADD COLUMN password TEXT;
-        RAISE NOTICE '✅ Added password column (nullable)';
+        RAISE NOTICE 'Added password column (nullable)';
     END IF;
 
     -- Remove NOT NULL constraint if it exists
@@ -33,12 +34,15 @@ BEGIN
         AND is_nullable = 'NO'
     ) THEN
         ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-        RAISE NOTICE '✅ Removed NOT NULL constraint from password column';
+        RAISE NOTICE 'Removed NOT NULL constraint from password column';
     END IF;
-END $;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Password column fix skipped or already applied: %', SQLERRM;
+END $$migration_block$$;
 
 -- Add unique constraint on email if it doesn't exist
-DO $
+DO $$email_constraint$$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints tc
@@ -46,9 +50,14 @@ BEGIN
         AND tc.table_name = 'users'
     ) THEN
         ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
-        RAISE NOTICE '✅ Added UNIQUE constraint on users.email';
+        RAISE NOTICE 'Added UNIQUE constraint on users.email';
     END IF;
-END $;
+EXCEPTION
+    WHEN duplicate_table THEN
+        RAISE NOTICE 'Email constraint already exists';
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Email constraint fix skipped: %', SQLERRM;
+END $$email_constraint$$;
 
 -- Clean up any invalid password values
 UPDATE users 

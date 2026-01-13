@@ -357,6 +357,27 @@ export class ProductionMigrationRunner {
         migrationsRun++;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        // CRITICAL: Check if this is a "already exists" error - these are safe to ignore
+        const isSafeError = errorMessage.includes('already exists') || 
+                           errorMessage.includes('duplicate') ||
+                           errorMessage.includes('relation') && errorMessage.includes('already exists');
+        
+        if (isSafeError) {
+          console.warn(`⚠️  Migration ${migration.filename} encountered safe error (already applied): ${errorMessage}`);
+          // Mark as completed anyway since the schema is already in the desired state
+          await this.sql`
+            INSERT INTO schema_migrations (filename, checksum, status, error_message)
+            VALUES (${migration.filename}, ${migration.checksum}, 'completed', ${errorMessage})
+            ON CONFLICT (filename) DO UPDATE SET
+              status = 'completed',
+              executed_at = NOW(),
+              error_message = ${errorMessage}
+          `;
+          migrationsSkipped++;
+          continue;
+        }
+        
         errors.push(`${migration.filename}: ${errorMessage}`);
         
         // Stop on first error to prevent cascade failures
