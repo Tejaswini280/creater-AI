@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { WebSocketManager } from "./websocket";
 import { ContentSchedulerService } from "./services/scheduler";
-import { ProductionMigrationRunner } from "./services/productionMigrationRunner.js";
+import { StrictMigrationRunner } from "./services/strictMigrationRunner.js";
 import { ProductionSeeder } from "./services/productionSeeder.js";
 import {
   authRateLimit,
@@ -49,26 +49,30 @@ async function initializeDatabase() {
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   
   try {
-    // STEP 1: Run migrations with production-grade validation
-    console.log('🔄 Running database migrations with production validation...');
-    const migrationRunner = new ProductionMigrationRunner();
+    // STEP 1: Run migrations with STRICT validation (no false positives)
+    console.log('🔄 Running database migrations with STRICT schema validation...');
+    const migrationRunner = new StrictMigrationRunner();
     const migrationResult = await migrationRunner.run();
     
-    if (!migrationResult.success) {
-      console.error('💥 CRITICAL: Database migrations failed!');
+    if (!migrationResult.success || !migrationResult.schemaValid) {
+      console.error('💥 CRITICAL: Database migrations failed or schema is invalid!');
       console.error('Errors:', migrationResult.errors);
+      console.error('Schema Valid:', migrationResult.schemaValid);
       
-      // In production, we MUST exit if migrations fail
+      // In production, we MUST exit if migrations fail OR schema is invalid
       if (process.env.NODE_ENV === 'production') {
-        console.error('🚨 PRODUCTION MODE: Exiting due to migration failure');
+        console.error('🚨 PRODUCTION MODE: Exiting due to migration/schema failure');
+        console.error('   The application CANNOT start with an invalid database schema');
+        console.error('   This prevents cascading failures and data corruption');
         process.exit(1);
       } else {
-        throw new Error(`Migration failed: ${migrationResult.errors.join(', ')}`);
+        throw new Error(`Migration failed or schema invalid: ${migrationResult.errors.join(', ')}`);
       }
     }
     
-    console.log('✅ Database migrations completed successfully');
+    console.log('✅ Database migrations completed successfully with STRICT validation');
     console.log(`📊 Migration summary: ${migrationResult.migrationsRun} executed, ${migrationResult.migrationsSkipped} skipped, ${migrationResult.tablesCreated} tables verified`);
+    console.log(`✅ Schema validation: ${migrationResult.schemaValid ? 'PASSED' : 'FAILED'}`);
     
     // STEP 2: Run seeding (AFTER migrations pass validation, only if not in test)
     if (process.env.NODE_ENV !== 'test') {

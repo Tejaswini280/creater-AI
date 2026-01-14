@@ -104,12 +104,18 @@ export class ContentSchedulerService {
         'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
       ];
       
+      // FIXED: Use proper SQL query without positional parameters
+      // The postgres driver doesn't support $1 syntax with db.execute for arrays
       const schemaCheck = await db.execute(`
         SELECT column_name 
         FROM information_schema.columns 
-        WHERE table_name = 'content' 
-        AND column_name = ANY($1)
-      `, [requiredColumns]);
+        WHERE table_schema = 'public'
+        AND table_name = 'content' 
+        AND column_name IN (
+          'id', 'user_id', 'title', 'description', 'script', 
+          'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
+        )
+      `);
       
       const foundColumns = schemaCheck.map((row: any) => row.column_name);
       const missingColumns = requiredColumns.filter(col => !foundColumns.includes(col));
