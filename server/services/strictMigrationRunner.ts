@@ -321,26 +321,6 @@ export class StrictMigrationRunner {
       
       throw error;
     }
-  }      console.log(`✅ Migration completed and validated in ${executionTime}ms: ${migration.filename}`);
-      
-    } catch (error) {
-      const executionTime = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      // Record failure
-      await this.sql`
-        UPDATE schema_migrations 
-        SET status = 'failed', 
-            execution_time_ms = ${executionTime},
-            error_message = ${errorMessage}
-        WHERE filename = ${migration.filename}
-      `;
-
-      console.error(`❌ Migration failed: ${migration.filename}`);
-      console.error(`   Error: ${errorMessage}`);
-      
-      throw error;
-    }
   }
 
   async runMigrations(): Promise<ExecutionResult> {
