@@ -91,18 +91,17 @@ jobs:
 
       - name: Deploy to Railway Staging
         env:
-          # echo "🚀 skipping  Railway toke..."
-         # RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set -e
 
           echo "🚀 Deploying to Railway Staging..."
 
-           Verify token is set
-           if [ -z "$RAILWAY_TOKEN" ]; then
-             echo "❌ RAILWAY_TOKEN is not set"
-             exit 1
-           fi
+          # Verify token is set
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "❌ RAILWAY_TOKEN is not set"
+            exit 1
+          fi
 
           echo "🔐 Authenticating with Railway..."
           echo "$RAILWAY_TOKEN" | railway login --browserless
