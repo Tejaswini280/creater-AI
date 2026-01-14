@@ -317,8 +317,8 @@ WHERE password = 'temp_password_needs_reset' OR password = '';
 -- Update content with missing status
 UPDATE content 
 SET 
-    content_status = status,
-    is_ai_generated = COALESCE(ai_generated, false)
+    content_status = COALESCE(status, 'draft'),
+    is_ai_generated = false
 WHERE content_status IS NULL;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
