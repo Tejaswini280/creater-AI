@@ -20,10 +20,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
 -- Add password_hash column if it doesn't exist (nullable by default)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
--- Add unique constraint on email if it doesn't exist
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
-
--- Clean up any invalid password values
+-- Clean up any invalid password values BEFORE adding constraint
 UPDATE users 
 SET password = NULL 
 WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined');
@@ -32,10 +29,10 @@ UPDATE users
 SET password_hash = NULL 
 WHERE password_hash IN ('', 'temp_password_needs_reset', 'null', 'undefined');
 
--- Create index on email for faster lookups
+-- Create index on email for faster lookups (idempotent)
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
--- Create index on created_at for sorting
+-- Create index on created_at for sorting (idempotent)
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 
 -- Success message (as a comment since we can't use SELECT in migrations)

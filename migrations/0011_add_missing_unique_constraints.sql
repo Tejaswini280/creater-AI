@@ -9,17 +9,11 @@
 -- Target: Fix ON CONFLICT operations in seeding
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Add unique constraint for users email (for ON CONFLICT support)
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+-- Constraint removed (already exists from earlier migration)
 
--- Add unique constraint for ai_engagement_patterns (for ON CONFLICT support)
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE ai_engagement_patterns ADD CONSTRAINT IF NOT EXISTS ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
+-- Constraint removed (already exists from earlier migration)
 
--- Add unique constraint for niches name (for ON CONFLICT support)
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE niches ADD CONSTRAINT IF NOT EXISTS niches_name_key UNIQUE (name);
+-- Constraint removed (already exists from earlier migration)
 
 -- Verify all constraints were added successfully
 -- DO block removed (Railway-compatible)

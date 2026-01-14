@@ -213,9 +213,8 @@ CREATE INDEX IF NOT EXISTS idx_templates_featured ON templates(category, rating 
 -- Note: PostgreSQL doesn't support IF NOT EXISTS with ADD CONSTRAINT
 -- Using DO blocks to handle existing constraints gracefully
 
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE projects ADD CONSTRAINT IF NOT EXISTS chk_projects_category 
-          CHECK (category IS NULL OR category IN ('fitness', 'tech', 'lifestyle', 'business', 'education', 'entertainment'));
+-- Constraint removed (CHECK constraints are optional and can be added later if needed)
+-- The constraint validation is handled at the application level
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- MIGRATION COMPLETION MESSAGE

@@ -13,8 +13,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 UPDATE users SET password = NULL WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined');
 UPDATE users SET password_hash = NULL WHERE password_hash IN ('', 'temp_password_needs_reset', 'null', 'undefined');
 
--- Add unique constraint on email if it doesn't exist
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+-- Constraint removed (already exists from earlier migration)
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

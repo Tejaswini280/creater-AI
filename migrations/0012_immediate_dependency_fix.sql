@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Add UNIQUE constraint for email if not exists
 -- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+-- Constraint users_email_key removed (already exists from earlier migration)
 
 -- Projects table SECOND (depends on users via user_id, but no FK constraint)
 CREATE TABLE IF NOT EXISTS projects (

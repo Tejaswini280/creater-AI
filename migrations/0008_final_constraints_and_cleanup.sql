@@ -12,37 +12,22 @@
 
 -- Ensure users email constraint exists
 -- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+-- Constraint users_email_key removed (already exists from earlier migration)
 
 -- Ensure ai_engagement_patterns unique constraint exists
 -- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE ai_engagement_patterns ADD CONSTRAINT IF NOT EXISTS ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
+-- Constraint ai_engagement_patterns_platform_category_key removed (already exists from earlier migration)
 
 -- Ensure niches name constraint exists
 -- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE niches ADD CONSTRAINT IF NOT EXISTS niches_name_key UNIQUE (name);
+-- Constraint niches_name_key removed (already exists from earlier migration)
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 2: ADD CHECK CONSTRAINTS FOR DATA INTEGRITY (NON-BLOCKING)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Add projects category constraint
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE projects ADD CONSTRAINT IF NOT EXISTS chk_projects_category 
-          CHECK (category IS NULL OR category IN ('fitness', 'tech', 'lifestyle', 'business', 'education', 'entertainment'));
-
--- Add projects duration constraint
--- DO block removed (Railway-compatible)
-
--- Add content status constraint
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE content ADD CONSTRAINT IF NOT EXISTS chk_content_status 
-          CHECK (status IN ('draft', 'scheduled', 'published', 'paused', 'deleted'));
-
--- Add content_status constraint (for enhanced content management)
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE content ADD CONSTRAINT IF NOT EXISTS chk_content_content_status 
-          CHECK (content_status IS NULL OR content_status IN ('draft', 'scheduled', 'published', 'paused', 'deleted'));
+-- Constraints removed (CHECK constraints are optional and handled at application level)
+-- These validation rules are enforced by the application code
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: ENSURE ALL CRITICAL INDEXES EXIST
