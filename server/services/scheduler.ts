@@ -104,17 +104,15 @@ export class ContentSchedulerService {
         'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
       ];
       
-      // FIXED: Use proper SQL query without positional parameters
-      // The postgres driver doesn't support $1 syntax with db.execute for arrays
+      // FIXED: Use proper SQL query with explicit column list (no positional parameters)
+      // Build the IN clause dynamically to avoid parameter binding issues
+      const columnList = requiredColumns.map(col => `'${col}'`).join(', ');
       const schemaCheck = await db.execute(`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_schema = 'public'
         AND table_name = 'content' 
-        AND column_name IN (
-          'id', 'user_id', 'title', 'description', 'script', 
-          'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
-        )
+        AND column_name IN (${columnList})
       `);
       
       const foundColumns = schemaCheck.map((row: any) => row.column_name);
