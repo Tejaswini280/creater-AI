@@ -289,14 +289,7 @@ export class StrictMigrationRunner {
         await sql.unsafe(migration.content);
       });
 
-      // CRITICAL: Validate schema AFTER execution
-      const validation = await this.validateDatabaseSchema();
-      
-      if (!validation.isValid) {
-        throw new Error(`Schema validation failed after migration: ${validation.errors.join(', ')}`);
-      }
-
-      // Record successful completion ONLY if validation passed
+      // Record successful completion
       const executionTime = Date.now() - startTime;
       
       await this.sql`
@@ -308,7 +301,27 @@ export class StrictMigrationRunner {
         WHERE filename = ${migration.filename}
       `;
 
-      console.log(`✅ Migration completed and validated in ${executionTime}ms: ${migration.filename}`);
+      console.log(`✅ Migration completed in ${executionTime}ms: ${migration.filename}`);
+      
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Record failure
+      await this.sql`
+        UPDATE schema_migrations 
+        SET status = 'failed', 
+            execution_time_ms = ${executionTime},
+            error_message = ${errorMessage}
+        WHERE filename = ${migration.filename}
+      `;
+
+      console.error(`❌ Migration failed: ${migration.filename}`);
+      console.error(`   Error: ${errorMessage}`);
+      
+      throw error;
+    }
+  }      console.log(`✅ Migration completed and validated in ${executionTime}ms: ${migration.filename}`);
       
     } catch (error) {
       const executionTime = Date.now() - startTime;
@@ -339,28 +352,28 @@ export class StrictMigrationRunner {
     let migrationsSkipped = 0;
     const errors: string[] = [];
 
-    // CRITICAL FIX: First, validate current schema state
+    // CRITICAL FIX: Validate schema BEFORE migrations to detect drift
     const initialValidation = await this.validateDatabaseSchema();
     
     if (!initialValidation.isValid) {
       console.warn('⚠️  Schema validation failed BEFORE migrations');
       console.warn('   This indicates schema drift or incomplete previous migrations');
-      console.warn('   Will attempt to fix by re-running necessary migrations...');
+      console.warn('   Will run all pending migrations to fix schema...');
     }
 
     for (const migration of this.migrations) {
       const executedInfo = executedMigrations.get(migration.filename);
       
-      // CRITICAL FIX: Don't skip if schema is invalid, even if migration was "executed"
+      // Skip if migration was completed successfully AND schema is valid
       if (executedInfo && executedInfo.status === 'completed' && initialValidation.isValid) {
         console.log(`⏭️  Skipping (already executed and schema valid): ${migration.filename}`);
         migrationsSkipped++;
         continue;
       }
 
-      // If migration was marked as executed but schema is invalid, re-run it
-      if (executedInfo && !initialValidation.isValid) {
-        console.warn(`🔄 Re-executing (schema invalid despite execution record): ${migration.filename}`);
+      // If schema is invalid, run ALL migrations (don't skip any)
+      if (!initialValidation.isValid && executedInfo && executedInfo.status === 'completed') {
+        console.log(`🔄 Re-running (schema invalid, ensuring all migrations applied): ${migration.filename}`);
       }
 
       try {
@@ -373,7 +386,8 @@ export class StrictMigrationRunner {
       }
     }
 
-    // CRITICAL: Final schema validation
+    // CRITICAL: Final schema validation AFTER all migrations
+    console.log('🔍 Performing final schema validation...');
     const finalValidation = await this.validateDatabaseSchema();
     
     if (!finalValidation.isValid) {
