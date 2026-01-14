@@ -151,11 +151,10 @@ async function initializeServices() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Configure Express to trust proxy headers (required for Railway/production)
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); // Trust first proxy (Railway, Heroku, etc.)
-} else {
-  app.set('trust proxy', false); // Don't trust proxy in development
-}
+// CRITICAL: Railway terminates HTTPS at the edge and forwards HTTP to the container
+// We MUST trust the x-forwarded-proto header to detect the original protocol
+app.set('trust proxy', 1); // Always trust first proxy (Railway, Heroku, Cloudflare, etc.)
+
 const perfMode = process.env.PERF_MODE === '1';
 
 // Set the environment explicitly
@@ -163,6 +162,36 @@ app.set('env', process.env.NODE_ENV || 'development');
 console.log(`Express app environment set to: ${app.get("env")}`);
 console.log(`Process NODE_ENV: ${process.env.NODE_ENV}`);
 console.log(`Process SKIP_RATE_LIMIT: ${process.env.SKIP_RATE_LIMIT}`);
+console.log(`Trust Proxy: enabled (required for Railway/production)`);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRITICAL: HEALTHCHECK ENDPOINTS MUST BE REGISTERED BEFORE HTTPS REDIRECT
+// ═══════════════════════════════════════════════════════════════════════════════
+// Railway's healthcheck comes in as HTTP (HTTPS is terminated at the edge)
+// If we redirect healthchecks, we create an infinite loop → 502 Bad Gateway
+// These endpoints MUST return 200 immediately without any redirects
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || '5000',
+    host: '0.0.0.0'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || '5000',
+    host: '0.0.0.0'
+  });
+});
 
 // Apply security middleware to all routes
 app.use(requestIdMiddleware);
@@ -188,19 +217,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// HTTPS enforcement in production (but not in Docker development)
+// ═══════════════════════════════════════════════════════════════════════════════
+// HTTPS ENFORCEMENT IN PRODUCTION (AFTER HEALTHCHECK ENDPOINTS)
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRITICAL: This middleware runs AFTER healthcheck endpoints are registered
+// Railway terminates HTTPS at the edge and forwards HTTP to the container
+// We check x-forwarded-proto to detect the original protocol
+// Healthcheck endpoints are already registered above, so they're never redirected
+
 app.use((req, res, next) => {
-  // Skip HTTPS redirect in development or when TRUST_PROXY is false
   const isProduction = process.env.NODE_ENV === 'production';
-  const trustProxy = process.env.TRUST_PROXY !== 'false';
-  const isHttps = req.header('x-forwarded-proto') === 'https';
+  const isHttps = req.header('x-forwarded-proto') === 'https' || req.secure;
   
-  if (isProduction && trustProxy && !isHttps) {
-    console.log('🔒 Redirecting HTTP to HTTPS in production');
-    res.redirect(`https://${req.header('host')}${req.url}`);
-  } else {
-    next();
+  // In production, redirect HTTP to HTTPS (but healthchecks are already handled above)
+  if (isProduction && !isHttps) {
+    const host = req.header('host') || 'localhost';
+    const redirectUrl = `https://${host}${req.url}`;
+    console.log(`🔒 Redirecting HTTP to HTTPS: ${req.url} → ${redirectUrl}`);
+    return res.redirect(301, redirectUrl);
   }
+  
+  next();
 });
 
 // Centralized CORS configuration (production-ready)
@@ -347,31 +384,6 @@ if (!perfMode) {
 
   // Make WebSocket manager globally available for routes
   (global as any).wsManager = wsManager;
-
-  // Health check endpoint for Railway - CRITICAL: Must return 200 for Railway health checks
-  app.get('/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'ready',
-      scheduler: 'initialized',
-      port: process.env.PORT || '5000',
-      host: '0.0.0.0'
-    });
-  });
-
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'ready',
-      scheduler: 'initialized',
-      port: process.env.PORT || '5000',
-      host: '0.0.0.0'
-    });
-  });
 
   // Add WebSocket stats endpoint
   app.get('/api/websocket/stats', (req, res) => {
