@@ -78,11 +78,14 @@ export class ContentSchedulerService {
       
       console.log('✅ Content Scheduler Service initialized successfully');
     } catch (error) {
-      console.error('❌ Content Scheduler Service initialization failed:', error);
-      console.log('⚠️  Scheduler will continue to work for new content, but existing schedules may not be loaded');
+      console.error('❌ FATAL: Content Scheduler Service initialization failed:', error);
+      console.error('   Scheduler will NOT start until database schema is fixed');
+      console.error('   Run pending migrations to resolve this issue');
+      console.error('   DO NOT mask this error - it indicates a critical schema problem');
       
-      // Still start monitoring even if loading existing schedules failed
-      this.startMonitoring();
+      // DO NOT start monitoring if schema is incomplete
+      // This prevents continuous error spam and false sense of functionality
+      throw error; // Re-throw to prevent application from starting with broken scheduler
     }
   }
 
@@ -94,19 +97,33 @@ export class ContentSchedulerService {
       // Verify database connection and schema before querying
       console.log('📋 Checking database schema for scheduler...');
       
-      // Test if content table exists and has required columns
+      // CRITICAL: Check ALL columns that the scheduler actually uses
+      // This prevents false positives where verification passes but queries fail
+      const requiredColumns = [
+        'id', 'user_id', 'title', 'description', 'script', 
+        'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
+      ];
+      
       const schemaCheck = await db.execute(`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'content' 
-        AND column_name IN ('id', 'status', 'scheduled_at', 'user_id')
-      `);
+        AND column_name = ANY($1)
+      `, [requiredColumns]);
       
-      if (schemaCheck.length < 4) {
-        throw new Error('Content table schema is not ready - missing required columns');
+      const foundColumns = schemaCheck.map((row: any) => row.column_name);
+      const missingColumns = requiredColumns.filter(col => !foundColumns.includes(col));
+      
+      if (missingColumns.length > 0) {
+        const errorMsg = `Content table schema is incomplete. Missing required columns: ${missingColumns.join(', ')}`;
+        console.error('❌ ' + errorMsg);
+        console.error('   Found columns:', foundColumns.join(', '));
+        console.error('   Required columns:', requiredColumns.join(', '));
+        console.error('   Run migrations to fix schema before starting scheduler');
+        throw new Error(errorMsg);
       }
       
-      console.log('✅ Database schema verified for scheduler');
+      console.log(`✅ Database schema verified - all ${requiredColumns.length} required columns present`);
       
       const scheduledContent = await db
         .select()
@@ -135,10 +152,10 @@ export class ContentSchedulerService {
         }
       }
     } catch (error) {
-      console.error('❌ Error loading existing schedules:', error);
-      console.log('⚠️ This is expected if database schema is not ready yet');
-      console.log('⚠️ Scheduler will work for new content once schema is available');
-      throw error; // Re-throw to be handled by initialize()
+      console.error('❌ FATAL: Cannot load existing schedules due to schema error:', error);
+      console.error('   Scheduler initialization FAILED - schema must be fixed before starting');
+      console.error('   This is NOT expected - it indicates missing database migrations');
+      throw error; // Re-throw to prevent scheduler from starting with incomplete schema
     }
   }
 
