@@ -14,13 +14,18 @@
 -- Status: PERMANENT FIX - CORRECT SYNTAX
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+-- CRITICAL FIX: Drop NOT NULL constraint FIRST (if it exists from earlier migrations)
+-- This is safe because it only removes the constraint if it exists
+ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+
 -- Add password column if it doesn't exist (nullable by default)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
 
 -- Add password_hash column if it doesn't exist (nullable by default)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
--- Clean up any invalid password values BEFORE adding constraint
+-- Clean up any invalid password values
 UPDATE users 
 SET password = NULL 
 WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined');
