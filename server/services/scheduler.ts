@@ -101,7 +101,8 @@ export class ContentSchedulerService {
       // This prevents false positives where verification passes but queries fail
       const requiredColumns = [
         'id', 'user_id', 'title', 'description', 'script', 
-        'platform', 'status', 'scheduled_at', 'created_at', 'updated_at'
+        'platform', 'content_type', 'status', 'scheduled_at', 
+        'created_at', 'updated_at'
       ];
       
       // FIXED: Use proper SQL query with explicit column list (no positional parameters)
@@ -120,10 +121,15 @@ export class ContentSchedulerService {
       
       if (missingColumns.length > 0) {
         const errorMsg = `Content table schema is incomplete. Missing required columns: ${missingColumns.join(', ')}`;
-        console.error('❌ ' + errorMsg);
+        console.error('❌ SCHEMA ERROR: ' + errorMsg);
         console.error('   Found columns:', foundColumns.join(', '));
         console.error('   Required columns:', requiredColumns.join(', '));
-        console.error('   Run migrations to fix schema before starting scheduler');
+        console.error('   ');
+        console.error('   🔧 TO FIX THIS ERROR:');
+        console.error('   1. Run: node fix-scheduler-schema-permanent.cjs');
+        console.error('   2. Or run pending migrations: npm run db:migrate');
+        console.error('   3. Then restart the application');
+        console.error('   ');
         throw new Error(errorMsg);
       }
       
