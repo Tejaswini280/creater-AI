@@ -1,0 +1,2984 @@
+{
+  "timestamp": "2026-01-14T07:21:32.025Z",
+  "database": {
+    "name": "creators_dev_db",
+    "user": "postgres",
+    "version": "PostgreSQL 17.4 on x86_64-windows, compiled by msvc-19.43.34808, 64-bit"
+  },
+  "migrations": {
+    "history": [
+      {
+        "filename": "0000_nice_forgotten_one.sql",
+        "executed_at": "2026-01-14T06:34:25.173Z",
+        "status": "completed",
+        "execution_time_ms": 72,
+        "error_message": null,
+        "checksum": "ac503336c3450e5fac38b3de40a3aa77"
+      },
+      {
+        "filename": "0001_core_tables_clean.sql",
+        "executed_at": "2026-01-14T06:34:25.188Z",
+        "status": "completed",
+        "execution_time_ms": 4,
+        "error_message": null,
+        "checksum": "05bfcf56ecf268db4f7e80fffc485758"
+      },
+      {
+        "filename": "0002_add_missing_columns.sql",
+        "executed_at": "2026-01-14T06:34:25.217Z",
+        "status": "completed",
+        "execution_time_ms": 27,
+        "error_message": null,
+        "checksum": "3a65bcaa0c2261ced989dd975634588a"
+      },
+      {
+        "filename": "0003_additional_tables_safe.sql",
+        "executed_at": "2026-01-14T06:34:25.262Z",
+        "status": "completed",
+        "execution_time_ms": 42,
+        "error_message": null,
+        "checksum": "2fb2713939de02e39ba870650d3a6675"
+      },
+      {
+        "filename": "0003_essential_tables.sql",
+        "executed_at": "2026-01-14T06:34:25.280Z",
+        "status": "completed",
+        "execution_time_ms": 15,
+        "error_message": null,
+        "checksum": "9de7892b7ee41cd49194e517ee21069e"
+      },
+      {
+        "filename": "0004_legacy_comprehensive_schema_fix.sql",
+        "executed_at": "2026-01-14T06:34:25.326Z",
+        "status": "completed",
+        "execution_time_ms": 41,
+        "error_message": null,
+        "checksum": "6dc288f34bc209b7a8f6b5f5c138c012"
+      },
+      {
+        "filename": "0004_seed_essential_data.sql",
+        "executed_at": "2026-01-14T06:34:25.367Z",
+        "status": "completed",
+        "execution_time_ms": 38,
+        "error_message": null,
+        "checksum": "db4c01d1a50a2fd8a5ea11a999ce7eab"
+      },
+      {
+        "filename": "0005_enhanced_content_management.sql",
+        "executed_at": "2026-01-14T06:34:25.397Z",
+        "status": "completed",
+        "execution_time_ms": 26,
+        "error_message": null,
+        "checksum": "7ed16ff94646ea1dc5870afa0c2624c0"
+      },
+      {
+        "filename": "0006_critical_form_database_mapping_fix.sql",
+        "executed_at": "2026-01-14T06:34:25.417Z",
+        "status": "completed",
+        "execution_time_ms": 16,
+        "error_message": null,
+        "checksum": "4ca4d773fbebe7104f80cb0df34be3d9"
+      },
+      {
+        "filename": "0007_production_repair_idempotent.sql",
+        "executed_at": "2026-01-14T06:34:25.421Z",
+        "status": "failed",
+        "execution_time_ms": 24,
+        "error_message": "column \"password_hash\" does not exist",
+        "checksum": "d367c825d4095c73547aa9f9b3f758a8"
+      },
+      {
+        "filename": "0029_add_content_metrics_created_at.sql",
+        "executed_at": "2026-01-14T06:46:39.877Z",
+        "status": "completed",
+        "execution_time_ms": 0,
+        "error_message": null,
+        "checksum": "manual"
+      }
+    ],
+    "totalExecuted": 11,
+    "failed": 1,
+    "completed": 10,
+    "filesOnDisk": 31,
+    "files": [
+      {
+        "filename": "0000_nice_forgotten_one.sql",
+        "checksum": "ac503336c3450e5fac38b3de40a3aa77",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 983
+      },
+      {
+        "filename": "0001_core_tables_idempotent.sql",
+        "checksum": "c0387eb0426910b48cb3b7b1313923d6",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 8431
+      },
+      {
+        "filename": "0002_add_missing_columns.sql",
+        "checksum": "3a65bcaa0c2261ced989dd975634588a",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 2876
+      },
+      {
+        "filename": "0003_additional_tables_safe.sql",
+        "checksum": "2fb2713939de02e39ba870650d3a6675",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 16684
+      },
+      {
+        "filename": "0003_essential_tables.sql",
+        "checksum": "9de7892b7ee41cd49194e517ee21069e",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 5827
+      },
+      {
+        "filename": "0004_legacy_comprehensive_schema_fix.sql",
+        "checksum": "6dc288f34bc209b7a8f6b5f5c138c012",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 17639
+      },
+      {
+        "filename": "0004_seed_essential_data.sql",
+        "checksum": "db4c01d1a50a2fd8a5ea11a999ce7eab",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 6163
+      },
+      {
+        "filename": "0005_enhanced_content_management.sql",
+        "checksum": "7ed16ff94646ea1dc5870afa0c2624c0",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 8492
+      },
+      {
+        "filename": "0006_critical_form_database_mapping_fix.sql",
+        "checksum": "4ca4d773fbebe7104f80cb0df34be3d9",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "completed",
+        "size": 14467
+      },
+      {
+        "filename": "0007_production_repair_idempotent.sql",
+        "checksum": "d367c825d4095c73547aa9f9b3f758a8",
+        "executed": true,
+        "checksumMatch": true,
+        "status": "failed",
+        "size": 16782
+      },
+      {
+        "filename": "0008_final_constraints_and_cleanup.sql",
+        "checksum": "e716874640143f389b6a78d699ed31cd",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 5323
+      },
+      {
+        "filename": "0009_railway_production_repair_complete.sql",
+        "checksum": "869bb852b0b72971315d8c7f272108fe",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 33380
+      },
+      {
+        "filename": "0010_railway_production_schema_repair_final.sql",
+        "checksum": "40dbec7cd931fb5a1ff42d5da57d5f8e",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 2081
+      },
+      {
+        "filename": "0011_add_missing_unique_constraints.sql",
+        "checksum": "b1c04107cb5067fd7d303c9a924596a6",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1221
+      },
+      {
+        "filename": "0012_immediate_dependency_fix.sql",
+        "checksum": "0678082a4bd7c20fe7c085b7f6ceb2fa",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 6715
+      },
+      {
+        "filename": "0013_critical_column_fixes.sql",
+        "checksum": "3b848292f7f6e48156e7ed9b6fb73f8f",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 12873
+      },
+      {
+        "filename": "0014_comprehensive_column_additions.sql",
+        "checksum": "8b8670b4b69fac750eb91f07ced07d4e",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 814
+      },
+      {
+        "filename": "0015_passwordless_oauth_fix.sql",
+        "checksum": "aa41db47dad6efa706ff384ed298bc59",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1333
+      },
+      {
+        "filename": "0017_fix_password_hash_column_mismatch.sql",
+        "checksum": "0e6a7d86ff7ea9a1a8afa72d71302ff9",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1344
+      },
+      {
+        "filename": "0018_fix_password_hash_null_constraint.sql",
+        "checksum": "2fad0c4b56f5737d13b81dd5d6c62f31",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1850
+      },
+      {
+        "filename": "0019_fix_password_hash_null_values_hotfix.sql",
+        "checksum": "aa465d0a5930e19033df1791f216be6d",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1347
+      },
+      {
+        "filename": "0020_fix_password_hash_null_values_production.sql",
+        "checksum": "21e02ca1a409aff643345db526cb93af",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1266
+      },
+      {
+        "filename": "0021_fix_password_null_constraint_permanent.sql",
+        "checksum": "02f1f8104f3d68aab954f8bf95a05f46",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1349
+      },
+      {
+        "filename": "0022_fix_password_nullable_for_oauth.sql",
+        "checksum": "3b6fd47a6fc89ae9cd16ae013f23c7a7",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1342
+      },
+      {
+        "filename": "0023_fix_password_nullable_permanent.sql",
+        "checksum": "ba5aaa7d1aadd226a51e7c14a441dd35",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1342
+      },
+      {
+        "filename": "0024_fix_password_not_null_constraint_permanent.sql",
+        "checksum": "d7f9f0febc3b77c07791cfd2dcd14db1",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 2459
+      },
+      {
+        "filename": "0025_consolidated_permanent_fix.sql",
+        "checksum": "01b8f3e6316d0bb29f04c34dc3af21d3",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 9572
+      },
+      {
+        "filename": "0026_add_missing_description_column.sql",
+        "checksum": "1058839c554c2dd483b8def778678b93",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 1703
+      },
+      {
+        "filename": "0027_add_missing_script_column.sql",
+        "checksum": "978c33f59e8055f7011b41346af2b453",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 4503
+      },
+      {
+        "filename": "0028_fix_schema_migrations_table_structure.sql",
+        "checksum": "c0dae212cb1c59f511c1afbe28ed3a78",
+        "executed": false,
+        "checksumMatch": null,
+        "status": "not executed",
+        "size": 4294
+      },
+      {
+        "filename": "0029_add_content_metrics_created_at.sql",
+        "checksum": "a759ca3cfa7e4790b2127b399aee7c6c",
+        "executed": true,
+        "checksumMatch": false,
+        "status": "completed",
+        "size": 1579
+      }
+    ]
+  },
+  "schema": {
+    "tables": [
+      {
+        "name": "ai_content_calendar",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_content_calendar_id_seq'::regclass)"
+          },
+          {
+            "name": "ai_project_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "scheduled_date",
+            "type": "timestamp without time zone",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "scheduled_time",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'scheduled'::character varying"
+          },
+          {
+            "name": "optimal_posting_time",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "engagement_score",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_optimized",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "ai_content_suggestions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_content_suggestions_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "suggestion_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "confidence",
+            "type": "numeric",
+            "nullable": true,
+            "default": "'0'::numeric"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "ai_engagement_patterns",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_engagement_patterns_id_seq'::regclass)"
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "category",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "optimal_times",
+            "type": "ARRAY",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "engagement_score",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "sample_size",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "ai_generated_content",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_generated_content_id_seq'::regclass)"
+          },
+          {
+            "name": "ai_project_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'draft'::character varying"
+          },
+          {
+            "name": "scheduled_date",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "published_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "hashtags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_model",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'gemini-2.5-flash'::character varying"
+          },
+          {
+            "name": "generation_prompt",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "confidence",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "engagement_prediction",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "day_number",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "is_paused",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "is_stopped",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "can_publish",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "publish_order",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "content_version",
+            "type": "integer",
+            "nullable": true,
+            "default": "1"
+          },
+          {
+            "name": "last_regenerated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "ai_generation_tasks",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_generation_tasks_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "task_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "prompt",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "result",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'pending'::character varying"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "completed_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "ai_projects",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('ai_projects_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "project_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "duration",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "custom_duration",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "target_channels",
+            "type": "ARRAY",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_frequency",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "target_audience",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "brand_voice",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_goals",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_title",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "channel_type",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "tags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_settings",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'active'::character varying"
+          },
+          {
+            "name": "start_date",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "end_date",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "content",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('content_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "script",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'draft'::character varying"
+          },
+          {
+            "name": "scheduled_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "published_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "thumbnail_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "video_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "tags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_generated",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "day_number",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_paused",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "is_stopped",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "can_publish",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "publish_order",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "content_version",
+            "type": "integer",
+            "nullable": true,
+            "default": "1"
+          },
+          {
+            "name": "last_regenerated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "scheduled_time",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'draft'::character varying"
+          },
+          {
+            "name": "is_ai_generated",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "engagement_prediction",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "target_audience",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "optimal_posting_time",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_format",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "tone",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "word_count",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "reading_time",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "seo_score",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "readability_score",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "sentiment_score",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "hashtags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "mentions",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "media_files",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "approval_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'pending'::character varying"
+          },
+          {
+            "name": "approved_by",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "approved_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "rejection_reason",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "content_action_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('content_action_history_id_seq'::regclass)"
+          },
+          {
+            "name": "content_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "action",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "previous_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "new_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "content_actions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('content_actions_id_seq'::regclass)"
+          },
+          {
+            "name": "content_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "action_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "action_data",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "performed_by",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "performed_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "content_metrics",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('content_metrics_id_seq'::regclass)"
+          },
+          {
+            "name": "content_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "views",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "likes",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "comments",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "shares",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "engagement_rate",
+            "type": "numeric",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "revenue",
+            "type": "numeric",
+            "nullable": true,
+            "default": "'0'::numeric"
+          },
+          {
+            "name": "last_updated",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "content_versions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('content_versions_id_seq'::regclass)"
+          },
+          {
+            "name": "content_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "version_number",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "script",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "hashtags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "scheduled_time",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "created_by",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "generated_code",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "nullable": false,
+            "default": "uuid_generate_v4()"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "language",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "framework",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "code",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "explanation",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "dependencies",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "hashtag_suggestions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('hashtag_suggestions_id_seq'::regclass)"
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "category",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "hashtag",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "trend_score",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "usage_count",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "niches",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('niches_id_seq'::regclass)"
+          },
+          {
+            "name": "name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "category",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "trend_score",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "difficulty",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "profitability",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "keywords",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "notifications",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('notifications_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "message",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "is_read",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "read_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "platform_posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('platform_posts_id_seq'::regclass)"
+          },
+          {
+            "name": "social_post_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "account_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "caption",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "hashtags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "emojis",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "scheduled_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "published_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'draft'::character varying"
+          },
+          {
+            "name": "platform_post_id",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "platform_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "post_media",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('post_media_id_seq'::regclass)"
+          },
+          {
+            "name": "social_post_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "media_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "media_url",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "thumbnail_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "file_name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "file_size",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "mime_type",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "duration",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "dimensions",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "post_schedules",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('post_schedules_id_seq'::regclass)"
+          },
+          {
+            "name": "social_post_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "scheduled_at",
+            "type": "timestamp without time zone",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'pending'::character varying"
+          },
+          {
+            "name": "retry_count",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "last_attempt_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "error_message",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "recurrence",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'none'::character varying"
+          },
+          {
+            "name": "timezone",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'UTC'::character varying"
+          },
+          {
+            "name": "series_end_date",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_type",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "duration",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "tone",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "target_audience",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "time_distribution",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "project_content_management",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('project_content_management_id_seq'::regclass)"
+          },
+          {
+            "name": "ai_project_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "total_days",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content_per_day",
+            "type": "integer",
+            "nullable": true,
+            "default": "1"
+          },
+          {
+            "name": "current_day",
+            "type": "integer",
+            "nullable": true,
+            "default": "1"
+          },
+          {
+            "name": "is_paused",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "is_stopped",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "can_publish_unpublished",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "original_duration",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "extended_days",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "extension_history",
+            "type": "jsonb",
+            "nullable": true,
+            "default": "'[]'::jsonb"
+          },
+          {
+            "name": "calendar_updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "last_content_generated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "project_extensions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('project_extensions_id_seq'::regclass)"
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "original_duration",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "extended_duration",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "extension_days",
+            "type": "integer",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "extended_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "extended_by",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "projects",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('projects_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "template",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "target_audience",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "estimated_duration",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "tags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_public",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'active'::character varying"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "content_type",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "channel_types",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "category",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "duration",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_frequency",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_formats",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_themes",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "brand_voice",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_length",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "posting_frequency",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_tools",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "scheduling_preferences",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "start_date",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "budget",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "team_members",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "goals",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "end_date",
+            "type": "date",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_template",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "template_id",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "progress",
+            "type": "numeric",
+            "nullable": true,
+            "default": "0.0"
+          },
+          {
+            "name": "completion_status",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'in_progress'::character varying"
+          }
+        ]
+      },
+      {
+        "name": "schema_migrations",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('schema_migrations_id_seq'::regclass)"
+          },
+          {
+            "name": "filename",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "executed_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "checksum",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "execution_time_ms",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'completed'::character varying"
+          },
+          {
+            "name": "error_message",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "sessions",
+        "columns": [
+          {
+            "name": "sid",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "sess",
+            "type": "jsonb",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "expire",
+            "type": "timestamp without time zone",
+            "nullable": false,
+            "default": null
+          }
+        ]
+      },
+      {
+        "name": "social_accounts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('social_accounts_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "platform",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "account_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "account_name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "access_token",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "refresh_token",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "token_expiry",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "social_posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('social_posts_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "caption",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "hashtags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "emojis",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "content_type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "character varying",
+            "nullable": false,
+            "default": "'draft'::character varying"
+          },
+          {
+            "name": "scheduled_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "published_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "thumbnail_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "media_urls",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "ai_generated",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "structured_outputs",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('structured_outputs_id_seq'::regclass)"
+          },
+          {
+            "name": "user_id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "prompt",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "schema",
+            "type": "jsonb",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "response_json",
+            "type": "jsonb",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "model",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'gemini-2.5-flash'::character varying"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "templates",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "nullable": false,
+            "default": "nextval('templates_id_seq'::regclass)"
+          },
+          {
+            "name": "title",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "category",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "type",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "content",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "thumbnail_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "rating",
+            "type": "numeric",
+            "nullable": true,
+            "default": "'0'::numeric"
+          },
+          {
+            "name": "downloads",
+            "type": "integer",
+            "nullable": true,
+            "default": "0"
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "is_featured",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "tags",
+            "type": "ARRAY",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "metadata",
+            "type": "jsonb",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          }
+        ]
+      },
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "email",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "first_name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "last_name",
+            "type": "character varying",
+            "nullable": false,
+            "default": null
+          },
+          {
+            "name": "profile_image_url",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "nullable": true,
+            "default": "true"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": "now()"
+          },
+          {
+            "name": "password",
+            "type": "text",
+            "nullable": true,
+            "default": "'temp_password_needs_reset'::text"
+          },
+          {
+            "name": "full_name",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "username",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "phone",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "bio",
+            "type": "text",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "website",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "location",
+            "type": "character varying",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "timezone",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'UTC'::character varying"
+          },
+          {
+            "name": "preferences",
+            "type": "jsonb",
+            "nullable": true,
+            "default": "'{}'::jsonb"
+          },
+          {
+            "name": "subscription_tier",
+            "type": "character varying",
+            "nullable": true,
+            "default": "'free'::character varying"
+          },
+          {
+            "name": "last_login_at",
+            "type": "timestamp without time zone",
+            "nullable": true,
+            "default": null
+          },
+          {
+            "name": "email_verified",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          },
+          {
+            "name": "phone_verified",
+            "type": "boolean",
+            "nullable": true,
+            "default": "false"
+          }
+        ]
+      }
+    ],
+    "validation": {
+      "missingTables": [],
+      "missingColumns": [],
+      "extraTables": [],
+      "valid": true
+    }
+  },
+  "rootCauses": [
+    {
+      "type": "MIGRATION_MODIFIED_AFTER_EXECUTION",
+      "severity": "CRITICAL",
+      "migration": "0029_add_content_metrics_created_at.sql",
+      "description": "Migration file was modified after being executed",
+      "impact": "Schema drift - database state does not match migration file"
+    },
+    {
+      "type": "MIGRATIONS_NEVER_EXECUTED",
+      "severity": "HIGH",
+      "migrations": [
+        "0001_core_tables_idempotent.sql",
+        "0008_final_constraints_and_cleanup.sql",
+        "0009_railway_production_repair_complete.sql",
+        "0010_railway_production_schema_repair_final.sql",
+        "0011_add_missing_unique_constraints.sql",
+        "0012_immediate_dependency_fix.sql",
+        "0013_critical_column_fixes.sql",
+        "0014_comprehensive_column_additions.sql",
+        "0015_passwordless_oauth_fix.sql",
+        "0017_fix_password_hash_column_mismatch.sql",
+        "0018_fix_password_hash_null_constraint.sql",
+        "0019_fix_password_hash_null_values_hotfix.sql",
+        "0020_fix_password_hash_null_values_production.sql",
+        "0021_fix_password_null_constraint_permanent.sql",
+        "0022_fix_password_nullable_for_oauth.sql",
+        "0023_fix_password_nullable_permanent.sql",
+        "0024_fix_password_not_null_constraint_permanent.sql",
+        "0025_consolidated_permanent_fix.sql",
+        "0026_add_missing_description_column.sql",
+        "0027_add_missing_script_column.sql",
+        "0028_fix_schema_migrations_table_structure.sql"
+      ],
+      "description": "Some migration files exist but were never executed",
+      "impact": "Schema is incomplete, missing tables/columns from these migrations"
+    },
+    {
+      "type": "MIGRATION_ORDER_MISMATCH",
+      "severity": "MEDIUM",
+      "description": "Migrations were executed in different order than file names suggest",
+      "impact": "May cause dependency issues if migrations depend on each other"
+    },
+    {
+      "type": "MISSING_CORE_TABLES_MIGRATION",
+      "severity": "CRITICAL",
+      "description": "Core tables migration 0001_core_tables_idempotent.sql was never executed",
+      "impact": "Core tables (users, projects, content, etc.) may not exist"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "action": "Execute all pending migrations in correct order",
+      "details": "21 migrations have never been executed"
+    },
+    {
+      "priority": "HIGH",
+      "action": "Investigate modified migrations and create corrective migrations",
+      "details": "1 migrations were modified after execution"
+    }
+  ]
+}
