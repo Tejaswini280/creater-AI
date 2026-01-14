@@ -126,7 +126,51 @@ SELECT 'Facebook Post Template', 'Engaging Facebook post for community building'
 WHERE NOT EXISTS (SELECT 1 FROM templates WHERE title = 'Facebook Post Template');
 
 -- Insert hashtag suggestions (idempotent) - Using WHERE NOT EXISTS for safety
--- DO block removed (Railway-compatible)
+DO $$
+BEGIN
+    -- Instagram hashtags
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'fitness', '#fitness', 95, 1000000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'fitness' AND hashtag = '#fitness');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'fitness', '#workout', 90, 800000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'fitness' AND hashtag = '#workout');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'fitness', '#gym', 88, 750000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'fitness' AND hashtag = '#gym');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'tech', '#technology', 92, 500000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'tech' AND hashtag = '#technology');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'lifestyle', '#lifestyle', 90, 900000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'lifestyle' AND hashtag = '#lifestyle');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'instagram', 'business', '#entrepreneur', 89, 450000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'instagram' AND category = 'business' AND hashtag = '#entrepreneur');
+    
+    -- YouTube hashtags
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'youtube', 'tech', '#technology', 85, 200000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'youtube' AND category = 'tech' AND hashtag = '#technology');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'youtube', 'fitness', '#fitness', 90, 150000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'youtube' AND category = 'fitness' AND hashtag = '#fitness');
+    
+    -- TikTok hashtags
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'tiktok', 'fitness', '#fitness', 95, 500000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'tiktok' AND category = 'fitness' AND hashtag = '#fitness');
+    
+    INSERT INTO hashtag_suggestions (platform, category, hashtag, trend_score, usage_count)
+    SELECT 'tiktok', 'lifestyle', '#lifestyle', 92, 400000
+    WHERE NOT EXISTS (SELECT 1 FROM hashtag_suggestions WHERE platform = 'tiktok' AND category = 'lifestyle' AND hashtag = '#lifestyle');
+END $$;
 
 -- Insert niche data (idempotent)
 INSERT INTO niches (name, category, trend_score, difficulty, profitability, keywords, description)
@@ -213,9 +257,52 @@ CREATE INDEX IF NOT EXISTS idx_templates_featured ON templates(category, rating 
 -- Note: PostgreSQL doesn't support IF NOT EXISTS with ADD CONSTRAINT
 -- Using DO blocks to handle existing constraints gracefully
 
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE projects ADD CONSTRAINT IF NOT EXISTS chk_projects_category 
+DO $$
+BEGIN
+    -- Add projects category constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_projects_category' 
+        AND table_name = 'projects'
+    ) THEN
+        ALTER TABLE projects ADD CONSTRAINT chk_projects_category 
           CHECK (category IS NULL OR category IN ('fitness', 'tech', 'lifestyle', 'business', 'education', 'entertainment'));
+    END IF;
+
+    -- Note: duration column is INTEGER (from migration 0002), not VARCHAR
+    -- Skipping duration constraint as it should accept numeric values (7, 30, 90, etc.)
+    -- The constraint check with string values like '7days' would fail for INTEGER column
+
+    -- Add projects content frequency constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_projects_content_frequency' 
+        AND table_name = 'projects'
+    ) THEN
+        ALTER TABLE projects ADD CONSTRAINT chk_projects_content_frequency 
+          CHECK (content_frequency IS NULL OR content_frequency IN ('daily', 'weekly', 'bi-weekly', 'monthly'));
+    END IF;
+
+    -- Add post schedules tone constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_post_schedules_tone' 
+        AND table_name = 'post_schedules'
+    ) THEN
+        ALTER TABLE post_schedules ADD CONSTRAINT chk_post_schedules_tone 
+          CHECK (tone IS NULL OR tone IN ('professional', 'casual', 'friendly', 'authoritative', 'playful', 'inspirational'));
+    END IF;
+
+    -- Add post schedules time distribution constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_post_schedules_time_distribution' 
+        AND table_name = 'post_schedules'
+    ) THEN
+        ALTER TABLE post_schedules ADD CONSTRAINT chk_post_schedules_time_distribution 
+          CHECK (time_distribution IS NULL OR time_distribution IN ('mixed', 'peak', 'off-peak', 'optimal'));
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- MIGRATION COMPLETION MESSAGE

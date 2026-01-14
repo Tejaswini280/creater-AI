@@ -34,8 +34,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Add UNIQUE constraint for email if not exists
--- Constraint added with IF NOT EXISTS (Railway-compatible)
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'users_email_key' 
+        AND table_name = 'users'
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
+    END IF;
+END $$;
 
 -- Projects table SECOND (depends on users via user_id, but no FK constraint)
 CREATE TABLE IF NOT EXISTS projects (
@@ -174,9 +182,32 @@ CREATE INDEX IF NOT EXISTS idx_content_status ON content(status);
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Verify that project_id column exists in content table
--- DO block removed (Railway-compatible)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'content' 
+        AND column_name = 'project_id'
+        AND table_schema = 'public'
+    ) THEN
+        RAISE EXCEPTION 'CRITICAL: project_id column still missing from content table';
+    END IF;
+    
+    RAISE NOTICE 'SUCCESS: project_id column verified in content table';
+END $$;
 
 -- Verify that projects table exists
--- DO block removed (Railway-compatible)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'projects'
+        AND table_schema = 'public'
+    ) THEN
+        RAISE EXCEPTION 'CRITICAL: projects table missing';
+    END IF;
+    
+    RAISE NOTICE 'SUCCESS: projects table verified';
+END $$;
 
 SELECT 'IMMEDIATE FIX COMPLETED: Migration dependency issue resolved' as status;

@@ -43,7 +43,15 @@ ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Step 1: Add the column if it doesn't exist (allows NULL initially)
--- DO block removed (Railway-compatible)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'password_hash'
+    ) THEN
+        ALTER TABLE users ADD COLUMN password_hash TEXT;
+    END IF;
+END $$;
 
 -- Step 2: Update ALL NULL values to the OAuth placeholder
 -- This MUST happen before setting any constraints
@@ -56,7 +64,15 @@ ALTER TABLE users
 ALTER COLUMN password_hash SET DEFAULT 'oauth_user_no_password';
 
 -- Step 4: Verify no NULL values remain
--- DO block removed (Railway-compatible)
+DO $$
+DECLARE
+    null_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO null_count FROM users WHERE password_hash IS NULL;
+    IF null_count > 0 THEN
+        RAISE EXCEPTION 'Still have % users with NULL password_hash after update', null_count;
+    END IF;
+END $$;
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -469,7 +485,20 @@ ON CONFLICT (email) DO NOTHING;
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Verify password_hash column exists and has no NULL values
--- DO block removed (Railway-compatible)
+DO $$
+DECLARE
+    null_count INTEGER;
+    total_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO total_count FROM users;
+    SELECT COUNT(*) INTO null_count FROM users WHERE password_hash IS NULL;
+    
+    RAISE NOTICE 'Total users: %, Users with NULL password_hash: %', total_count, null_count;
+    
+    IF null_count > 0 THEN
+        RAISE EXCEPTION 'CRITICAL: % users still have NULL password_hash!', null_count;
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PRODUCTION REPAIR COMPLETED - NO FOREIGN KEY CONSTRAINTS

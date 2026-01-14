@@ -424,8 +424,16 @@ CREATE TABLE IF NOT EXISTS generated_code (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- Add unique constraint for users email (for ON CONFLICT support)
--- Add constraint if it doesn't exist (Railway-compatible)
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'users_email_key' 
+        AND tc.table_name = 'users'
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
+    END IF;
+END $$;
 
 -- Add missing content management columns to content table
 ALTER TABLE content ADD COLUMN IF NOT EXISTS day_number INTEGER;
@@ -475,12 +483,28 @@ ALTER TABLE post_schedules ADD COLUMN IF NOT EXISTS target_audience VARCHAR(200)
 ALTER TABLE post_schedules ADD COLUMN IF NOT EXISTS time_distribution VARCHAR(50);
 
 -- Add unique constraint for ai_engagement_patterns (for ON CONFLICT support)
--- Add constraint if it doesn't exist (Railway-compatible)
-ALTER TABLE ai_engagement_patterns ADD CONSTRAINT IF NOT EXISTS ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'ai_engagement_patterns_platform_category_key' 
+        AND tc.table_name = 'ai_engagement_patterns'
+    ) THEN
+        ALTER TABLE ai_engagement_patterns ADD CONSTRAINT ai_engagement_patterns_platform_category_key UNIQUE (platform, category);
+    END IF;
+END $$;
 
 -- Add unique constraint for niches name (for ON CONFLICT support)
--- Add constraint if it doesn't exist (Railway-compatible)
-ALTER TABLE niches ADD CONSTRAINT IF NOT EXISTS niches_name_key UNIQUE (name);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'niches_name_key' 
+        AND tc.table_name = 'niches'
+    ) THEN
+        ALTER TABLE niches ADD CONSTRAINT niches_name_key UNIQUE (name);
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STEP 3: CREATE ALL ESSENTIAL INDEXES (IDEMPOTENT)
@@ -773,13 +797,103 @@ ANALYZE post_schedules;
 -- MIGRATION COMPLETION WITH COMPREHENSIVE VALIDATION
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Validation blocks removed (Railway-compatible)
+-- Validate that all critical tables exist
+DO $$
+DECLARE
+    missing_tables TEXT[] := ARRAY[]::TEXT[];
+    table_name_var TEXT;
+    required_tables TEXT[] := ARRAY[
+        'users', 'projects', 'content', 'content_metrics', 
+        'ai_projects', 'ai_generated_content', 'ai_content_calendar',
+        'post_schedules', 'templates', 'hashtag_suggestions', 
+        'ai_engagement_patterns', 'niches', 'sessions',
+        'social_posts', 'platform_posts', 'post_media',
+        'structured_outputs', 'generated_code'
+    ];
+BEGIN
+    FOREACH table_name_var IN ARRAY required_tables
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.tables t
+            WHERE t.table_name = table_name_var AND t.table_schema = 'public'
+        ) THEN
+            missing_tables := array_append(missing_tables, table_name_var);
+        END IF;
+    END LOOP;
+    
+    IF array_length(missing_tables, 1) > 0 THEN
+        RAISE EXCEPTION 'CRITICAL: Missing tables: %', array_to_string(missing_tables, ', ');
+    END IF;
+    
+    RAISE NOTICE '✅ All critical tables validated successfully';
+END $$;
 
+-- Validate that users table has password column
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns c
+        WHERE c.table_name = 'users' AND c.column_name = 'password'
+    ) THEN
+        RAISE EXCEPTION 'CRITICAL: Users table missing password column - authentication will fail';
+    END IF;
+    
+    RAISE NOTICE '✅ Users table password column validated successfully';
+END $$;
 
+-- Validate that all project wizard columns exist
+DO $$
+DECLARE
+    missing_columns TEXT[] := ARRAY[]::TEXT[];
+    column_name_var TEXT;
+    required_columns TEXT[] := ARRAY[
+        'content_type', 'channel_types', 'category', 'duration', 
+        'content_frequency', 'brand_voice', 'goals'
+    ];
+BEGIN
+    FOREACH column_name_var IN ARRAY required_columns
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'projects' AND c.column_name = column_name_var
+        ) THEN
+            missing_columns := array_append(missing_columns, column_name_var);
+        END IF;
+    END LOOP;
+    
+    IF array_length(missing_columns, 1) > 0 THEN
+        RAISE EXCEPTION 'CRITICAL: Projects table missing columns: %', array_to_string(missing_columns, ', ');
+    END IF;
+    
+    RAISE NOTICE '✅ Projects table wizard columns validated successfully';
+END $$;
 
-
-
-
+-- Validate that all scheduler form columns exist
+DO $$
+DECLARE
+    missing_columns TEXT[] := ARRAY[]::TEXT[];
+    column_name_var TEXT;
+    required_columns TEXT[] := ARRAY[
+        'recurrence', 'timezone', 'project_id', 'title', 
+        'description', 'content_type', 'tone'
+    ];
+BEGIN
+    FOREACH column_name_var IN ARRAY required_columns
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_name = 'post_schedules' AND c.column_name = column_name_var
+        ) THEN
+            missing_columns := array_append(missing_columns, column_name_var);
+        END IF;
+    END LOOP;
+    
+    IF array_length(missing_columns, 1) > 0 THEN
+        RAISE EXCEPTION 'CRITICAL: Post schedules table missing columns: %', array_to_string(missing_columns, ', ');
+    END IF;
+    
+    RAISE NOTICE '✅ Post schedules table form columns validated successfully';
+END $$;
 
 -- Final success message with comprehensive status
 SELECT 
@@ -793,4 +907,3 @@ SELECT
     '✅ All triggers configured' as triggers_fix,
     '✅ Essential data seeded' as data_fix,
     '🚀 Railway 502 errors permanently eliminated' as result;
-
