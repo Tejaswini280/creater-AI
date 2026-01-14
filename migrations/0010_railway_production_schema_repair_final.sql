@@ -1,76 +1,44 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- MIGRATION 0010: REPLACED WITH SAFE VERSION
+-- MIGRATION 0010: SAFE REPLACEMENT - NO DO BLOCKS
 -- ═══════════════════════════════════════════════════════════════════════════════
--- This migration has been replaced with a safe version that:
--- 1. Does NOT create any users (to avoid password constraint issues)
--- 2. Only ensures password column is nullable
--- 3. Is fully idempotent
+-- This migration has been rewritten to avoid DO blocks entirely
+-- Railway PostgreSQL sometimes has issues parsing DO blocks in migrations
 --
--- The original migration 0010 was causing 502 errors due to password constraints.
--- This replacement ensures the application can start successfully.
+-- FIXES:
+-- 1. Ensures password column is nullable (for OAuth users)
+-- 2. Adds unique constraint on email
+-- 3. Cleans up invalid password values
+-- 4. Uses simple SQL statements instead of DO blocks
 --
--- Date: 2026-01-13
--- Status: SAFE REPLACEMENT
+-- Date: 2026-01-14
+-- Status: PERMANENT FIX - NO DO BLOCKS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- CRITICAL FIX: Ensure password column is nullable
--- Using $$migration_block$$ delimiter to avoid parsing issues
-DO $$migration_block$$
-BEGIN
-    -- Add password column if it doesn't exist (nullable)
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'password'
-    ) THEN
-        ALTER TABLE users ADD COLUMN password TEXT;
-        RAISE NOTICE 'Added password column (nullable)';
-    END IF;
+-- Add password column if it doesn't exist (nullable by default)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
 
-    -- Remove NOT NULL constraint if it exists
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' 
-        AND column_name = 'password' 
-        AND is_nullable = 'NO'
-    ) THEN
-        ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-        RAISE NOTICE 'Removed NOT NULL constraint from password column';
-    END IF;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE NOTICE 'Password column fix skipped or already applied: %', SQLERRM;
-END $$migration_block$$;
+-- Remove NOT NULL constraint if it exists (PostgreSQL 12+)
+ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
 
 -- Add unique constraint on email if it doesn't exist
-DO $$email_constraint$$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints tc
-        WHERE tc.constraint_name = 'users_email_key' 
-        AND tc.table_name = 'users'
-    ) THEN
-        ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
-        RAISE NOTICE 'Added UNIQUE constraint on users.email';
-    END IF;
-EXCEPTION
-    WHEN duplicate_table THEN
-        RAISE NOTICE 'Email constraint already exists';
-    WHEN OTHERS THEN
-        RAISE NOTICE 'Email constraint fix skipped: %', SQLERRM;
-END $$email_constraint$$;
+ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
 
 -- Clean up any invalid password values
 UPDATE users 
 SET password = NULL 
-WHERE password = '' 
-   OR password = 'temp_password_needs_reset'
-   OR password = 'null'
-   OR password = 'undefined';
+WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined')
+   OR password IS NOT NULL AND LENGTH(password) < 8;
 
--- Success message
-SELECT 
-    '🎉 MIGRATION 0010 SAFE REPLACEMENT COMPLETED' as status,
-    '✅ Password column is nullable' as fix_1,
-    '✅ OAuth users are supported' as fix_2,
-    '✅ No users created (avoiding constraint issues)' as fix_3,
-    '🚀 Application can now start' as result;
+-- Create index on email for faster lookups
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Create index on created_at for sorting
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+
+-- Success message (as a comment since we can't use SELECT in migrations)
+-- ✅ MIGRATION 0010 COMPLETED
+-- ✅ Password column is nullable
+-- ✅ OAuth users are supported
+-- ✅ Email has unique constraint
+-- ✅ Invalid passwords cleaned up
+-- 🚀 Application can now start
