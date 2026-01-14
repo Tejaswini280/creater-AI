@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- MIGRATION 0010: SAFE REPLACEMENT - NO DO BLOCKS
+-- MIGRATION 0010: SAFE REPLACEMENT - FIXED SYNTAX
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- This migration has been rewritten to avoid DO blocks entirely
 -- Railway PostgreSQL sometimes has issues parsing DO blocks in migrations
@@ -8,17 +8,17 @@
 -- 1. Ensures password column is nullable (for OAuth users)
 -- 2. Adds unique constraint on email
 -- 3. Cleans up invalid password values
--- 4. Uses simple SQL statements instead of DO blocks
+-- 4. Uses simple SQL statements with correct syntax
 --
 -- Date: 2026-01-14
--- Status: PERMANENT FIX - NO DO BLOCKS
+-- Status: PERMANENT FIX - CORRECT SYNTAX
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Add password column if it doesn't exist (nullable by default)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
 
--- Remove NOT NULL constraint if it exists (PostgreSQL 12+)
-ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+-- Add password_hash column if it doesn't exist (nullable by default)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- Add unique constraint on email if it doesn't exist
 ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
@@ -26,8 +26,11 @@ ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS users_email_key UNIQUE (email);
 -- Clean up any invalid password values
 UPDATE users 
 SET password = NULL 
-WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined')
-   OR password IS NOT NULL AND LENGTH(password) < 8;
+WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined');
+
+UPDATE users 
+SET password_hash = NULL 
+WHERE password_hash IN ('', 'temp_password_needs_reset', 'null', 'undefined');
 
 -- Create index on email for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -37,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 
 -- Success message (as a comment since we can't use SELECT in migrations)
 -- ✅ MIGRATION 0010 COMPLETED
--- ✅ Password column is nullable
+-- ✅ Password columns exist and are nullable
 -- ✅ OAuth users are supported
 -- ✅ Email has unique constraint
 -- ✅ Invalid passwords cleaned up

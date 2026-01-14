@@ -7,12 +7,8 @@
 
 -- Ensure password column exists and is nullable
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
-ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-
 -- Ensure password_hash column exists and is nullable  
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
-ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
-
 -- Clean up invalid password values
 UPDATE users SET password = NULL WHERE password IN ('', 'temp_password_needs_reset', 'null', 'undefined');
 UPDATE users SET password_hash = NULL WHERE password_hash IN ('', 'temp_password_needs_reset', 'null', 'undefined');

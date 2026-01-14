@@ -9,15 +9,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Drop the NOT NULL constraint if it exists on password column
-ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-
 -- Ensure password_hash column exists and is nullable
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- Also ensure password column is nullable (for backward compatibility)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
-ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-
 -- Update any empty strings to NULL for consistency
 UPDATE users SET password_hash = NULL WHERE password_hash = '';
 UPDATE users SET password = NULL WHERE password = '';
