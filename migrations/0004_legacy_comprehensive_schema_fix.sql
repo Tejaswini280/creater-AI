@@ -26,9 +26,10 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- ADD MISSING PASSWORD COLUMN TO USERS TABLE (CRITICAL FIX)
+-- ADD MISSING PASSWORD COLUMN TO USERS TABLE (NULLABLE FOR OAUTH SUPPORT)
+-- Changed from NOT NULL to nullable to support OAuth users
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'temp_password_needs_reset';
+ADD COLUMN IF NOT EXISTS password TEXT;
 
 -- Add missing columns to content table (idempotent)
 ALTER TABLE content 

@@ -21,13 +21,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 -- Users table FIRST (no dependencies)
+-- Password is nullable to support OAuth users
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY NOT NULL,
     email VARCHAR NOT NULL,
     first_name VARCHAR NOT NULL,
     last_name VARCHAR NOT NULL,
     profile_image_url VARCHAR,
-    password TEXT NOT NULL DEFAULT 'temp_password_needs_reset',
+    password TEXT, -- Nullable for OAuth support
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
