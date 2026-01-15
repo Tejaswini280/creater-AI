@@ -30,7 +30,7 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique().notNull(),
-  password: text("password").notNull(), // Hashed password
+  password: text("password"), // Hashed password - nullable to support OAuth users
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   profileImageUrl: varchar("profile_image_url"),

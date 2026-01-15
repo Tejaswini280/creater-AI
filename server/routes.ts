@@ -609,20 +609,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-
+      console.log('🔐 Login attempt for:', email);
 
       try {
         // Get user by email
         const user = await storage.getUserByEmail(email);
         if (!user) {
+          console.log('❌ User not found:', email);
           return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        console.log('✅ User found:', user.id);
+        console.log('🔍 User has password:', !!user.password);
+
+        // Check if user has a password (OAuth users may not have passwords)
+        if (!user.password) {
+          console.log('❌ User has no password (OAuth user):', email);
+          return res.status(401).json({ 
+            message: "This account uses OAuth authentication. Please sign in with your OAuth provider." 
+          });
         }
 
         // Verify password
         const isValidPassword = await verifyPassword(password, user.password);
         if (!isValidPassword) {
+          console.log('❌ Invalid password for:', email);
           return res.status(401).json({ message: "Invalid credentials" });
         }
+
+        console.log('✅ Password verified for:', email);
 
         // Generate tokens
         const tokens = generateTokens(user);
@@ -632,8 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const cookieOptions = {
           httpOnly: true,
           secure: isProduction,
-          sameSite: isProduction ? 'strict' as const : 'lax' as const, // ✅ CRITICAL: Use 'lax' in development for Docker
-          domain: isProduction ? undefined : undefined, // Let browser handle domain in dev
+          sameSite: isProduction ? 'strict' as const : 'lax' as const,
+          domain: isProduction ? undefined : undefined,
           path: '/',
           maxAge: 15 * 60 * 1000 // 15 minutes for access token
         };
@@ -644,8 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days for refresh token
         });
 
-        console.log('🔧 Login Debug - NODE_ENV:', process.env.NODE_ENV);
-        console.log('🔧 Login Debug - Including tokens in response for development');
+        console.log('✅ Login successful for:', email);
 
         res.json({
           message: "Login successful",
@@ -655,42 +669,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             firstName: user.firstName,
             lastName: user.lastName,
           },
-          // ✅ CRITICAL: Always include tokens for frontend localStorage storage
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken
         });
       } catch (dbError) {
-        console.warn('Database error during login, using fallback:', dbError);
+        console.error('❌ Database error during login:', dbError);
+        console.error('Error details:', {
+          name: dbError instanceof Error ? dbError.name : 'Unknown',
+          message: dbError instanceof Error ? dbError.message : String(dbError),
+          stack: dbError instanceof Error ? dbError.stack : undefined
+        });
         
-        // Fallback for development - accept any email/password
-        const fallbackUser = {
-          id: 'fallback-user-id',
-          email: email,
-          firstName: 'Fallback',
-          lastName: 'User',
-          password: 'hashed_password',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+        // Return proper error instead of fallback
+        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         
-        const tokens = generateTokens(fallbackUser);
+        if (errorMessage.includes('connection') || errorMessage.includes('ECONNREFUSED')) {
+          return res.status(503).json({ 
+            message: "Database connection error. Please try again later.",
+            error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+          });
+        }
         
-        res.json({
-          message: "Login successful (fallback mode)",
-          user: {
-            id: fallbackUser.id,
-            email: fallbackUser.email,
-            firstName: fallbackUser.firstName,
-            lastName: fallbackUser.lastName,
-          },
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken
+        return res.status(500).json({ 
+          message: "An error occurred during login. Please try again.",
+          error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         });
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("❌ Login error:", error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       res.status(500).json({ 
-        message: "Failed to login",
+        message: "Failed to login. Please try again.",
         error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }

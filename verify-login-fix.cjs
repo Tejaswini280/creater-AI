@@ -1,127 +1,221 @@
+#!/usr/bin/env node
+
+/**
+ * VERIFY LOGIN FIX
+ * 
+ * This script verifies that the login fix has been applied correctly
+ * Run after deployment to confirm everything is working
+ */
+
+const https = require('https');
 const http = require('http');
 
-console.log('🔍 Verifying Login → Dashboard Fix');
-console.log('=====================================');
+const STAGING_URL = 'https://creator-dev-server-staging.up.railway.app';
+const TEST_EMAIL = 'tgaswini.kawade@renalssa.ai';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test_password';
 
-// Test if server is running
-function testServer() {
+console.log('🔍 VERIFYING LOGIN FIX');
+console.log('='.repeat(70));
+console.log('');
+
+async function makeRequest(url, options, data) {
   return new Promise((resolve, reject) => {
-    const req = http.get('http://localhost:5000/api/health', (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          console.log('✅ Server is running on localhost:5000');
-          resolve(true);
-        } else {
-          console.log(`⚠️ Server responded with status ${res.statusCode}`);
-          resolve(false);
-        }
-      });
-    });
+    const protocol = url.startsWith('https') ? https : http;
+    const urlObj = new URL(url);
     
-    req.on('error', (err) => {
-      console.log('❌ Server is not running on localhost:5000');
-      console.log('   Please run: npm run dev');
-      resolve(false);
-    });
-    
-    req.setTimeout(5000, () => {
-      req.destroy();
-      console.log('❌ Server request timed out');
-      resolve(false);
-    });
-  });
-}
-
-// Test login endpoint
-function testLogin() {
-  return new Promise((resolve, reject) => {
-    const postData = JSON.stringify({
-      email: 'test@example.com',
-      password: 'password123'
-    });
-
-    const options = {
-      hostname: 'localhost',
-      port: 5000,
-      path: '/api/auth/login',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      }
+    const reqOptions = {
+      hostname: urlObj.hostname,
+      port: urlObj.port,
+      path: urlObj.pathname,
+      method: options.method || 'GET',
+      headers: options.headers || {}
     };
 
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
+    const req = protocol.request(reqOptions, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
       res.on('end', () => {
-        if (res.statusCode === 200) {
-          console.log('✅ Login endpoint working');
-          try {
-            const result = JSON.parse(data);
-            console.log(`   User: ${result.user?.email || 'Unknown'}`);
-          } catch (e) {
-            console.log('   Response received but not JSON');
-          }
-          resolve(true);
-        } else {
-          console.log(`❌ Login failed with status ${res.statusCode}`);
-          console.log(`   Response: ${data}`);
-          resolve(false);
-        }
+        resolve({
+          status: res.statusCode,
+          headers: res.headers,
+          body: body
+        });
       });
     });
 
-    req.on('error', (err) => {
-      console.log(`❌ Login request failed: ${err.message}`);
-      resolve(false);
-    });
-
-    req.setTimeout(5000, () => {
-      req.destroy();
-      console.log('❌ Login request timed out');
-      resolve(false);
-    });
-
-    req.write(postData);
+    req.on('error', reject);
+    
+    if (data) {
+      req.write(data);
+    }
+    
     req.end();
   });
 }
 
-// Main test function
-async function runTests() {
-  console.log('\n1. Testing server status...');
-  const serverRunning = await testServer();
+async function testHealthEndpoint() {
+  console.log('📋 TEST 1: Health Check');
+  console.log('-'.repeat(70));
   
-  if (!serverRunning) {
-    console.log('\n❌ Cannot continue tests - server not running');
-    console.log('\nTo fix:');
-    console.log('1. Run: npm run dev');
-    console.log('2. Wait for server to start');
-    console.log('3. Run this test again');
-    return;
-  }
+  try {
+    const response = await makeRequest(`${STAGING_URL}/api/health`, {
+      method: 'GET'
+    });
 
-  console.log('\n2. Testing login endpoint...');
-  const loginWorking = await testLogin();
-
-  console.log('\n=====================================');
-  console.log('📋 SUMMARY:');
-  console.log(`Server Running: ${serverRunning ? '✅' : '❌'}`);
-  console.log(`Login Working: ${loginWorking ? '✅' : '❌'}`);
-
-  if (serverRunning && loginWorking) {
-    console.log('\n🎉 SUCCESS! Login flow should work properly now.');
-    console.log('\nNext steps:');
-    console.log('1. Open: http://localhost:5000');
-    console.log('2. Login with: test@example.com / password123');
-    console.log('3. Verify dashboard loads without "Something went wrong" error');
-    console.log('4. Open test page: test-login-dashboard-flow-final.html');
-  } else {
-    console.log('\n⚠️ Some issues detected. Check the logs above.');
+    if (response.status === 200) {
+      console.log('✅ Health check passed');
+      const data = JSON.parse(response.body);
+      console.log('   Status:', data.status);
+      console.log('   Environment:', data.environment);
+      return true;
+    } else {
+      console.log('❌ Health check failed');
+      console.log('   Status:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Health check error:', error.message);
+    return false;
   }
 }
 
-runTests().catch(console.error);
+async function testLoginEndpoint() {
+  console.log('');
+  console.log('📋 TEST 2: Login Endpoint');
+  console.log('-'.repeat(70));
+  
+  try {
+    const payload = JSON.stringify({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD
+    });
+
+    const response = await makeRequest(`${STAGING_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, payload);
+
+    console.log('   Status:', response.status);
+    
+    if (response.status === 200) {
+      console.log('✅ Login successful!');
+      const data = JSON.parse(response.body);
+      console.log('   User ID:', data.user?.id);
+      console.log('   Email:', data.user?.email);
+      console.log('   Has Access Token:', !!data.accessToken);
+      console.log('   Has Refresh Token:', !!data.refreshToken);
+      return true;
+    } else if (response.status === 401) {
+      const data = JSON.parse(response.body);
+      console.log('⚠️  Login failed (expected if password is wrong)');
+      console.log('   Message:', data.message);
+      
+      if (data.message.includes('OAuth')) {
+        console.log('ℹ️  This is an OAuth user - fix is working correctly!');
+        return true;
+      } else if (data.message.includes('Invalid credentials')) {
+        console.log('ℹ️  Invalid credentials - fix is working, but password is wrong');
+        console.log('   Try setting TEST_PASSWORD environment variable');
+        return true;
+      }
+      return false;
+    } else if (response.status === 500) {
+      console.log('❌ Login still returning 500 error!');
+      console.log('   Response:', response.body);
+      return false;
+    } else {
+      console.log('⚠️  Unexpected status code');
+      console.log('   Response:', response.body);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Login test error:', error.message);
+    return false;
+  }
+}
+
+async function testInvalidLogin() {
+  console.log('');
+  console.log('📋 TEST 3: Invalid Login (Error Handling)');
+  console.log('-'.repeat(70));
+  
+  try {
+    const payload = JSON.stringify({
+      email: 'nonexistent@example.com',
+      password: 'wrong_password'
+    });
+
+    const response = await makeRequest(`${STAGING_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, payload);
+
+    if (response.status === 401) {
+      console.log('✅ Invalid login handled correctly');
+      const data = JSON.parse(response.body);
+      console.log('   Message:', data.message);
+      return true;
+    } else if (response.status === 500) {
+      console.log('❌ Still returning 500 for invalid login!');
+      return false;
+    } else {
+      console.log('⚠️  Unexpected status:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Invalid login test error:', error.message);
+    return false;
+  }
+}
+
+async function runVerification() {
+  console.log('Target:', STAGING_URL);
+  console.log('Test Email:', TEST_EMAIL);
+  console.log('');
+
+  const results = {
+    health: await testHealthEndpoint(),
+    login: await testLoginEndpoint(),
+    errorHandling: await testInvalidLogin()
+  };
+
+  console.log('');
+  console.log('📊 VERIFICATION RESULTS');
+  console.log('='.repeat(70));
+  console.log('');
+  console.log('Health Check:     ', results.health ? '✅ PASS' : '❌ FAIL');
+  console.log('Login Endpoint:   ', results.login ? '✅ PASS' : '❌ FAIL');
+  console.log('Error Handling:   ', results.errorHandling ? '✅ PASS' : '❌ FAIL');
+  console.log('');
+
+  const allPassed = results.health && results.login && results.errorHandling;
+
+  if (allPassed) {
+    console.log('✅ ALL TESTS PASSED - LOGIN FIX VERIFIED!');
+    console.log('');
+    console.log('🎉 The login 500 error has been successfully fixed!');
+    console.log('');
+  } else {
+    console.log('❌ SOME TESTS FAILED');
+    console.log('');
+    console.log('🔧 Troubleshooting:');
+    console.log('1. Check Railway logs for detailed errors');
+    console.log('2. Verify database migration ran successfully');
+    console.log('3. Confirm column is named "password" not "password_hash"');
+    console.log('4. Run: node diagnose-login-500-error.cjs');
+    console.log('');
+  }
+
+  process.exit(allPassed ? 0 : 1);
+}
+
+runVerification().catch(error => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
