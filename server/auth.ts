@@ -32,9 +32,21 @@ export interface AuthRequest extends Request {
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-super-secret-refresh-key-change-in-production";
 
-// Token expiration times
-const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "1h";
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || "7d";
+// Token expiration times - with robust fallback handling
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || process.env.JWT_EXPIRES_IN || "15m";
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+// Validate token expiry values to prevent JWT signing errors
+function validateTokenExpiry(expiry: string | undefined, defaultValue: string): string {
+  if (!expiry || expiry === '' || expiry === 'undefined' || expiry === 'null') {
+    console.warn(`⚠️ Invalid token expiry value: "${expiry}", using default: ${defaultValue}`);
+    return defaultValue;
+  }
+  return expiry;
+}
+
+const VALIDATED_ACCESS_TOKEN_EXPIRY = validateTokenExpiry(ACCESS_TOKEN_EXPIRY, "15m");
+const VALIDATED_REFRESH_TOKEN_EXPIRY = validateTokenExpiry(REFRESH_TOKEN_EXPIRY, "7d");
 
 // Password hashing
 export async function hashPassword(password: string): Promise<string> {
@@ -57,7 +69,7 @@ export function generateAccessToken(user: User): string {
       lastName: user.lastName
     },
     JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRY as any }
+    { expiresIn: VALIDATED_ACCESS_TOKEN_EXPIRY }
   );
 }
 
@@ -69,7 +81,7 @@ export function generateRefreshToken(user: User): string {
       type: 'refresh'
     },
     JWT_REFRESH_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY as any }
+    { expiresIn: VALIDATED_REFRESH_TOKEN_EXPIRY }
   );
 }
 
