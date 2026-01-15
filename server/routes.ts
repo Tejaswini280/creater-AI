@@ -508,6 +508,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password must be at least 6 characters" });
       }
 
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
       try {
         // Check if user already exists
         const existingUser = await storage.getUserByEmail(email);
@@ -518,15 +524,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Create user
+        // Create user with proper error handling
         const userId = nanoid();
+        console.log('🔧 Creating user with ID:', userId);
+        
         const user = await storage.createUser({
           id: userId,
-          email,
+          email: email.toLowerCase().trim(), // Normalize email
           password: hashedPassword,
-          firstName,
-          lastName,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
         });
+
+        console.log('✅ User created successfully:', user.id);
 
         // Generate tokens
         const tokens = generateTokens(user);
@@ -543,18 +553,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           refreshToken: tokens.refreshToken
         });
       } catch (dbError) {
-        console.error('Database error during registration:', dbError);
+        console.error('❌ Database error during registration:', dbError);
+        console.error('Error details:', {
+          name: dbError instanceof Error ? dbError.name : 'Unknown',
+          message: dbError instanceof Error ? dbError.message : String(dbError),
+          stack: dbError instanceof Error ? dbError.stack : undefined
+        });
+        
+        // Check for specific database errors
+        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
+        
+        if (errorMessage.includes('unique constraint') || errorMessage.includes('duplicate key')) {
+          return res.status(400).json({ 
+            message: "User with this email already exists"
+          });
+        }
+        
+        if (errorMessage.includes('connection') || errorMessage.includes('ECONNREFUSED')) {
+          return res.status(503).json({ 
+            message: "Database connection error. Please try again later.",
+            error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+          });
+        }
+        
         res.status(500).json({ 
-          message: "Failed to register user - database error",
-          error: process.env.NODE_ENV === 'development' ? (dbError instanceof Error ? dbError.message : String(dbError)) : undefined
+          message: "Failed to register user. Please try again.",
+          error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         });
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("❌ Registration error:", error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Ensure we always return JSON, never HTML
       res.status(500).json({ 
-        message: "Failed to register user",
+        message: "Failed to register user. Please try again.",
         error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }

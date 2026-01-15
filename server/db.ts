@@ -4,8 +4,9 @@ import * as schema from "@shared/schema";
 
 // Build connection string from individual environment variables or use DATABASE_URL
 const buildConnectionString = (): string => {
-  // If DATABASE_URL is provided, use it
+  // If DATABASE_URL is provided, use it (Railway provides this)
   if (process.env.DATABASE_URL) {
+    console.log('✅ Using DATABASE_URL from environment');
     return process.env.DATABASE_URL;
   }
 
@@ -16,30 +17,40 @@ const buildConnectionString = (): string => {
   const dbHost = process.env.DB_HOST || "db";
   const dbPort = process.env.DB_PORT || "5432";
 
+  console.log('✅ Building connection string from individual environment variables');
   return `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
 };
 
 const connectionString = buildConnectionString();
 
-console.log('Attempting to connect to database with connection string:', connectionString.replace(/\/\/.*@/, '//***:***@'));
+console.log('🔧 Database connection info:', {
+  host: connectionString.includes('@') ? connectionString.split('@')[1].split('/')[0] : 'unknown',
+  database: connectionString.split('/').pop()?.split('?')[0] || 'unknown',
+  ssl: connectionString.includes('sslmode=require') || process.env.NODE_ENV === 'production'
+});
 
-// Create the connection with optimized pooling
+// Create the connection with optimized pooling and SSL for production
 const client = postgres(connectionString, {
   max: parseInt(process.env.DB_POOL_MAX || '20'),
   idle_timeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30'),
   connect_timeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10'),
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : false, // Enable SSL for production (Railway)
   connection: {
     application_name: 'creatornexus',
     statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '30000'), // 30 seconds
   },
   onnotice: (notice) => {
-    console.log('Database notice:', notice);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Database notice:', notice);
+    }
   },
   onparameter: (parameterStatus) => {
-    console.log('Database parameter change:', parameterStatus);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Database parameter change:', parameterStatus);
+    }
   },
   onclose: () => {
-    console.log('Database connection closed');
+    console.log('⚠️  Database connection closed');
   }
 });
 

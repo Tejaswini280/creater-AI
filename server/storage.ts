@@ -199,8 +199,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(userData).returning();
-    return user;
+    try {
+      console.log('🔧 Attempting to create user:', { email: userData.email, id: userData.id });
+      
+      // Validate required fields
+      if (!userData.id || !userData.email || !userData.password || !userData.firstName || !userData.lastName) {
+        throw new Error('Missing required user fields');
+      }
+      
+      const [user] = await db.insert(users).values(userData).returning();
+      
+      if (!user) {
+        throw new Error('Failed to create user - no user returned from database');
+      }
+      
+      console.log('✅ User created successfully:', user.id);
+      return user;
+    } catch (error) {
+      console.error('❌ Error in createUser:', error);
+      console.error('User data:', { 
+        id: userData.id, 
+        email: userData.email,
+        hasPassword: !!userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      });
+      
+      // Re-throw with more context
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to create user: ${errorMessage}`);
+    }
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
